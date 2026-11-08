@@ -1,14 +1,15 @@
+@model Khetsophon_CSI402_8456.Models.User?
 @{
     ViewData["Title"] = "โปรไฟล์ของฉัน — FriendHouse";
 
     // Top-of-file Media & Content Configuration
     var defaultUser = new {
-        Name = "เขมิกา วัฒนกุล",
-        Email = "thunderwolf2209@gmail.com",
-        Phone = "081-234-5678",
-        Points = "1,250 แต้ม",
-        PendingOrders = "คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ 1 รายการ",
-        DefaultAvatar = "~/logo/logo.png"
+        Name = !string.IsNullOrEmpty(Model?.FullName) ? Model.FullName : (Model != null ? Model.Email.Split('@')[0] : "เขมิกา วัฒนกุล"),
+        Email = Model?.Email ?? "thunderwolf2209@gmail.com",
+        Phone = Model?.Phone ?? "081-234-5678",
+        Points = $"{(Model?.Points ?? 1250):N0} แต้ม",
+        PendingOrders = ViewBag.PendingPreorderCount != null ? $"คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ {ViewBag.PendingPreorderCount} รายการ" : "คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ 1 รายการ",
+        DefaultAvatar = !string.IsNullOrEmpty(Model?.AvatarUrl) ? Model.AvatarUrl : "~/logo/logo.png"
     };
 }
 
@@ -70,8 +71,11 @@
                 </svg>
                 <span>@defaultUser.PendingOrders</span>
             </div>
-            <a asp-controller="Home" asp-action="PreorderStatus" class="shrink-0 font-semibold hover:underline">
-                ดูสถานะ &rarr;
+            <a asp-controller="Home" asp-action="PreorderStatus" class="inline-flex items-center gap-1 shrink-0 font-semibold hover:underline">
+                <span>ดูสถานะ</span>
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
             </a>
         </div>
 
@@ -307,29 +311,35 @@
             });
         }
 
-        // Save profile
+        // Save profile via AJAX to backend and localStorage fallback
         if (form) {
-            form.addEventListener('submit', function (e) {
+            form.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 var newName = inputName.value.trim();
-                var newEmail = inputEmail.value.trim();
                 var newPhone = inputPhone.value.trim();
+                var newAvatar = modalAvatarPreview.src;
+
+                // Call Backend UpdateProfile
+                var formData = new FormData();
+                formData.append('fullName', newName);
+                formData.append('phone', newPhone);
+                formData.append('avatarUrl', newAvatar);
+
+                try {
+                    await fetch('/Account/UpdateProfile', { method: 'POST', body: formData });
+                } catch (err) { }
 
                 if (newName) {
                     localStorage.setItem('friendhouse_user_name', newName);
                     nameDisplay.textContent = newName;
                 }
-                if (newEmail) {
-                    localStorage.setItem('friendhouse_user_email', newEmail);
-                    emailDisplay.textContent = newEmail;
-                }
                 if (newPhone) {
                     localStorage.setItem('friendhouse_user_phone', newPhone);
                     phoneDisplay.textContent = newPhone;
                 }
-                if (modalAvatarPreview.src) {
-                    localStorage.setItem('friendhouse_user_avatar', modalAvatarPreview.src);
-                    avatarImg.src = modalAvatarPreview.src;
+                if (newAvatar) {
+                    localStorage.setItem('friendhouse_user_avatar', newAvatar);
+                    avatarImg.src = newAvatar;
                 }
 
                 closeModal();

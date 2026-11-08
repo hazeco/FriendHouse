@@ -82,6 +82,24 @@ public class AccountController : Controller
                 HttpContext.Session.SetString("Role", user.RoleName);
                 HttpContext.Session.SetString("UserEmail", user.Email);
                 HttpContext.Session.SetString("UserName", user.FullName ?? user.Email);
+
+                // บันทึก Session แยกตาม Role เพื่อป้องกันการแย่ง Session เมื่อเปิดทดสอบหลาย Tab
+                string r = user.RoleName.ToLowerInvariant();
+                if (r == "customer")
+                {
+                    HttpContext.Session.SetInt32("CustomerUserId", user.UserId);
+                    HttpContext.Session.SetString("CustomerUserName", user.FullName ?? user.Email);
+                }
+                else if (r == "staff")
+                {
+                    HttpContext.Session.SetInt32("StaffUserId", user.UserId);
+                    HttpContext.Session.SetString("StaffUserName", user.FullName ?? user.Email);
+                }
+                else if (r == "owner")
+                {
+                    HttpContext.Session.SetInt32("OwnerUserId", user.UserId);
+                    HttpContext.Session.SetString("OwnerUserName", user.FullName ?? user.Email);
+                }
                 
                 // Login สำเร็จ
                 return RedirectToAction("Index", "Home" );
@@ -164,13 +182,54 @@ public class AccountController : Controller
         HttpContext.Session.SetString("UserEmail", email);
         HttpContext.Session.SetString("UserName", name);
 
+        // บันทึก Session แยกตาม Role เพื่อรองรับการเปิดหลายแท็บพร้อมกัน
+        if (normalizedRole == "customer")
+        {
+            HttpContext.Session.SetInt32("CustomerUserId", mockUserId);
+            HttpContext.Session.SetString("CustomerUserName", name);
+        }
+        else if (normalizedRole == "staff")
+        {
+            HttpContext.Session.SetInt32("StaffUserId", mockUserId);
+            HttpContext.Session.SetString("StaffUserName", name);
+        }
+        else if (normalizedRole == "owner")
+        {
+            HttpContext.Session.SetInt32("OwnerUserId", mockUserId);
+            HttpContext.Session.SetString("OwnerUserName", name);
+        }
+        else if (normalizedRole == "accountant")
+        {
+            HttpContext.Session.SetInt32("AccountantUserId", mockUserId);
+            HttpContext.Session.SetString("AccountantUserName", name);
+        }
+        else if (normalizedRole == "itsupport")
+        {
+            HttpContext.Session.SetInt32("ITSupportUserId", mockUserId);
+            HttpContext.Session.SetString("ITSupportUserName", name);
+        }
+
         TempData["SuccessMessage"] = $"เข้าสู่ระบบด่วนในบทบาท {normalizedRole} สำเร็จ";
         return RedirectToAction(targetAction, targetController);
     }
 
-    public IActionResult Logout()
+    public IActionResult Logout(string? role)
     {
-        // WHY: ล้าง Session ทั้งหมดเพื่อตัดการเชื่อมต่อและคืนสถานะเป็นผู้เยี่ยมชม (Guest)
+        // WHY: หากระบุ Role ให้เคลียร์เฉพาะ Session ของ Role นั้น เพื่อไม่ให้กระทบแท็บของ Role อื่น
+        if (string.Equals(role, "staff", StringComparison.OrdinalIgnoreCase))
+        {
+            HttpContext.Session.Remove("StaffUserId");
+            HttpContext.Session.Remove("StaffUserName");
+            return RedirectToAction("Login", "Account");
+        }
+        else if (string.Equals(role, "customer", StringComparison.OrdinalIgnoreCase))
+        {
+            HttpContext.Session.Remove("CustomerUserId");
+            HttpContext.Session.Remove("CustomerUserName");
+            return RedirectToAction("Index", "Home");
+        }
+
+        // กรณีไม่ระบุ Role หรือกด Logout ปกติ เคลียร์ทั้งระบบ
         HttpContext.Session.Clear();
         return RedirectToAction("Index", "Home");
     }
@@ -180,8 +239,91 @@ public class AccountController : Controller
         return View();
     }
 
+    // READ: แสดงหน้าโปรไฟล์สมาชิก (Profile)
     public IActionResult Profile()
     {
-        return View();
+        var userId = HttpContext.Session.GetInt32("UserId");
+        User? user = null;
+
+        if (userId.HasValue)
+        {
+            user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
+        }
+
+        // ดึงจำนวนคำสั่งจองพรีออเดอร์ที่ยังรอดำเนินการ
+        if (user != null)
+        {
+            ViewBag.PendingPreorderCount = _db.Preorders.Count(p => p.UserId == user.UserId && p.CurrentStatus != "Completed" && p.CurrentStatus != "Cancelled");
+        }
+
+        return View(user);
+    }
+
+    // UPDATE: แก้ไขข้อมูลส่วนตัวของสมาชิก (Update Profile)
+    [HttpPost]
+    public IActionResult UpdateProfile(string fullName, string phone, string? avatarUrl)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (!userId.HasValue)
+        {
+            return Json(new { success = false, message = "กรุณาเข้าสู่ระบบก่อนดำเนินการ" });
+        }
+
+        var user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "ไม่พบข้อมูลผู้ใช้งาน" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            user.FullName = fullName.Trim();
+            HttpContext.Session.SetString("UserName", user.FullName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            user.Phone = phone.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(avatarUrl))
+        {
+            user.AvatarUrl = avatarUrl;
+        }
+
+        _db.SaveChanges();
+        return Json(new { success = true, fullName = user.FullName, phone = user.Phone, message = "บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว" });
+    }
+
+    // UPDATE: เปลี่ยนรหัสผ่านของสมาชิก (Change Password)
+    [HttpPost]
+    public IActionResult ChangePassword(string oldPassword, string newPassword)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+        if (!userId.HasValue)
+        {
+            return Json(new { success = false, message = "กรุณาเข้าสู่ระบบก่อนดำเนินการ" });
+        }
+
+        var user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "ไม่พบข้อมูลผู้ใช้งาน" });
+        }
+
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            return Json(new { success = false, message = "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร" });
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(oldPassword, user.PasswordHash))
+        {
+            return Json(new { success = false, message = "รหัสผ่านเดิมไม่ถูกต้อง" });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        _db.SaveChanges();
+
+        return Json(new { success = true, message = "เปลี่ยนรหัสผ่านเรียบร้อยแล้ว" });
     }
 }

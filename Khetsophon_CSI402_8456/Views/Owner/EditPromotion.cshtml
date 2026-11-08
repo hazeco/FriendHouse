@@ -1,3 +1,4 @@
+@model Khetsophon_CSI402_8456.Models.Promotion?
 @{
     ViewData["Title"] = "แก้ไขโปรโมชั่น";
     Layout = "_OwnerLayout";
@@ -7,20 +8,20 @@
         Breadcrumb1 = "โปรโมชั่น",
         Breadcrumb2 = "แก้ไขโปรโมชั่น",
         Title = "แก้ไขโปรโมชั่น",
-        PromoName = "ล้างสต๊อกสิ้นปี 2569",
-        VoucherCode = "CLEARANCE50",
-        DiscountValue = 50,
-        MinimumSpend = 500
+        PromoName = Model?.Name ?? "ล้างสต๊อกสิ้นปี 2569",
+        VoucherCode = Model?.VoucherCode ?? "CLEARANCE50",
+        DiscountValue = Model?.DiscountValue ?? 50m,
+        MinimumSpend = Model?.MinimumSpend ?? 500m
     };
 }
 
 @* Form Parameters expected by Controller:
-   [Id: int, Name: string, VoucherCode: string, PromoType: string, DiscountValue: decimal,
-    MinimumSpend: decimal, ApplicableScope: string, Terms: string,
-    StartDate: DateTime, EndDate: DateTime, UsageLimit: int?, IsActive: bool]
+   [PromotionId: int, Name: string, VoucherCode: string, PromoType: string, DiscountValue: decimal,
+    MinimumSpend: decimal, ApplicableScope: string,
+    StartDate: DateOnly, EndDate: DateOnly, UsageLimit: int?, IsActive: bool]
 *@
-<form asp-controller="Owner" asp-action="Promotions" class="space-y-6">
-    <input type="hidden" name="Id" value="1" />
+<form asp-controller="Owner" asp-action="EditPromotion" class="space-y-6">
+    <input type="hidden" name="PromotionId" value="@(Model?.PromotionId ?? 1)" />
 
     <!-- Breadcrumb & Back Header (frame_65_4317.png) -->
     <div>

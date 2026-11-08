@@ -749,3 +749,131 @@
    - ไอทีซัพพอร์ต: `[Authorize(Roles = "ITSupport")]`
    - คนทำบัญชี: `[Authorize(Roles = "Accountant,Owner")]`
 3. **การจัดการ Session / Token หมดอายุ**: หากผู้ใช้ไม่มีสิทธิ์หรือ Session หลุด ระบบจะนำทางกลับไปยัง `Account/Login` พร้อมพารามิเตอร์ `returnUrl`
+
+---
+
+## 7. รายการเส้นทางระบบ (MVC Endpoints / Route Catalog) ทั้งหมดในระบบ (34 Actions)
+
+ในระบบ ASP.NET Core MVC เส้นทางการทำงาน (Endpoints) แต่ละเส้นจะถูกกำหนดเป็น **Controller Action Methods** ซึ่งทำหน้าที่รับ Request จาก Client, ดำเนินการ CRUD บนฐานข้อมูล, และส่งต่อ Model ไปยัง View หรือส่ง JSON Response กลับมา
+
+### สรุปจำนวนเส้นทางตาม Controller:
+- **HomeController**: 13 เส้นทาง (Storefront, Hero 3D, Catalog, Cart CRUD, Preorder)
+- **AccountController**: 8 เส้นทาง (Auth, Fast Login, Profile Update, Password Change)
+- **StaffController**: 3 เส้นทาง (Stock Inventory, Counter Preorder, Scan Receive)
+- **OwnerController**: 5 เส้นทาง (Promotions CRUD, Quick Toggle, Monthly Report)
+- **ITSupportController**: 6 เส้นทาง (Dashboard Health, Users CRUD, Reset Password, Logs)
+- **AccountantController**: 5 เส้นทาง (Financial Dashboard, Ledger CRUD, Receipts History)
+- **รวมทั้งสิ้น: 34 เส้นทาง (Action Endpoints)**
+
+---
+
+### รายละเอียดเส้นทางราย Controller และเหตุผลในการออกแบบ (WHY over WHAT)
+
+#### 1. HomeController (13 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 1 | `/Home/Index` | `GET` | **Read (R)** | - | `View(Product heroProduct)` | ดึง Hero Product จาก DB มาแสดงผลพร้อมโมเดล 3D หากไม่มีจะ Fallback ใช้นารูโตะ เพื่อให้หน้าแรกไม่พังและดึงดูดลูกค้า |
+| 2 | `/Home/Collection` | `GET` | **Read (R)** | - | `View(List<Product>)` | ดึงสินค้าที่เปิดขายอยู่จริงเพื่อนำมาแสดงในหน้าแคตตาล็อกรวม |
+| 3 | `/Home/Promotion` | `GET` | **Read (R)** | - | `View(List<Promotion>)` | ดึงโปรโมชั่นที่เปิดใช้งานจริงมาให้ลูกค้าเลือกดู |
+| 4 | `/Home/ProductDetail/{id?}` | `GET` | **Read (R)** | `int? id` | `View(Product)` | นำ ID สินค้ามา Query ข้อมูลสเปกและสต็อกคงเหลือจริงเพื่อแสดงรายละเอียดก่อนสั่งจอง |
+| 5 | `/Home/Cart` | `GET` | **Read (R)** | - | `View(List<Cartitem>)` | ดึงรายการสินค้าในตะกร้าของสมาชิกที่ล็อกอินอยู่จากตาราง `Cartitems` |
+| 6 | `/Home/AddToCart` | `POST` | **Create (C)** | `int productId, int quantity` | `Json({success, message})` | บันทึกสินค้าลงตะกร้าหรือบวกจำนวนเพิ่ม หากเป็นสินค้าเดิม เพื่อประสบการณ์ใช้งานที่ลื่นไหลแบบ AJAX |
+| 7 | `/Home/UpdateCartQuantity` | `POST` | **Update (U)** | `int cartItemId, int quantity` | `Json({success, quantity})` | อัปเดตจำนวนสินค้าในตะกร้าทันที หรือลบทิ้งหากยอดเป็น 0 |
+| 8 | `/Home/RemoveFromCart` | `POST` | **Delete (D)** | `int cartItemId` | `Json({success, message})` | ลบสินค้าออกจากตะกร้าแบบ Hard Delete เพราะเป็นเพียงข้อมูลตะกร้าชั่วคราว |
+| 9 | `/Home/ClearCart` | `POST` | **Delete (D)** | - | `Json({success})` | ล้างสินค้าทั้งหมดในตะกร้าของ User ในคราวเดียว |
+| 10 | `/Home/ConfirmPreorder` | `POST` | **Create (C)** | `string? contactPhone, string? pickupBranch` | `RedirectToAction("PreorderStatus")` | สร้างใบจองพรีออเดอร์ (`Preorders` + `Preorderitems`), ตัดยอดจองในสต็อก (`ReservedQuantity`), และเคลียร์ตะกร้าสินค้า |
+| 11 | `/Home/PreorderStatus` | `GET` | **Read (R)** | - | `View(List<Preorder>)` | ดึงสถานะใบจองของ User ปัจจุบันเพื่อให้ลูกค้าติดตามสถานะการจัดส่ง/รับสินค้า |
+| 12 | `/Home/Rewards` | `GET` | **Read (R)** | - | `View()` | แสดงรายการของรางวัลสำหรับแต้มสะสม |
+| 13 | `/Home/Customer` | `GET` | **Read (R)** | - | `View("Index")` | เส้นทางทางลัดสำหรับสลับบทบาทลูกค้ากลับสู่หน้าแรก |
+
+---
+
+#### 2. AccountController (8 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 14 | `/Account/Login` | `GET / POST` | **Read (R)** | `LoginViewModel model` | `View()` หรือ `Redirect` | ตรวจสอบอีเมลและรหัสผ่านด้วย BCrypt ป้องกัน Credential Leak และจดจำ Session |
+| 15 | `/Account/FastLogin` | `POST` | **Create (C)** | `string role` | `Json({success, redirectUrl})` | ให้กรรมการ/อาจารย์ทดสอบระบบได้ทันทีโดยไม่ต้องจำรหัสผ่าน พร้อมจำลองสิทธิ์ใน Session |
+| 16 | `/Account/Register` | `GET / POST` | **Create (C)** | `RegisterViewModel model` | `View()` หรือ `Redirect` | สมัครสมาชิกใหม่ แฮชรหัสผ่านด้วย BCrypt และกำหนด Role เริ่มต้นเป็น Customer |
+| 17 | `/Account/Logout` | `GET / POST` | **Delete (D)** | - | `RedirectToAction("Login")` | เคลียร์ Session ทั้งหมดออกจากระบบเพื่อความปลอดภัย |
+| 18 | `/Account/Profile` | `GET` | **Read (R)** | - | `View(User)` | ดึงข้อมูลส่วนตัว, แต้มสะสม, และประวัติของผู้ใช้ที่ล็อกอินอยู่ |
+| 19 | `/Account/UpdateProfile` | `POST` | **Update (U)** | `string fullName, string phone` | `Json({success, message})` | อัปเดตข้อมูลติดต่อของตนเองเพื่อรับ SMS แจ้งเตือนสินค้า |
+| 20 | `/Account/ChangePassword` | `POST` | **Update (U)** | `string oldPassword, string newPassword` | `Json({success, message})` | ตรวจสอบรหัสผ่านเดิมก่อนอนุญาตให้เปลี่ยนรหัสผ่านใหม่ ป้องกันการโดนขโมยเซสชัน |
+| 21 | `/Account/ResetPassword` | `GET` | **Read (R)** | - | `View()` | หน้าสำหรับให้ผู้ใช้ขอรีเซ็ตรหัสผ่าน |
+
+---
+
+#### 3. StaffController (3 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 22 | `/Staff/Index` | `GET` | **Read (R)** | `string? search, string? category` | `View(List<Product>)` | ตรวจสอบสต็อกคงเหลือหน้าร้านและยอดที่ถูกจองไว้แบบ Real-time |
+| 23 | `/Staff/CounterPreorder` | `GET / POST` | **Read (R) / Update (U)** | `CounterPreorderViewModel model, string? actionType, string? cancelReason` | `View(Preorder)` | ค้นหาใบจองจากเบอร์/รหัสใบจอง และอัปเดตสถานะเป็น "Fulfilled" (รับของแล้ว) หรือ "Cancelled" (ยกเลิก) พร้อมบันทึกสาเหตุลง Log |
+| 24 | `/Staff/ScanReceive` | `GET / POST` | **Read (R) / Update (U)** | `string? sku, int? quantity` | `View()` | จำลองการสแกนบาร์โค้ดรับสินค้าเข้าคลังจริง เพิ่มจำนวนใน `Inventories.QuantityOnHand` |
+
+---
+
+#### 4. OwnerController (5 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 25 | `/Owner/Promotions` | `GET` | **Read (R)** | - | `View(List<Promotion>)` | เจ้าของร้านดูภาพรวมโปรโมชั่นทั้งหมดที่กำลังรันอยู่ |
+| 26 | `/Owner/AddPromotion` | `GET / POST` | **Create (C)** | `Promotion data` | `View()` หรือ `Redirect` | สร้างโปรโมชั่นส่วนลดใหม่ บันทึกลงตาราง `Promotions` |
+| 27 | `/Owner/EditPromotion/{id?}` | `GET / POST` | **Read (R) / Update (U)** | `int? id, Promotion data` | `View()` หรือ `Redirect` | แก้ไขรายละเอียด เงื่อนไข และระยะเวลาของโปรโมชั่นที่มีอยู่ |
+| 28 | `/Owner/TogglePromotion` | `POST` | **Update (U)** | `int id` | `Json({success, isActive})` | สลับเปิด/ปิดโปรโมชั่นหน้าร้านทันทีด้วย AJAX โดยไม่ต้องรีโหลดหน้า |
+| 29 | `/Owner/DeletePromotion` | `POST` | **Delete (D - Soft)** | `int id` | `Json({success, message})` | ทำ Soft Delete (`IsActive = false`) เพื่อไม่ให้กระทบ Foreign Key ของคำสั่งซื้อเก่า |
+| 30 | `/Owner/MonthlyReport` | `GET` | **Read (R)** | `int? year, int? month` | `View(MonthlyReportViewModel)` | สรุปผลประกอบการ ยอดขาย และสถานะสินค้าคงคลังรายเดือน |
+
+---
+
+#### 5. ITSupportController (6 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 31 | `/ITSupport/Dashboard` | `GET` | **Read (R)** | - | `View()` | มอนิเตอร์สุขภาพเซิร์ฟเวอร์ การเชื่อมต่อ Database และ Uptime |
+| 32 | `/ITSupport/Users` | `GET` | **Read (R)** | `string? role, string? search` | `View(List<User>)` | ตรวจสอบรายชื่อผู้ใช้งานและบทบาททั้งหมดในระบบ |
+| 33 | `/ITSupport/AddUser` | `POST` | **Create (C)** | `string fullName, string email, string phone, string role, string password` | `Json({success, message})` | สร้างบัญชีพนักงาน/ผู้ใช้ใหม่พร้อมกำหนดสิทธิ์และแฮชรหัสผ่าน |
+| 34 | `/ITSupport/EditUser` | `POST` | **Update (U)** | `string email, string? phone, string? role, string? status, string? fullName` | `Json({success, message})` | แก้ไขข้อมูลสิทธิ์ เบอร์โทร หรือสถานะบัญชีผู้ใช้งาน |
+| 35 | `/ITSupport/ResetPassword` | `POST` | **Update (U)** | `int userId` | `Json({success, tempPassword})` | ช่วยเหลือผู้ใช้ที่ลืมรหัสผ่านโดยสุ่มรหัสผ่านชั่วคราวและบันทึกประวัติการกระทำลงใน Log |
+| 36 | `/ITSupport/DeleteUser` | `POST` | **Delete (D - Soft)** | `string email` | `Json({success, message})` | ระงับการใช้งานบัญชี (`IsActive = false`) ห้ามลบจริงเพื่อรักษา Audit Trail และความสมบูรณ์ของใบเสร็จ |
+| 37 | `/ITSupport/Logs` | `GET` | **Read (R)** | `string? level, string? search` | `View(List<Systemlog>)` | ตรวจสอบประวัติข้อผิดพลาดและการกระทำสำคัญในระบบ (Audit Logs) |
+
+---
+
+#### 6. AccountantController (5 เส้นทาง)
+| ลำดับ | เส้นทาง (Route / URL) | HTTP Method | ประเภท CRUD | สิ่งที่ส่งมา (Input Parameters) | สิ่งที่ส่งกลับ (Output) | เหตุผลในการออกแบบ (WHY) |
+| :---: | :--- | :---: | :---: | :--- | :--- | :--- |
+| 38 | `/Accountant/Index` | `GET` | **Read (R)** | - | `View()` | แดชบอร์ดสรุปรายรับ-รายจ่าย ยอดรวม และเงินสดหมุนเวียน |
+| 39 | `/Accountant/Ledger` | `GET / POST` | **Read (R) / Create (C)** | `Financialledger entry` | `View(List<Financialledger>)` | บันทึกรายการค่าใช้จ่ายใหม่ เช่น ค่าเช่า ค่าน้ำไฟ พร้อมแสดงบัญชีย้อนหลัง |
+| 40 | `/Accountant/EditLedgerEntry` | `POST` | **Update (U)** | `int ledgerId, string? categoryName, string? entryType, decimal? amount, DateOnly? entryDate, string? note` | `Json({success, message})` | แก้ไขตัวเลขหรือหมวดหมู่บัญชีที่ลงบันทึกผิดพลาด |
+| 41 | `/Accountant/DeleteLedgerEntry` | `POST` | **Delete (D - Hard)** | `int ledgerId` | `Json({success, message})` | ลบรายการบัญชีที่ผิดพลาดออกจากตาราง `Financialledgers` |
+| 42 | `/Accountant/Receipts` | `GET` | **Read (R)** | `string? search, int? month` | `View(List<Receipt>)` | ดูประวัติใบเสร็จรับเงินที่ออกให้ลูกค้าหน้าร้านทั้งหมด |
+
+---
+
+## 8. การวิเคราะห์จุดต่างระหว่าง UI และฐานข้อมูล (Database & Data Dictionary Gap Analysis)
+
+> [!IMPORTANT]
+> รายการต่อไปนี้เป็นสิ่งที่หน้าจอ **UI มีการแสดงผลหรือมี Modal รองรับ** แต่ใน **Database Schema / Data Dictionary ปัจจุบันยังไม่มีคอลัมน์รองรับโดยตรง** (ทางเราได้ออกแบบวิธีชดเชยการทำงานไว้ชั่วคราวแล้วโดยไม่แตะโครงสร้าง DB):
+
+1. **ระบบเงินมัดจำ (Deposit / Balance Due)**:
+   - **UI**: มีข้อความและช่องแสดง "เงินมัดจำ", "ยอดค้างชำระหน้าร้าน"
+   - **Database**: ตาราง `Preorders` มีเพียงฟิลด์ `TotalFinalPrice` (ยอดเต็ม) ไม่มีฟิลด์ `DepositAmount` หรือ `BalanceDue`
+   - **วิธีชดเชยปัจจุบัน**: คำนวณยอดเต็มและแสดงผลเป็นยอดที่ต้องชำระเมื่อมารับของหน้าร้าน
+
+2. **สาเหตุการยกเลิก / ไม่รับสินค้า (Cancellation Reason)**:
+   - **UI**: เมื่อพนักงานกด "ไม่รับสินค้า" จะมี Modal ให้กรอกสาเหตุที่ไม่รับ
+   - **Database**: ตาราง `Preorders` มีเพียงคอลัมน์ `CurrentStatus` ('Pending', 'Fulfilled', 'Cancelled') ไม่มีคอลัมน์ `CancellationReason` หรือ `CancelNote`
+   - **วิธีชดเชยปัจจุบัน**: บันทึกสาเหตุการยกเลิกลงในตาราง `Systemlogs` ในคอลัมน์ `Details` พร้อมอ้างอิงเลขที่ใบจอง เพื่อคงประวัติไว้ตรวจสอบได้
+
+3. **คำบรรยายสินค้าแบบยาว (Product Description)**:
+   - **UI**: หน้ารายละเอียดสินค้ามีคำบรรยายสินค้ายาวๆ (Description)
+   - **Database**: ตาราง `Products` มีฟิลด์ `SeriesName`, `BrandName`, `Scale`, `Material`, `ExpectedArrival` แต่ไม่มีคอลัมน์ `Description`
+   - **วิธีชดเชยปัจจุบัน**: รวมข้อมูลจาก `SeriesName`, `BrandName`, `Scale`, `Material` มาสร้างเป็นข้อความบรรยายอัตโนมัติ
+
+4. **ประวัติการแลกของรางวัลด้วยแต้มสะสม (Points Redemption History)**:
+   - **UI**: หน้า Rewards มีการแลกของรางวัลด้วยแต้มสะสม
+   - **Database**: ตาราง `Users` มีคอลัมน์ `Points` สำหรับเก็บแต้มคงเหลือ แต่ยังไม่มีตาราง `PointsRedemptions` หรือ `RewardsCatalog` ใน Schema
+   - **วิธีชดเชยปัจจุบัน**: ใช้ Mock Catalog ของรางวัลใน View และหักลบแต้มจาก `Users.Points`
+
+5. **เงื่อนไขโปรโมชั่น (Promotion Terms & Conditions)**:
+   - **UI**: หน้าโปรโมชั่นมีช่องแสดงเงื่อนไขและข้อตกลงการใช้สิทธิ์
+   - **Database**: ตาราง `Promotions` มี `Name`, `DiscountPercentage`, `DiscountAmount`, `StartDate`, `EndDate`, `IsActive` แต่ไม่มีคอลัมน์ `Terms` หรือ `Description`
+   - **วิธีชดเชยปัจจุบัน**: แสดงข้อความเงื่อนไขมาตรฐานของร้านที่ส่วนบนของ View
+

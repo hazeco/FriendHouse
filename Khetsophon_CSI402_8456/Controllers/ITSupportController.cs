@@ -15,6 +15,8 @@ public class ITSupportController : Controller
     private bool IsAuthorizedIT()
     {
         var role = HttpContext.Session.GetString("Role");
+        var itId = HttpContext.Session.GetInt32("ITSupportUserId");
+        if (itId.HasValue) return true;
         return role != null && (role.ToLower() == "itsupport" || role.ToLower() == "owner");
     }
 
@@ -129,7 +131,108 @@ public class ITSupportController : Controller
         return RedirectToAction("Users");
     }
 
+    // UPDATE: แก้ไขข้อมูลผู้ใช้งาน (Edit User)
+    [HttpPost]
+    public IActionResult EditUser(string email, string? phone, string? role, string? status, string? fullName)
+    {
+        if (!IsAuthorizedIT())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
 
+        var user = _db.Users.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "ไม่พบผู้ใช้งานนี้ในระบบ" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(phone)) user.Phone = phone.Trim();
+        if (!string.IsNullOrWhiteSpace(fullName)) user.FullName = fullName.Trim();
+        if (!string.IsNullOrWhiteSpace(role)) user.RoleName = role.ToLower();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            user.IsActive = (status.ToLower() == "active" || status == "ปกติ");
+        }
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = "EDIT-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "INFO",
+            Module = "auth.users",
+            Message = $"IT Support แก้ไขข้อมูลผู้ใช้: {user.Email} (สถานะ: {(user.IsActive == true ? "ปกติ" : "ถูกล็อก")})",
+            UserId = HttpContext.Session.GetInt32("UserId"),
+            Timestamp = DateTime.UtcNow
+        });
+
+        _db.SaveChanges();
+        return Json(new { success = true, message = "อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว" });
+    }
+
+    // UPDATE: รีเซ็ตรหัสผ่านชั่วคราว (Reset Password)
+    [HttpPost]
+    public IActionResult ResetPassword(int userId)
+    {
+        if (!IsAuthorizedIT())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var user = _db.Users.FirstOrDefault(u => u.UserId == userId);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "ไม่พบบัญชีผู้ใช้งาน" });
+        }
+
+        var randomNum = new Random().Next(1000, 9999);
+        var tempPassword = "FH-Temp-" + randomNum;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = "RESET-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "WARNING",
+            Module = "auth.security",
+            Message = "IT Support รีเซ็ตรหัสผ่านชั่วคราวให้ผู้ใช้: " + user.Email,
+            UserId = HttpContext.Session.GetInt32("UserId"),
+            Timestamp = DateTime.UtcNow
+        });
+
+        _db.SaveChanges();
+
+        return Json(new { success = true, email = user.Email, tempPassword = tempPassword });
+    }
+
+    // DELETE: ลบผู้ใช้งาน (Soft Delete: ปิดการใช้งาน IsActive = false เพื่อรักษา Foreign Key สัมพันธ์กับ Orders/Receipts)
+    [HttpPost]
+    public IActionResult DeleteUser(string email)
+    {
+        if (!IsAuthorizedIT())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var user = _db.Users.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+        {
+            return Json(new { success = false, message = "ไม่พบบัญชีผู้ใช้งานที่ต้องการลบ" });
+        }
+
+        user.IsActive = false;
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = "DEL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "WARNING",
+            Module = "auth.users",
+            Message = $"IT Support ระงับ/ลบบัญชีผู้ใช้: {user.Email}",
+            UserId = HttpContext.Session.GetInt32("UserId"),
+            Timestamp = DateTime.UtcNow
+        });
+
+        _db.SaveChanges();
+        return Json(new { success = true, message = $"ระงับและลบบัญชี {user.Email} สำเร็จ" });
+    }
 
     // READ: บันทึกกิจกรรมและข้อผิดพลาด (System Logs)
     public IActionResult Logs(string? level, string? timeRange)

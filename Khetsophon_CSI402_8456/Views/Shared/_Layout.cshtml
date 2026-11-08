@@ -13,35 +13,20 @@
     <link rel="stylesheet" href="~/Khetsophon_CSI402_8456.styles.css" asp-append-version="true" />
 </head>
 @{
-    var sessionRole = Context.Session.GetString("Role");
-    var routeAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var routeCtrl = ViewContext.RouteData.Values["controller"]?.ToString();
-    var queryRole = Context.Request.Query["role"].ToString();
-    
+    var sessionRole = Context.Session.GetString("Role")?.ToLowerInvariant();
+    var customerUserId = Context.Session.GetInt32("CustomerUserId");
+    var queryRole = Context.Request.Query["role"].ToString().ToLowerInvariant();
+
+    // WHY: Layout หน้าร้าน (Storefront) จะแสดง Navbar หน้าร้านเสมอ
+    // ไม่สลับไปเป็น Navbar ฝั่งจัดการของพนักงาน/ผู้จัดการ แม้จะมีการล็อกอินบทบาทอื่นในอีกแท็บก็ตาม
     string userRole = "guest";
-    if (!string.IsNullOrEmpty(queryRole))
-    {
-        userRole = queryRole.ToLowerInvariant();
-    }
-    else if (!string.IsNullOrEmpty(sessionRole))
-    {
-        userRole = sessionRole.ToLowerInvariant();
-    }
-    else if (string.Equals(routeCtrl, "Staff", StringComparison.OrdinalIgnoreCase))
-    {
-        userRole = "staff";
-    }
-    else if (string.Equals(routeCtrl, "Owner", StringComparison.OrdinalIgnoreCase))
-    {
-        userRole = "owner";
-    }
-    else if (string.Equals(routeAction, "Customer", StringComparison.OrdinalIgnoreCase))
+    if (sessionRole == "customer" || customerUserId.HasValue || queryRole == "customer")
     {
         userRole = "customer";
     }
-    else if (ViewData["Role"] is string explicitRole)
+    else if (ViewData["Role"] is string explicitRole && explicitRole.ToLowerInvariant() == "customer")
     {
-        userRole = explicitRole.ToLowerInvariant();
+        userRole = "customer";
     }
 }
 <body class="flex min-h-screen flex-col bg-background text-text bg-white">

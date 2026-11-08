@@ -4,6 +4,7 @@
     Layout = "_StaffLayout";
 
     var hasDbProducts = Model != null && Model.Any();
+    var allProducts = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Product>();
 
     // Top-of-file Media & Content Configuration (Rule-compliant)
     var pageHeader = new {
@@ -14,95 +15,13 @@
         ScanController = "Staff"
     };
 
-    var alerts = new[] {
-        new { Name = "ตุ๊กตาหมี Baba (สีชมพู)", Sku = "SKU-BB-1042", Status = "หมด · 0 ชิ้น", Class = "bg-[#FEE2E2] text-[#DC2626]" },
-        new { Name = "กล่องสุ่ม Mystery Box S2", Sku = "SKU-MB-2201", Status = "ใกล้หมด · 2 ชิ้น", Class = "bg-[#FEF3C7] text-[#D97706]" },
-        new { Name = "พวงกุญแจแมวส้ม", Sku = "SKU-KC-0087", Status = "ใกล้หมด · 3 ชิ้น", Class = "bg-[#FEF3C7] text-[#D97706]" }
-    };
+    var lowStockProducts = allProducts.Where(p => (p.Inventory?.QuantityOnHand ?? 0) <= 3).ToList();
+    var normalCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 3);
+    var lowCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= 3);
+    var outOfStockCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) <= 0);
 
-    var categories = new[] {
-        "ทุกหมวดหมู่",
-        "ตุ๊กตา & ของสะสม",
-        "กล่องสุ่ม Mystery Box",
-        "พวงกุญแจ & อุปกรณ์",
-        "เครื่องเขียน & สมุด",
-        "เสื้อผ้า & เครื่องแต่งกาย"
-    };
-
-    var stockItems = new[] {
-        new {
-            Id = 1,
-            Name = "ตุ๊กตาหมี Baba (สีชมพู)",
-            Sku = "SKU-BB-1042",
-            Category = "ตุ๊กตา & ของสะสม",
-            Stock = 0,
-            Status = "หมด",
-            StatusClass = "bg-[#FEE2E2] text-[#DC2626]",
-            StockClass = "text-[#DC2626]",
-            Date = "28 ส.ค. 2569",
-            IconType = "bear"
-        },
-        new {
-            Id = 2,
-            Name = "กล่องสุ่ม Mystery Box S2",
-            Sku = "SKU-MB-2201",
-            Category = "กล่องสุ่ม Mystery Box",
-            Stock = 2,
-            Status = "ใกล้หมด",
-            StatusClass = "bg-[#FEF3C7] text-[#D97706]",
-            StockClass = "text-[#D97706]",
-            Date = "2 ก.ย. 2569",
-            IconType = "box"
-        },
-        new {
-            Id = 3,
-            Name = "พวงกุญแจแมวส้ม",
-            Sku = "SKU-KC-0087",
-            Category = "พวงกุญแจ & อุปกรณ์",
-            Stock = 3,
-            Status = "ใกล้หมด",
-            StatusClass = "bg-[#FEF3C7] text-[#D97706]",
-            StockClass = "text-[#D97706]",
-            Date = "30 ส.ค. 2569",
-            IconType = "key"
-        },
-        new {
-            Id = 4,
-            Name = "การ์ดสะสมชุด Sakura Vol.4",
-            Sku = "SKU-CD-3390",
-            Category = "ตุ๊กตา & ของสะสม",
-            Stock = 48,
-            Status = "ปกติ",
-            StatusClass = "bg-[#DCFCE7] text-[#16A34A]",
-            StockClass = "text-[#050315]",
-            Date = "5 ก.ย. 2569",
-            IconType = "card"
-        },
-        new {
-            Id = 5,
-            Name = "สมุดโน้ตลายดอกไม้ A5",
-            Sku = "SKU-NB-0512",
-            Category = "เครื่องเขียน & สมุด",
-            Stock = 64,
-            Status = "ปกติ",
-            StatusClass = "bg-[#DCFCE7] text-[#16A34A]",
-            StockClass = "text-[#050315]",
-            Date = "4 ก.ย. 2569",
-            IconType = "notebook"
-        },
-        new {
-            Id = 6,
-            Name = "เสื้อยืดลาย FriendHouse Classic",
-            Sku = "SKU-TS-7710",
-            Category = "เสื้อผ้า & เครื่องแต่งกาย",
-            Stock = 21,
-            Status = "ปกติ",
-            StatusClass = "bg-[#DCFCE7] text-[#16A34A]",
-            StockClass = "text-[#050315]",
-            Date = "1 ก.ย. 2569",
-            IconType = "tshirt"
-        }
-    };
+    var dbCategories = new List<string> { "ทุกหมวดหมู่" };
+    dbCategories.AddRange(allProducts.Select(p => p.Category?.CategoryName).Where(c => !string.IsNullOrEmpty(c)).Distinct()!);
 }
 
 <div class="space-y-6">
@@ -123,30 +42,43 @@
     </div>
 
     <!-- Alert Banner (Matching frame_9_3.png) -->
-    <div class="rounded-2xl border border-[#FCA5A5]/70 bg-[#FFF5F5] p-4 space-y-3">
-        <div class="flex items-center gap-2 text-[#DC2626]">
-            <svg class="size-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
-            <span class="text-xs sm:text-sm font-bold">แจ้งเตือนสต็อก — มีสินค้าใกล้หมด/หมดสต็อก 3 รายการ ต้องดำเนินการ</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            @foreach (var alert in alerts)
-            {
-                <div class="bg-white rounded-xl p-3.5 border border-red-100/80 flex items-center justify-between shadow-2xs">
-                    <div>
-                        <div class="text-sm font-bold text-[#050315]">@alert.Name</div>
-                        <div class="text-xs text-gray-400 font-mono mt-0.5">@alert.Sku</div>
+    @if (lowStockProducts.Any())
+    {
+        <div class="rounded-2xl border border-[#FCA5A5]/70 bg-[#FFF5F5] p-4 space-y-3">
+            <div class="flex items-center gap-2 text-[#DC2626]">
+                <svg class="size-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span class="text-xs sm:text-sm font-bold">แจ้งเตือนสต็อก — มีสินค้าใกล้หมด/หมดสต็อก @lowStockProducts.Count รายการ ต้องดำเนินการ</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                @foreach (var alert in lowStockProducts.Take(3))
+                {
+                    var qty = alert.Inventory?.QuantityOnHand ?? 0;
+                    var badgeCls = qty <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : "bg-[#FEF3C7] text-[#D97706]";
+                    var statusLbl = qty <= 0 ? "หมด · 0 ชิ้น" : $"ใกล้หมด · {qty} ชิ้น";
+                    <div class="bg-white rounded-xl p-3.5 border border-red-100/80 flex items-center justify-between shadow-2xs">
+                        <div class="min-w-0 pr-2">
+                            <div class="text-sm font-bold text-[#050315] truncate">@alert.Name</div>
+                            <div class="text-xs text-gray-400 font-mono mt-0.5">@alert.Sku</div>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 @badgeCls">
+                            @statusLbl
+                        </span>
                     </div>
-                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 @alert.Class">
-                        @alert.Status
-                    </span>
-                </div>
-            }
+                }
+            </div>
         </div>
-    </div>
+    }
+    else
+    {
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 flex items-center gap-2.5 text-emerald-800">
+            <svg class="size-5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span class="text-xs sm:text-sm font-bold">สต็อกสินค้าทั้งหมดอยู่ในระดับปกติ ไม่มีสินค้าใกล้หมดหรือขาดสต็อก</span>
+        </div>
+    }
 
     <!-- Search & Filter Bar (Matching frame_9_3.png) -->
     @* Form Parameters expected by Controller:
@@ -166,7 +98,7 @@
         <!-- Category Dropdown -->
         <div class="relative">
             <select id="stockCategoryFilter" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none focus:border-[#2F39A9]">
-                @foreach (var c in categories)
+                @foreach (var c in dbCategories)
                 {
                     <option value="@c">@c</option>
                 }
@@ -179,16 +111,16 @@
         <!-- Status Filter Tabs (Figma Buttons) -->
         <div class="flex items-center gap-1.5" id="stockStatusButtons">
             <button type="button" onclick="filterStockStatus('all')" class="status-tab px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-sm font-semibold transition cursor-pointer">
-                ทั้งหมด 32
+                ทั้งหมด @allProducts.Count
             </button>
             <button type="button" onclick="filterStockStatus('ปกติ')" class="status-tab px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium transition cursor-pointer shadow-2xs">
-                ปกติ 27
+                ปกติ @normalCount
             </button>
             <button type="button" onclick="filterStockStatus('ใกล้หมด')" class="status-tab px-4 py-2 rounded-xl bg-white border border-[#FDE68A] text-[#D97706] hover:bg-amber-50 text-sm font-medium transition cursor-pointer shadow-2xs">
-                ใกล้หมด 4
+                ใกล้หมด @lowCount
             </button>
             <button type="button" onclick="filterStockStatus('หมด')" class="status-tab px-4 py-2 rounded-xl bg-white border border-[#FECACA] text-[#DC2626] hover:bg-red-50 text-sm font-medium transition cursor-pointer shadow-2xs">
-                หมด 1
+                หมด @outOfStockCount
             </button>
         </div>
     </div>
@@ -259,90 +191,11 @@
                     }
                     else
                     {
-                        @foreach (var item in stockItems)
-                        {
-                            <tr class="hover:bg-gray-50/70 transition-colors stock-row" data-category="@item.Category" data-status="@item.Status">
-                                <!-- Product Name & SVG Icon -->
-                                <td class="py-4 px-6 flex items-center gap-3.5">
-                                    <div class="size-8 rounded-lg bg-[#92EEFF]/25 text-[#2F39A9] flex items-center justify-center shrink-0">
-                                        @if (item.IconType == "bear")
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="14" r="7"></circle>
-                                                <circle cx="7" cy="8" r="3"></circle>
-                                                <circle cx="17" cy="8" r="3"></circle>
-                                                <circle cx="10" cy="13" r="1" fill="currentColor"></circle>
-                                                <circle cx="14" cy="13" r="1" fill="currentColor"></circle>
-                                                <path d="M11 16c.6.4 1.4.4 2 0"></path>
-                                            </svg>
-                                        }
-                                        else if (item.IconType == "box")
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                            </svg>
-                                        }
-                                        else if (item.IconType == "key")
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="7.5" cy="15.5" r="4.5"></circle>
-                                                <path d="M21 3l-9.5 9.5"></path>
-                                                <path d="M15 4l3 3"></path>
-                                                <path d="M18 7l1.5-1.5"></path>
-                                            </svg>
-                                        }
-                                        else if (item.IconType == "card")
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                                <circle cx="12" cy="12" r="4"></circle>
-                                                <line x1="3" y1="9" x2="21" y2="9"></line>
-                                            </svg>
-                                        }
-                                        else if (item.IconType == "notebook")
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                                                <line x1="8" y1="7" x2="16" y2="7"></line>
-                                                <line x1="8" y1="11" x2="14" y2="11"></line>
-                                            </svg>
-                                        }
-                                        else
-                                        {
-                                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path>
-                                            </svg>
-                                        }
-                                    </div>
-                                    <span class="font-medium text-[#050315]">@item.Name</span>
-                                </td>
-
-                                <!-- SKU -->
-                                <td class="py-4 px-6 text-gray-500 font-mono text-xs">
-                                    @item.Sku
-                                </td>
-
-                                <!-- Stock Count (Centered, Bold) -->
-                                <td class="py-4 px-6 text-center font-bold text-base @item.StockClass">
-                                    @item.Stock
-                                </td>
-
-                                <!-- Status Pill (Centered) -->
-                                <td class="py-4 px-6 text-center">
-                                    <span class="text-xs font-semibold px-3 py-1 rounded-full @item.StatusClass">
-                                        @item.Status
-                                    </span>
-                                </td>
-
-                                <!-- Last Restocked Date -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @item.Date
-                                </td>
-                            </tr>
-                        }
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-xs text-gray-400">
+                                ไม่พบรายการสินค้าในคลัง
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -350,7 +203,7 @@
 
         <!-- Pagination (Exact from Figma frame_9_3.png) -->
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4 text-sm">
-            <span class="text-xs text-gray-500">แสดง 6 จาก 32 รายการ</span>
+            <span class="text-xs text-gray-500">แสดง @allProducts.Count รายการ</span>
             <div class="flex items-center gap-1.5">
                 <button type="button" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
                     ก่อนหน้า

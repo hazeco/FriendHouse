@@ -9,69 +9,6 @@
         Badge = "ข้อเสนอพิเศษ"
     };
 
-    var defaultPromos = new[] {
-        new {
-            Id = 1,
-            Tag = "ล้างสต๊อก",
-            Title = "ล้างสต๊อกส่งท้ายปี ลด 20–50%",
-            Description = "ส่วนลดพิเศษสูงสุดถึง 50% สำหรับสินค้าและฟิกเกอร์ในสต็อกที่ร่วมรายการ จำนวนจำกัด หมดแล้วหมดเลย",
-            Period = "วันนี้ - 31 ธันวาคม 2569",
-            Condition = "เฉพาะสินค้าที่มีสติกเกอร์ Clearance เท่านั้น ไม่สามารถใช้ร่วมกับคูปองอื่นได้",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-rose-100 text-rose-700",
-            IconClass = "text-rose-600 bg-rose-50",
-            SvgIcon = "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-        },
-        new {
-            Id = 2,
-            Tag = "1 แถม 1",
-            Title = "ซื้อ 1 ชิ้น แถมฟรีอีก 1 ชิ้น (Buy 1 Get 1)",
-            Description = "ซื้อฟิกเกอร์สเกลมาตรฐานในหมวดหมู่ที่กำหนด รับฟรีทันทีมินิฟิกเกอร์หรือพวงกุญแจลายเดียวกัน",
-            Period = "ทุกวันเสาร์ - อาทิตย์ ตลอดเดือน",
-            Condition = "ของแถมเป็นรายการที่ทางร้านกำหนดในแต่ละรอบสัปดาห์",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-secondary/40 text-primary",
-            IconClass = "text-primary bg-secondary/30",
-            SvgIcon = "M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-        },
-        new {
-            Id = 3,
-            Tag = "ซื้อคู่คุ้มกว่า",
-            Title = "เซ็ตคู่ดูโอ้ (Bundle Pack)",
-            Description = "จับคู่ซื้อฟิกเกอร์ตัวละครหลักในซีรีส์เดียวกัน ลดทันที 15% จากราคารวมทั้งชุด",
-            Period = "ตลอดทั้งปี 2569",
-            Condition = "ต้องเป็นสินค้าที่ระบุว่าเป็น Duo Collection ภายในร้าน",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-accent/15 text-accent",
-            IconClass = "text-accent bg-accent/10",
-            SvgIcon = "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-        },
-        new {
-            Id = 4,
-            Tag = "สะสมแต้ม",
-            Title = "คะแนนสะสมคูณสอง (Double Points)",
-            Description = "ทุกยอดใช้จ่าย 100 บาท รับแต้มสะสม 2 แต้ม (จากปกติ 1 แต้ม) นำไปแลกของรางวัลหรือส่วนลดพรีเมียม",
-            Period = "สัปดาห์แรกของทุกเดือน",
-            Condition = "สำหรับสมาชิกที่มีบัญชี FriendHouse และเข้าสู่ระบบเรียบร้อยแล้ว",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-amber-100 text-amber-800",
-            IconClass = "text-amber-700 bg-amber-50",
-            SvgIcon = "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-        },
-        new {
-            Id = 5,
-            Tag = "พรีออเดอร์",
-            Title = "พรีออเดอร์ล็อกราคา รับของแถมพิเศษ",
-            Description = "สั่งจองฟิกเกอร์ล่วงหน้าผ่านระบบ ล็อกราคาเดิมไม่มีบวกเพิ่ม พร้อมรับโปสการ์ดลิขสิทธิ์ฟรีเมื่อมารับที่หน้าร้าน",
-            Period = "จนกว่าโควตาการสั่งจองของแต่ละล็อตจะเต็ม",
-            Condition = "ชำระเงินเมื่อมารับสินค้าที่สาขาหน้าร้าน FriendHouse เท่านั้น",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-primary/15 text-primary",
-            IconClass = "text-primary bg-primary/10",
-            SvgIcon = "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        }
-    };
-
     var promoList = (Model != null && Model.Any())
         ? Model.Select(p => new {
             Id = p.PromotionId,
@@ -85,7 +22,7 @@
             IconClass = "text-primary bg-primary/10",
             SvgIcon = "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
         }).ToArray()
-        : defaultPromos;
+        : Array.Empty<dynamic>();
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">

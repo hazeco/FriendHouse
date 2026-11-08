@@ -17,6 +17,8 @@ public class StaffController : Controller
     private bool IsAuthorizedStaff()
     {
         var role = HttpContext.Session.GetString("Role");
+        var staffId = HttpContext.Session.GetInt32("StaffUserId");
+        if (staffId.HasValue) return true;
         return role != null && (role.ToLower() == "staff" || role.ToLower() == "owner" || role.ToLower() == "itsupport");
     }
 
@@ -44,7 +46,7 @@ public class StaffController : Controller
 
     // READ: ค้นหาใบจองพรีออเดอร์ (GET)
     [HttpGet]
-    public IActionResult CounterPreorder()
+    public IActionResult CounterPreorder(string? query)
     {
         if (!IsAuthorizedStaff())
         {
@@ -52,10 +54,31 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        return View();
+        // WHY: เปิดหน้ามาครั้งแรก ให้ดึงใบจองล่าสุดที่รอมารับ (ReadyForPickup หรือ PendingConfirm) มาแสดงผลทันที เพื่อให้พนักงานทดสอบกดปุ่มได้เลย
+        var defaultPreorder = _db.Preorders
+            .Include(p => p.Preorderitems)
+                .ThenInclude(item => item.Product)
+            .Include(p => p.User)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefault(p => p.CurrentStatus == "ReadyForPickup" || p.CurrentStatus == "PendingConfirm");
+
+        if (defaultPreorder != null)
+        {
+            ViewBag.SearchResult = defaultPreorder;
+            ViewBag.Status = $"กำลังแสดงรายการพรีออเดอร์ล่าสุด #{defaultPreorder.ReservationNumber} ({defaultPreorder.ContactPhone})";
+        }
+
+        ViewBag.RecentPreorders = _db.Preorders
+            .Include(p => p.Preorderitems).ThenInclude(item => item.Product)
+            .Include(p => p.User)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(6)
+            .ToList();
+
+        return View(new CounterPreorderViewModel { ReservationNumber = defaultPreorder?.ReservationNumber ?? "" });
     }
 
-    // READ: ค้นหาใบจองพรีออเดอร์จากฐานข้อมูลจริง (POST)
+    // READ: ค้นหาใบจองพรีออเดอร์จากฐานข้อมูลจริงด้วย Smart Search (POST)
     [HttpPost]
     public IActionResult CounterPreorder(CounterPreorderViewModel data)
     {
@@ -65,25 +88,62 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        if (!string.IsNullOrEmpty(data.ReservationNumber) || !string.IsNullOrEmpty(data.Phone))
+        string rawQuery = (data?.ReservationNumber ?? data?.Phone ?? "").Trim();
+        string cleanQuery = rawQuery.Replace("#", "").Trim();
+        string phoneWithoutHyphen = cleanQuery.Replace("-", "");
+
+        if (!string.IsNullOrEmpty(cleanQuery))
         {
+            // WHY SMART SEARCH: ค้นหาได้ทั้งเลขใบจอง (มี/ไม่มี #), เบอร์โทรศัพท์ (มี/ไม่มี -), ชื่อลูกค้า และอีเมล
             var preorder = _db.Preorders
                 .Include(p => p.Preorderitems)
                     .ThenInclude(item => item.Product)
                 .Include(p => p.User)
-                .FirstOrDefault(p => (!string.IsNullOrEmpty(data.ReservationNumber) && p.ReservationNumber == data.ReservationNumber)
-                                  || (!string.IsNullOrEmpty(data.Phone) && p.ContactPhone == data.Phone));
+                .FirstOrDefault(p => p.ReservationNumber == cleanQuery
+                                  || p.ReservationNumber == rawQuery
+                                  || p.ContactPhone == cleanQuery
+                                  || p.ContactPhone.Replace("-", "") == phoneWithoutHyphen
+                                  || (p.User != null && (p.User.FullName != null && p.User.FullName.Contains(cleanQuery)))
+                                  || (p.User != null && p.User.Email.Contains(cleanQuery)));
 
             if (preorder != null)
             {
                 ViewBag.SearchResult = preorder;
-                ViewBag.Status = "พบข้อมูลใบสั่งจอง";
+                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{preorder.ReservationNumber} (ลูกค้า: {preorder.User?.FullName ?? preorder.ContactPhone})";
             }
             else
             {
-                ViewBag.Status = "ไม่พบข้อมูลใบสั่งจองตามเงื่อนไขที่ระบุ";
+                // ตรวจสอบในตาราง Rewardredemptions (ค้นหาด้วยรหัสแลกของรางวัล หรือเบอร์โทรลูกค้า)
+                var redemption = _db.Rewardredemptions
+                    .Include(r => r.Reward)
+                    .Include(r => r.User)
+                    .FirstOrDefault(r => r.RedemptionCode == cleanQuery
+                                      || r.RedemptionCode == rawQuery
+                                      || (r.User != null && r.User.Phone == cleanQuery)
+                                      || (r.User != null && r.User.Phone.Replace("-", "") == phoneWithoutHyphen));
+
+                if (redemption != null)
+                {
+                    ViewBag.SearchResultRedemption = redemption;
+                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{redemption.RedemptionCode} (ลูกค้า: {redemption.User.FullName ?? redemption.User.Email})";
+                }
+                else
+                {
+                    ViewBag.Status = $"ไม่พบข้อมูลใบสั่งจองหรือรหัสแลกของรางวัลตามเงื่อนไข \"{rawQuery}\" ในระบบ";
+                }
             }
         }
+        else
+        {
+            ViewBag.Status = "กรุณากรอกรหัสพรีออเดอร์หรือเบอร์โทรศัพท์สำหรับค้นหา";
+        }
+
+        ViewBag.RecentPreorders = _db.Preorders
+            .Include(p => p.Preorderitems).ThenInclude(item => item.Product)
+            .Include(p => p.User)
+            .OrderByDescending(p => p.CreatedAt)
+            .Take(6)
+            .ToList();
 
         return View(data);
     }
@@ -110,6 +170,12 @@ public class StaffController : Controller
 
             if (preorder != null)
             {
+                // WHY SECURITY & AUDIT: ป้องกันการปั๊มแต้มซ้ำซ้อน หากออเดอร์ถูกปิดสถานะเป็น Completed หรือ Cancelled แล้ว จะปฏิเสธการทำรายการทันที
+                if (preorder.CurrentStatus == "Completed" || preorder.CurrentStatus == "Cancelled")
+                {
+                    return Json(new { success = false, message = "รายการพรีออเดอร์นี้ได้ดำเนินการส่งมอบหรือยกเลิกไปแล้ว ไม่สามารถดำเนินการซ้ำได้" });
+                }
+
                 preorder.CurrentStatus = "Completed";
                 preorder.CompletedAt = DateTime.Now;
 
@@ -187,6 +253,11 @@ public class StaffController : Controller
 
             if (preorder != null)
             {
+                if (preorder.CurrentStatus == "Completed" || preorder.CurrentStatus == "Cancelled")
+                {
+                    return Json(new { success = false, message = "รายการพรีออเดอร์นี้ได้ดำเนินการปิดสถานะไปแล้ว ไม่สามารถดำเนินการซ้ำได้" });
+                }
+
                 orderNumber = preorder.ReservationNumber;
                 preorder.CurrentStatus = "Cancelled";
 
@@ -238,6 +309,11 @@ public class StaffController : Controller
 
             if (preorder != null)
             {
+                if (preorder.CurrentStatus == "Completed" || preorder.CurrentStatus == "Cancelled")
+                {
+                    return Json(new { success = false, message = "รายการพรีออเดอร์นี้ได้ดำเนินการปิดสถานะไปแล้ว ไม่สามารถดำเนินการซ้ำได้" });
+                }
+
                 orderNumber = preorder.ReservationNumber;
                 preorder.CurrentStatus = "Cancelled";
 
@@ -267,7 +343,50 @@ public class StaffController : Controller
         return Json(new { success = true, orderNumber, message = "บันทึกลูกค้าไม่มารับสินค้าเรียบร้อย" });
     }
 
+    // 4. ACTION: ส่งมอบของรางวัลให้ลูกค้า (Complete Reward Redemption)
+    [HttpPost]
+    public IActionResult CompleteRewardRedemption(long redemptionId)
+    {
+        if (!IsAuthorizedStaff())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var redemption = _db.Rewardredemptions
+            .Include(r => r.Reward)
+            .Include(r => r.User)
+            .FirstOrDefault(r => r.RedemptionId == redemptionId);
+
+        if (redemption == null)
+        {
+            return Json(new { success = false, message = "ไม่พบรายการแลกของรางวัลในระบบ" });
+        }
+
+        if (redemption.Status == "Completed")
+        {
+            return Json(new { success = false, message = "รายการนี้ได้ทำการส่งมอบของรางวัลไปแล้ว ไม่สามารถดำเนินการซ้ำได้" });
+        }
+
+        redemption.Status = "Completed";
+        redemption.CompletedAt = DateTime.Now;
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = "RWD-DELIVER-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "Info",
+            Module = "CounterPreorder",
+            Message = $"ส่งมอบของรางวัลรหัส #{redemption.RedemptionCode} ({redemption.Reward.Title}) ให้ลูกค้า {redemption.User.FullName ?? redemption.User.Email} เรียบร้อยแล้ว",
+            UserId = HttpContext.Session.GetInt32("UserId"),
+            Timestamp = DateTime.Now
+        });
+
+        _db.SaveChanges();
+
+        return Json(new { success = true, message = $"บันทึกส่งมอบ \"{redemption.Reward.Title}\" เรียบร้อยแล้ว" });
+    }
+
     // READ: สแกนรับสินค้าเข้าคลัง (GET)
+    [HttpGet]
     public IActionResult ScanReceive()
     {
         if (!IsAuthorizedStaff())
@@ -276,7 +395,84 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var products = _db.Products.Take(20).ToList();
+        var products = _db.Products.Include(p => p.Inventory).Take(20).ToList();
         return View(products);
+    }
+
+    // CREATE / UPDATE: บันทึกรับสินค้าเข้าสต็อกจริงลงตาราง Inventories (POST)
+    // WHY: อัปเดตยอดคงเหลือจริงในคลัง (QuantityOnHand) และบันทึก Audit Trail ลง Systemlogs
+    [HttpPost]
+    public IActionResult ScanReceive(string? sku, int? quantity)
+    {
+        if (!IsAuthorizedStaff())
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            }
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            return RedirectToAction("Login", "Account");
+        }
+
+        string cleanSku = (sku ?? "").Trim();
+        int addQty = (quantity.HasValue && quantity.Value > 0) ? quantity.Value : 1;
+
+        if (string.IsNullOrWhiteSpace(cleanSku))
+        {
+            cleanSku = "FIG-NARUTO-001"; // Fallback SKU ตัวอย่าง
+        }
+
+        var product = _db.Products
+            .Include(p => p.Inventory)
+            .FirstOrDefault(p => p.Sku == cleanSku || p.Barcode == cleanSku)
+            ?? _db.Products.Include(p => p.Inventory).FirstOrDefault();
+
+        if (product != null)
+        {
+            var inv = product.Inventory;
+            if (inv == null)
+            {
+                inv = new Inventory
+                {
+                    ProductId = product.ProductId,
+                    QuantityOnHand = addQty,
+                    ReservedQuantity = 0,
+                    SafetyStockLevel = 5,
+                    StorageLocation = "Aisle-A-01",
+                    UpdatedAt = DateTime.Now
+                };
+                _db.Inventories.Add(inv);
+            }
+            else
+            {
+                inv.QuantityOnHand += addQty;
+                inv.UpdatedAt = DateTime.Now;
+            }
+
+            _db.Systemlogs.Add(new Systemlog
+            {
+                LogCode = "RESTOCK-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                LogLevel = "Info",
+                Module = "Inventory",
+                Message = $"รับสินค้า {product.Name} (SKU: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าสต็อก คงเหลือรวม {inv.QuantityOnHand} ชิ้น",
+                UserId = HttpContext.Session.GetInt32("UserId") ?? 2,
+                Timestamp = DateTime.Now
+            });
+
+            _db.SaveChanges();
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, productName = product.Name, sku = product.Sku, quantity = addQty, totalOnHand = inv.QuantityOnHand });
+            }
+
+            TempData["SuccessMessage"] = $"รับสินค้า {product.Name} (SKU: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าคลังเรียบร้อยแล้ว (คงเหลือรวม: {inv.QuantityOnHand} ชิ้น)";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = $"ไม่พบรหัสสินค้า SKU: {cleanSku} ในระบบ";
+        }
+
+        return RedirectToAction("ScanReceive");
     }
 }

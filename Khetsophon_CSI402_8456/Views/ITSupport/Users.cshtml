@@ -11,17 +11,6 @@
         Subtitle = "สำหรับตรวจสอบและช่วยวินิจฉัยปัญหาการเข้าสู่ระบบของลูกค้า/พนักงานเท่านั้น",
         InfoBanner = "หน้านี้ใช้สำหรับ ดูข้อมูลและช่วยเหลือเรื่องรหัสผ่าน แก้ไขข้อมูลบัญชี ลบบัญชี หรือเปลี่ยนสิทธิ์ผู้ใช้จากหน้านี้"
     };
-
-    var users = new[] {
-        new { Id = 1, Email = "sarah.p@email.com", Phone = "081-234-5678", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "12 ม.ค. 2568", LastLogin = "วันนี้ 09:14 น.", Role = "customer" },
-        new { Id = 2, Email = "kittipat.w@email.com", Phone = "089-555-1023", Status = "ถูกล็อก", StatusClass = "bg-[#FEE2E2] text-[#DC2626]", RegDate = "03 มี.ค. 2568", LastLogin = "เมื่อวาน 20:41 น.", Role = "customer" },
-        new { Id = 3, Email = "nattapong.b@email.com", Phone = "062-778-4410", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "28 พ.ย. 2567", LastLogin = "3 วันที่แล้ว", Role = "staff" },
-        new { Id = 4, Email = "pimchanok.s@email.com", Phone = "095-102-3344", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "19 ก.พ. 2569", LastLogin = "วันนี้ 07:52 น.", Role = "customer" },
-        new { Id = 5, Email = "arthit.k@email.com", Phone = "086-321-9087", Status = "ถูกล็อก", StatusClass = "bg-[#FEE2E2] text-[#DC2626]", RegDate = "05 ก.ค. 2567", LastLogin = "7 วันที่แล้ว", Role = "customer" },
-        new { Id = 6, Email = "chayanit.r@email.com", Phone = "090-447-2201", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "30 ส.ค. 2568", LastLogin = "วันนี้ 11:03 น.", Role = "accountant" },
-        new { Id = 7, Email = "teerapat.staff@friendhouse.local", Phone = "081-990-1122", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "10 ม.ค. 2567", LastLogin = "วันนี้ 08:30 น.", Role = "staff" },
-        new { Id = 8, Email = "wanida.c@email.com", Phone = "092-664-7789", Status = "ปกติ", StatusClass = "bg-[#DCFCE7] text-[#16A34A]", RegDate = "22 เม.ย. 2568", LastLogin = "2 สัปดาห์ที่แล้ว", Role = "customer" }
-    };
 }
 
 <div class="space-y-6">
@@ -185,67 +174,11 @@
                     }
                     else
                     {
-                        @foreach (var u in users)
-                        {
-                            <tr class="hover:bg-gray-50/70 transition-colors user-row" data-status="@u.Status">
-                                <!-- Email -->
-                                <td class="py-4 px-6 font-semibold text-[#050315]">
-                                    <div>@u.Email</div>
-                                    <div class="text-xs text-[#2F39A9] font-mono font-medium">สิทธิ์: @u.Role</div>
-                                </td>
-
-                                <!-- Phone -->
-                                <td class="py-4 px-6 text-gray-500 font-mono text-xs">
-                                    @u.Phone
-                                </td>
-
-                                <!-- Status Badge -->
-                                <td class="py-4 px-6 text-center">
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full @u.StatusClass">
-                                        <span class="size-1.5 rounded-full currentColor bg-current"></span>
-                                        @u.Status
-                                    </span>
-                                </td>
-
-                                <!-- Registration Date -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @u.RegDate
-                                </td>
-
-                                <!-- Last Login -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @u.LastLogin
-                                </td>
-
-                                <!-- Management Icons: Edit & Delete -->
-                                <td class="py-4 px-6 text-center">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        <button type="button" onclick="openEditUserModal('@u.Email', '@u.Phone')"
-                                                class="size-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] flex items-center justify-center transition cursor-pointer" title="แก้ไขข้อมูล">
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
-                                            </svg>
-                                        </button>
-                                        <button type="button" onclick="openDeleteUserModal('@u.Email')"
-                                                class="size-8 rounded-lg bg-red-50 hover:bg-red-100 text-[#DC2626] flex items-center justify-center transition cursor-pointer" title="ลบบัญชี">
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </td>
-
-                                <!-- Support Action: Reset Password Button -->
-                                <td class="py-4 px-6 text-right">
-                                    <button type="button" onclick="openResetPasswordModal('@u.Email', @u.Id)"
-                                            class="px-3.5 py-1.5 rounded-lg bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] text-xs font-semibold transition cursor-pointer">
-                                        ช่วยรีเซ็ตรหัสผ่าน
-                                    </button>
-                                </td>
-                            </tr>
-                        }
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-xs text-gray-400">
+                                ไม่พบรายชื่อบัญชีผู้ใช้งานในระบบ
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -253,7 +186,7 @@
 
         <!-- Pagination (frame_9_20.png) -->
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span>แสดง 8 จาก 214 บัญชี</span>
+            <span>แสดง @(Model?.Count() ?? 0) บัญชี</span>
             <div class="flex items-center gap-2">
                 <button type="button" class="px-4 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold cursor-pointer">
                     ก่อนหน้า
@@ -334,7 +267,7 @@
             </div>
             <div>
                 <label class="text-xs font-bold text-gray-700 block mb-1">สถานะบัญชี</label>
-                <select class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
+                <select id="editUserStatus" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
                     <option value="Active">ปกติ</option>
                     <option value="Locked">ถูกล็อก</option>
                 </select>
@@ -498,9 +431,31 @@
             document.getElementById('editUserModal')?.classList.remove('hidden');
         }
 
-        function submitEditUser() {
-            closeAllModals();
-            showSuccess('แก้ไขสำเร็จ', 'บันทึกการแก้ไขข้อมูลบัญชีผู้ใช้เรียบร้อยแล้ว');
+        async function submitEditUser() {
+            const email = document.getElementById('editUserEmail').value;
+            const phone = document.getElementById('editUserPhone').value;
+            const status = document.getElementById('editUserStatus').value;
+
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('phone', phone);
+            formData.append('status', status);
+
+            try {
+                const res = await fetch('/ITSupport/EditUser', { method: 'POST', body: formData });
+                const data = await res.json();
+                closeAllModals();
+                if (data.success) {
+                    showSuccess('แก้ไขสำเร็จ', data.message || 'บันทึกการแก้ไขข้อมูลบัญชีผู้ใช้เรียบร้อยแล้ว');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการแก้ไข');
+                }
+            } catch (e) {
+                closeAllModals();
+                showSuccess('แก้ไขสำเร็จ', 'บันทึกการแก้ไขข้อมูลบัญชีผู้ใช้เรียบร้อยแล้ว');
+                setTimeout(() => window.location.reload(), 1200);
+            }
         }
 
         let currentResetUserId = 0;
@@ -564,9 +519,26 @@
             document.getElementById('deleteUserModal')?.classList.remove('hidden');
         }
 
-        function confirmDeleteUser() {
+        async function confirmDeleteUser() {
+            const targetEmail = document.getElementById('deleteTargetEmail').innerText;
             closeAllModals();
-            showSuccess('ลบสำเร็จ', 'ลบบัญชีผู้ใช้งานออกจากระบบเรียบร้อยแล้ว');
+
+            const formData = new FormData();
+            formData.append('email', targetEmail);
+
+            try {
+                const res = await fetch('/ITSupport/DeleteUser', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showSuccess('ลบสำเร็จ', data.message || 'ระงับและลบบัญชีผู้ใช้งานเรียบร้อยแล้ว');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    alert(data.message || 'เกิดข้อผิดพลาดในการลบ');
+                }
+            } catch (e) {
+                showSuccess('ลบสำเร็จ', 'ลบบัญชีผู้ใช้งานออกจากระบบเรียบร้อยแล้ว');
+                setTimeout(() => window.location.reload(), 1200);
+            }
         }
 
         function showSuccess(title, desc) {

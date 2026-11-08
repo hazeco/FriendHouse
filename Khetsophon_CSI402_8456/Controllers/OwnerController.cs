@@ -15,6 +15,8 @@ public class OwnerController : Controller
     private bool IsAuthorizedOwner()
     {
         var role = HttpContext.Session.GetString("Role");
+        var ownerId = HttpContext.Session.GetInt32("OwnerUserId");
+        if (ownerId.HasValue) return true;
         return role != null && (role.ToLower() == "owner" || role.ToLower() == "itsupport");
     }
 
@@ -75,7 +77,8 @@ public class OwnerController : Controller
         return View();
     }
 
-    public IActionResult EditPromotion()
+    // READ/UPDATE: หน้าฟอร์มแก้ไขโปรโมชั่น (GET)
+    public IActionResult EditPromotion(int? id)
     {
         if (!IsAuthorizedOwner())
         {
@@ -83,7 +86,86 @@ public class OwnerController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        return View();
+        Promotion? promo = null;
+        if (id.HasValue && id.Value > 0)
+        {
+            promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id.Value);
+        }
+
+        return View(promo);
+    }
+
+    // UPDATE: บันทึกข้อมูลการแก้ไขโปรโมชั่นลงฐานข้อมูลจริง (POST)
+    [HttpPost]
+    public IActionResult EditPromotion(Promotion data)
+    {
+        if (!IsAuthorizedOwner())
+        {
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            return RedirectToAction("Login", "Account");
+        }
+
+        var promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == data.PromotionId);
+        if (promo != null)
+        {
+            promo.Name = data.Name;
+            promo.VoucherCode = data.VoucherCode;
+            promo.PromoType = data.PromoType;
+            promo.DiscountValue = data.DiscountValue;
+            promo.MinimumSpend = data.MinimumSpend;
+            promo.ApplicableScope = data.ApplicableScope ?? "all";
+            promo.StartDate = data.StartDate;
+            promo.EndDate = data.EndDate;
+            promo.UsageLimit = data.UsageLimit;
+            promo.IsActive = data.IsActive;
+
+            _db.SaveChanges();
+            TempData["SuccessMessage"] = $"บันทึกการแก้ไขโปรโมชั่น \"{promo.Name}\" เรียบร้อยแล้ว";
+            return RedirectToAction("Promotions");
+        }
+
+        TempData["ErrorMessage"] = "ไม่พบข้อมูลโปรโมชั่นที่ต้องการแก้ไข";
+        return RedirectToAction("Promotions");
+    }
+
+    // UPDATE: สลับสถานะเปิด/ปิดโปรโมชั่นแบบ AJAX (POST)
+    [HttpPost]
+    public IActionResult TogglePromotion(int id)
+    {
+        if (!IsAuthorizedOwner())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id);
+        if (promo != null)
+        {
+            promo.IsActive = !(promo.IsActive ?? false);
+            _db.SaveChanges();
+            return Json(new { success = true, isActive = promo.IsActive });
+        }
+
+        return Json(new { success = false, message = "ไม่พบโปรโมชั่น" });
+    }
+
+    // DELETE: ลบโปรโมชั่น (Soft Delete: ปิดการใช้งาน IsActive = false เพื่อรักษาประวัติการใช้งานเดิม)
+    [HttpPost]
+    public IActionResult DeletePromotion(int id)
+    {
+        if (!IsAuthorizedOwner())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id);
+        if (promo != null)
+        {
+            promo.IsActive = false;
+            _db.SaveChanges();
+            return Json(new { success = true, message = $"ลบโปรโมชั่น {promo.Name} เรียบร้อยแล้ว" });
+        }
+
+        return Json(new { success = false, message = "ไม่พบโปรโมชั่นที่ต้องการลบ" });
     }
 
     // READ: หน้ารายงานสรุปยอดประจำเดือน

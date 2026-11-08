@@ -16,6 +16,8 @@ public class AccountantController : Controller
     private bool IsAuthorizedAccountant()
     {
         var role = HttpContext.Session.GetString("Role");
+        var accountantId = HttpContext.Session.GetInt32("AccountantUserId");
+        if (accountantId.HasValue) return true;
         return role != null && (role.ToLower() == "accountant" || role.ToLower() == "owner" || role.ToLower() == "itsupport");
     }
 
@@ -135,5 +137,52 @@ public class AccountantController : Controller
         }
 
         return RedirectToAction("Ledger");
+    }
+
+    // UPDATE: แก้ไขรายการบัญชีรายรับ-รายจ่าย (Edit Ledger Entry)
+    [HttpPost]
+    public IActionResult EditLedgerEntry(int ledgerId, string? categoryName, string? entryType, decimal? amount, DateOnly? entryDate, string? note)
+    {
+        if (!IsAuthorizedAccountant())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var entry = _db.Financialledgers.FirstOrDefault(f => f.EntryId == ledgerId);
+        if (entry == null)
+        {
+            return Json(new { success = false, message = "ไม่พบรายการบัญชีที่ต้องการแก้ไข" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(categoryName)) entry.CategoryName = categoryName.Trim();
+        if (!string.IsNullOrWhiteSpace(entryType)) entry.EntryType = entryType.ToLower();
+        if (amount.HasValue && amount.Value > 0) entry.Amount = amount.Value;
+        if (entryDate.HasValue) entry.EntryDate = entryDate.Value;
+        if (note != null) entry.Description = note.Trim();
+
+        _db.SaveChanges();
+        return Json(new { success = true, message = $"แก้ไขรายการ {entry.CategoryName} เรียบร้อยแล้ว" });
+    }
+
+    // DELETE: ลบรายการบัญชี (Hard Delete: ลบออกจากตาราง Financialledgers จริง)
+    [HttpPost]
+    public IActionResult DeleteLedgerEntry(int ledgerId)
+    {
+        if (!IsAuthorizedAccountant())
+        {
+            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+        }
+
+        var entry = _db.Financialledgers.FirstOrDefault(f => f.EntryId == ledgerId);
+        if (entry == null)
+        {
+            return Json(new { success = false, message = "ไม่พบรายการบัญชีที่ต้องการลบ" });
+        }
+
+        var catName = entry.CategoryName;
+        _db.Financialledgers.Remove(entry);
+        _db.SaveChanges();
+
+        return Json(new { success = true, message = $"ลบรายการ {catName} เรียบร้อยแล้ว" });
     }
 }

@@ -1,10 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Khetsophon_CSI402_8456.Models;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddSingleton<HtmlEncoder>(HtmlEncoder.Create(allowedRanges: new[] { UnicodeRanges.BasicLatin, UnicodeRanges.Thai, UnicodeRanges.CjkUnifiedIdeographs }));
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {

@@ -1,3 +1,4 @@
+@model IEnumerable<Khetsophon_CSI402_8456.Models.Product>?
 @{
     ViewData["Title"] = "คอลเลกชันฟิกเกอร์ทั้งหมด — FriendHouse";
 
@@ -10,176 +11,23 @@
             Series = new[] { "ทั้งหมด", "Naruto Shippuden", "Demon Slayer", "Vocaloid", "One Piece", "Jujutsu Kaisen", "Spy x Family", "Genshin Impact" },
             Statuses = new[] { "มีสินค้า", "ทั้งหมด" },
             PriceRanges = new[] { "ทั้งหมด", "฿0 - ฿1,000", "฿1,001 - ฿3,000", "฿3,001 - ฿5,000", "มากกว่า ฿5,000" },
-            TotalCountText = "แสดงสินค้าทั้งหมด 120 รายการ"
-        },
-        Figures = new[] {
-            new {
-                Id = 201,
-                Series = "Naruto Shippuden",
-                Title = "Naruto Uzumaki - Vibration Stars (Special Ver.)",
-                Price = "฿1,200",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/8 Scale",
-                ImageUrl = "~/media/images/naruto_vibration_stars.png",
-                Brand = "Banpresto"
-            },
-            new {
-                Id = 202,
-                Series = "Demon Slayer",
-                Title = "Tanjiro Kamado - Hinokami Kagura Dance",
-                Price = "฿2,450",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "Non-scale",
-                ImageUrl = "~/media/images/tanjiro_kamado.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 203,
-                Series = "Vocaloid",
-                Title = "Hatsune Miku - Magical Mirai 2024 Ver.",
-                Price = "฿4,200",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/hatsune_miku_magical.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 204,
-                Series = "One Piece",
-                Title = "Monkey D. Luffy - Gear 5 King of Artist",
-                Price = "฿950",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "16 ซม.",
-                ImageUrl = "~/media/images/luffy_gear5.png",
-                Brand = "Bandai Spirits"
-            },
-            new {
-                Id = 205,
-                Series = "Jujutsu Kaisen",
-                Title = "Gojo Satoru - Shibuya Incident Ver.",
-                Price = "฿3,800",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/gojo_satoru.png",
-                Brand = "Megahouse"
-            },
-            new {
-                Id = 206,
-                Series = "FriendHouse Studio",
-                Title = "Cloud Bear ตุ๊กตาหมีเมฆ (สีฟ้าพาสเทล)",
-                Price = "฿590",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "28 ซม.",
-                ImageUrl = "~/media/images/cloud_bear_plush.png",
-                Brand = "FriendHouse Studio"
-            },
-            new {
-                Id = 207,
-                Series = "Genshin Impact",
-                Title = "Raiden Shogun - Plane of Euthymia Ver.",
-                Price = "฿5,690",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/raiden_shogun.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 208,
-                Series = "Spy x Family",
-                Title = "Anya Forger & Bond - Going Out Ver.",
-                Price = "฿1,850",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/anya_forger.png",
-                Brand = "Megahouse"
-            },
-            new {
-                Id = 209,
-                Series = "Naruto Shippuden",
-                Title = "Naruto Uzumaki - Rasengan Hero Collection",
-                Price = "฿1,490",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "20 ซม.",
-                ImageUrl = "~/media/images/naruto_hero_fig.png",
-                Brand = "Banpresto"
-            },
-            new {
-                Id = 210,
-                Series = "Demon Slayer",
-                Title = "Tanjiro Kamado - Water Breathing Form",
-                Price = "฿1,950",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/8 Scale",
-                ImageUrl = "~/media/images/tanjiro_kamado.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 211,
-                Series = "One Piece",
-                Title = "Luffy Gear 5 - Giant Lightning Attack",
-                Price = "฿2,890",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "22 ซม.",
-                ImageUrl = "~/media/images/luffy_gear5.png",
-                Brand = "Bandai Spirits"
-            },
-            new {
-                Id = 212,
-                Series = "Vocaloid",
-                Title = "Hatsune Miku - Concert Spotlight Deluxe",
-                Price = "฿3,650",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/hatsune_miku_magical.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 213,
-                Series = "Jujutsu Kaisen",
-                Title = "Gojo Satoru - Domain Expansion Infinite Void",
-                Price = "฿4,500",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/gojo_satoru.png",
-                Brand = "Megahouse"
-            },
-            new {
-                Id = 214,
-                Series = "Genshin Impact",
-                Title = "Raiden Shogun - Musou no Hitotachi Strike",
-                Price = "฿6,200",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "1/7 Scale",
-                ImageUrl = "~/media/images/raiden_shogun.png",
-                Brand = "Good Smile Company"
-            },
-            new {
-                Id = 215,
-                Series = "Spy x Family",
-                Title = "Anya Forger - Stella Star Academy Uniform",
-                Price = "฿1,250",
-                Status = "มีสินค้า",
-                BadgeClass = "bg-emerald-100 text-emerald-700",
-                Scale = "14 ซม.",
-                ImageUrl = "~/media/images/anya_forger.png",
-                Brand = "Bandai Spirits"
-            }
+            TotalCountText = $"แสดงสินค้าทั้งหมด {Model?.Count() ?? 0} รายการ"
         }
     };
+    var displayFigures = (Model ?? Enumerable.Empty<Khetsophon_CSI402_8456.Models.Product>()).Select(p => {
+        int avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
+        return new {
+            Id = p.ProductId,
+            Series = !string.IsNullOrEmpty(p.SeriesName) ? p.SeriesName : (p.Category?.CategoryName ?? "FriendHouse"),
+            Title = p.Name,
+            Price = $"฿{p.RetailPrice:N0}",
+            Status = avail > 0 ? "มีสินค้า" : "สินค้าหมด",
+            BadgeClass = avail > 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700",
+            Scale = p.Scale ?? "1/8 Scale",
+            ImageUrl = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png",
+            Brand = p.BrandName ?? "Official"
+        };
+    }).ToList();
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-4 bg-white">
@@ -281,7 +129,7 @@
 
     <!-- Product Grid: 1 row 5 cards, 15 cards total (3 rows x 5 cards) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        @foreach (var item in pageMedia.Figures)
+        @foreach (var item in displayFigures)
         {
             <div
                 class="group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -321,8 +169,8 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-1.5">
-                        <!-- Button 1: ตะกร้า (Add to cart) -->
-                        <a asp-controller="Home" asp-action="Cart"
+                        <!-- Button 1: ตะกร้า (Add to cart via AJAX) -->
+                        <button type="button" onclick="addToCart(@item.Id)"
                            class="flex items-center justify-center gap-1 rounded-xl border border-primary/20 bg-primary/5 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
                             <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="9" cy="21" r="1"></circle>
@@ -330,7 +178,7 @@
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                             </svg>
                             <span>ตะกร้า</span>
-                        </a>
+                        </button>
 
                         <!-- Button 2: พรีออเดอร์สินค้านี้ -->
                         <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.Id"
@@ -372,3 +220,35 @@
         </button>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function addToCart(productId) {
+        var formData = new URLSearchParams();
+        formData.append('productId', productId);
+        formData.append('quantity', 1);
+
+        fetch('/Home/AddToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.requireLogin) {
+                alert(data.message || 'กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า');
+                window.location.href = data.redirectUrl || '/Account/Login';
+                return;
+            }
+            if (data.success) {
+                window.location.href = '/Home/Cart';
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาด');
+            }
+        })
+        .catch(() => {
+            window.location.href = '/Home/Cart';
+        });
+    }
+</script>
+}

@@ -1,3 +1,4 @@
+@model Khetsophon_CSI402_8456.Models.Product?
 @{
     ViewData["Title"] = "รายละเอียดสินค้า — FriendHouse";
 
@@ -468,14 +469,40 @@
         currentId = parsedId;
     }
 
-    var product = catalog.FirstOrDefault(p => p.Id == currentId)
+    var fallbackCatalogProduct = catalog.FirstOrDefault(p => p.Id == currentId)
                   ?? (currentId == 1 ? catalog.FirstOrDefault(p => p.Id == 206) : null)
                   ?? (currentId == 2 ? catalog.FirstOrDefault(p => p.Id == 201) : null)
                   ?? (currentId == 3 ? catalog.FirstOrDefault(p => p.Id == 202) : null)
                   ?? (currentId == 4 ? catalog.FirstOrDefault(p => p.Id == 203) : null)
                   ?? catalog[0];
 
+    var product = Model != null ? new {
+        Id = Model.ProductId,
+        Name = Model.Name,
+        Category = Model.Category?.CategoryName ?? "ฟิกเกอร์สเกล & ของสะสม",
+        Price = $"฿{Model.RetailPrice:N0}",
+        RawPrice = (int)Model.RetailPrice,
+        Status = (Model.Inventory?.QuantityOnHand ?? 0) > 0 ? "มีสินค้า" : "เปิดสั่งจองล่วงหน้า",
+        EstimatedArrival = !string.IsNullOrEmpty(Model.ExpectedArrival) ? Model.ExpectedArrival : "มีสินค้าพร้อมส่งมอบ",
+        ImageUrl = !string.IsNullOrEmpty(Model.ImageUrl) ? Model.ImageUrl : fallbackCatalogProduct.ImageUrl,
+        Series = !string.IsNullOrEmpty(Model.SeriesName) ? Model.SeriesName : (Model.Category?.CategoryName ?? "FriendHouse Collection"),
+        Description = $"{Model.Name} ผลิตโดย {Model.BrandName ?? "แบรนด์ลิขสิทธิ์แท้"} ซีรีส์ {Model.SeriesName ?? "ลิขสิทธิ์แท้"} สเกล {Model.Scale ?? "มาตรฐาน"} วัสดุ {Model.Material ?? "PVC/ABS คุณภาพสูง"} สินค้าลิขสิทธิ์แท้ รับสินค้าและชำระเงินที่หน้าร้าน FriendHouse สยามสแควร์",
+        Specs = new[] {
+            new { Label = "หมวดหมู่", Value = Model.Category?.CategoryName ?? "ฟิกเกอร์สเกล" },
+            new { Label = "ซีรีส์", Value = Model.SeriesName ?? "FriendHouse Official" },
+            new { Label = "ผู้ผลิต", Value = Model.BrandName ?? "Official Brand" },
+            new { Label = "สเกล", Value = Model.Scale ?? "มาตรฐาน" },
+            new { Label = "วัสดุ", Value = Model.Material ?? "PVC + ABS เกรดพรีเมียม" },
+            new { Label = "สถานะ", Value = (Model.Inventory?.QuantityOnHand ?? 0) > 0 ? "มีสินค้าพร้อมส่งมอบหน้าร้าน" : "เปิดรับสั่งจองพรีออเดอร์" }
+        }
+    } : fallbackCatalogProduct;
+
     bool isRewardItem = (product.Id >= 301 && product.Id <= 304) || product.Price.Contains("แต้ม");
+    int availableStock = Model != null 
+        ? ((Model.Inventory?.QuantityOnHand ?? 0) - (Model.Inventory?.ReservedQuantity ?? 0))
+        : 10;
+    bool isOutOfStock = !isRewardItem && availableStock <= 0;
+
     var notice = isRewardItem 
         ? "การแลกของรางวัล FriendHouse: ใช้คะแนนสะสมของท่านเพื่อแลกรับสินค้าสุดพิเศษที่หน้าร้าน FriendHouse สยามสแควร์ โดยไม่ต้องชำระเงินออนไลน์"
         : "สั่งจองคืออะไร? เป็นการจองสิทธิ์ล่วงหน้าสำหรับสินค้าที่หน้าร้าน ไม่มีการชำระเงินหรือจัดส่งออนไลน์ — เมื่อสินค้าพร้อมรับ ทางร้านจะให้มาชำระเงินและรับสินค้าที่หน้าร้านเท่านั้น ภายในระยะเวลาที่กำหนด";
@@ -504,10 +531,20 @@
         <div class="lg:col-span-6 flex flex-col h-full">
             <div class="relative aspect-square sm:aspect-4/3 lg:aspect-auto w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-0 flex-1 rounded-3xl border border-slate-200/80 bg-slate-100 overflow-hidden shadow-xs">
                 <!-- Status Badge -->
-                <div class="absolute top-4 left-4 z-10 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
-                    <span class="size-2 rounded-full bg-emerald-500"></span>
-                    <span>@product.Status</span>
-                </div>
+                @if (isOutOfStock)
+                {
+                    <div class="absolute top-4 left-4 z-10 rounded-full bg-rose-100 px-3.5 py-1 text-xs font-bold text-rose-700 shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
+                        <span class="size-2 rounded-full bg-rose-500"></span>
+                        <span>สินค้าหมดชั่วคราว</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="absolute top-4 left-4 z-10 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
+                        <span class="size-2 rounded-full bg-emerald-500"></span>
+                        <span>@product.Status</span>
+                    </div>
+                }
 
                 <!-- Full Edge-to-Edge Image -->
                 <img src="@Url.Content(product.ImageUrl)" alt="@product.Name"
@@ -541,27 +578,41 @@
 
             <!-- Action Buttons: พรีออเดอร์สินค้านี้ หรือ แลกของรางวัลนี้ (Responsive stacked/inline) -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2">
-                <!-- Open Pre-order / Redeem Modal Button -->
-                <button type="button" id="btn-open-preorder-modal"
-                        class="flex-1 w-full sm:w-auto rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
-                    @(isRewardItem ? "แลกของรางวัลนี้" : "สั่งจองสินค้านี้")
-                </button>
-
-                @if (isRewardItem)
+                @if (isOutOfStock)
                 {
-                    <!-- Back to Rewards Link -->
-                    <a asp-controller="Home" asp-action="Rewards"
-                       class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
-                        ดูของรางวัลอื่น
-                    </a>
+                    <button type="button" disabled
+                            class="flex-1 w-full sm:w-auto rounded-xl bg-slate-200 px-6 py-3.5 text-center text-sm font-bold text-slate-500 cursor-not-allowed shadow-none">
+                        สินค้าหมดชั่วคราว
+                    </button>
+                    <button type="button" disabled
+                            class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-slate-100 px-5 py-3.5 text-sm font-semibold text-slate-400 cursor-not-allowed">
+                        เพิ่มลงตะกร้า
+                    </button>
                 }
                 else
                 {
-                    <!-- Add to Cart Link -->
-                    <a asp-controller="Home" asp-action="Cart"
-                       class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
-                        เพิ่มลงตะกร้า
-                    </a>
+                    <!-- Open Pre-order / Redeem Modal Button -->
+                    <button type="button" id="btn-open-preorder-modal"
+                            class="flex-1 w-full sm:w-auto rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
+                        @(isRewardItem ? "แลกของรางวัลนี้" : "สั่งจองสินค้านี้")
+                    </button>
+
+                    @if (isRewardItem)
+                    {
+                        <!-- Back to Rewards Link -->
+                        <a asp-controller="Home" asp-action="Rewards"
+                           class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
+                            ดูของรางวัลอื่น
+                        </a>
+                    }
+                    else
+                    {
+                        <!-- Add to Cart Button -->
+                        <button type="button" onclick="addToCart(@product.Id)"
+                           class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
+                            เพิ่มลงตะกร้า
+                        </button>
+                    }
                 }
             </div>
 
@@ -609,16 +660,18 @@
         @* Form Parameters expected by Controller:
            [PickupDate: DateTime, ContactPhone: string, ProductId: int, Quantity: int]
         *@
-        <form asp-controller="Home" asp-action="PreorderStatus" class="space-y-4">
+        <form asp-controller="Home" asp-action="DirectPreorder" class="space-y-4">
+            <input type="hidden" name="productId" value="@product.Id" />
+            <input type="hidden" name="quantity" value="1" />
             <div>
                 <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าโดยประมาณ</label>
-                <input type="date" id="pickupDate"
+                <input type="date" id="pickupDate" name="pickupDate" required autocomplete="off" min="@DateTime.Today.ToString("yyyy-MM-dd")"
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 
             <div>
                 <label for="contactPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS แจ้งเตือนเมื่อสินค้าถึงร้าน</label>
-                <input type="tel" id="contactPhone" placeholder="08x-xxx-xxxx" value="081-234-5678"
+                <input type="tel" id="contactPhone" name="contactPhone" placeholder="08x-xxx-xxxx" required
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 
@@ -627,7 +680,7 @@
                     ยกเลิก
                 </button>
                 <button type="submit" class="rounded-xl bg-accent px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
-                    @(isRewardItem ? "ยืนยันการใช้แต้มแลก &rarr;" : "ยืนยันการจอง &rarr;")
+                    @(isRewardItem ? "ยืนยันการใช้แต้มแลก" : "ยืนยันการสั่งจอง")
                 </button>
             </div>
         </form>
@@ -636,6 +689,34 @@
 
 @section Scripts {
 <script>
+    function addToCart(productId) {
+        var formData = new URLSearchParams();
+        formData.append('productId', productId);
+        formData.append('quantity', 1);
+
+        fetch('/Home/AddToCart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.requireLogin) {
+                alert(data.message || 'กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า');
+                window.location.href = data.redirectUrl || '/Account/Login';
+                return;
+            }
+            if (data.success) {
+                window.location.href = '/Home/Cart';
+            } else {
+                alert(data.message || 'เกิดข้อผิดพลาด');
+            }
+        })
+        .catch(() => {
+            window.location.href = '/Home/Cart';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         var modal = document.getElementById('preorder-modal');
         var openBtn = document.getElementById('btn-open-preorder-modal');
