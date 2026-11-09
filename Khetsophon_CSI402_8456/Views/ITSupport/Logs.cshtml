@@ -10,20 +10,6 @@
         Title = "บันทึกกิจกรรมและข้อผิดพลาด",
         Subtitle = "ดูเหตุการณ์ระบบเพื่อช่วยตรวจสอบปัญหาเบื้องต้น เช่น การเข้าสู่ระบบ การซิงก์สต็อก และการแจ้งเตือน"
     };
-
-    var logs = new[] {
-        new { Time = "14:32:07", Level = "ERROR", Class = "bg-[#FEE2E2] text-[#DC2626]", Message = "sync.stock: ซิงก์สต็อกกับระบบหน้าร้านล้มเหลว (timeout 8000ms) สาขา: ร้านหลัก" },
-        new { Time = "13:47:52", Level = "WARNING", Class = "bg-[#FEF3C7] text-[#D97706]", Message = "sync.stock: กำลังลองซิงก์สต็อกใหม่อัตโนมัติ (ครั้งที่ 2/3)" },
-        new { Time = "12:58:14", Level = "ERROR", Class = "bg-[#FEE2E2] text-[#DC2626]", Message = "auth.login: เข้าสู่ระบบล้มเหลว 5 ครั้งติดต่อกัน — บัญชี kittipat.w@email.com ถูกล็อกชั่วคราว" },
-        new { Time = "11:20:03", Level = "INFO", Class = "bg-[#DBEAFE] text-[#2F39A9]", Message = "auth.login: เข้าสู่ระบบสำเร็จ — teerapat.staff@friendhouse.local (พนักงานขาย)" },
-        new { Time = "09:41:29", Level = "WARNING", Class = "bg-[#FEF3C7] text-[#D97706]", Message = "inventory.alert: สินค้าใกล้หมดสต็อก — \"สมุดโน้ตปกหนัง A5\" เหลือ 3 ชิ้น (จุดสั่งซื้อ: 5)" },
-        new { Time = "08:15:11", Level = "INFO", Class = "bg-[#DBEAFE] text-[#2F39A9]", Message = "system.cache: ล้างแคชสินค้าอัตโนมัติตามรอบเวลา (ทุก 6 ชม.)" },
-        new { Time = "03:00:04", Level = "INFO", Class = "bg-[#DBEAFE] text-[#2F39A9]", Message = "system.backup: สำรองฐานข้อมูลอัตโนมัติสำเร็จ (ขนาด 214 MB)" },
-        new { Time = "02:15:47", Level = "WARNING", Class = "bg-[#FEF3C7] text-[#D97706]", Message = "inventory.alert: สินค้าใกล้หมดสต็อก — \"ปากกาเจล สีดำ\" เหลือ 8 ชิ้น (จุดสั่งซื้อ: 10)" },
-        new { Time = "23:58:20", Level = "ERROR", Class = "bg-[#FEE2E2] text-[#DC2626]", Message = "media.upload: อัปโหลดรูปสินค้าล้มเหลว — ไฟล์เกินขนาดที่กำหนด (12.4 MB / จำกัด 8 MB)" },
-        new { Time = "22:00:00", Level = "INFO", Class = "bg-[#DBEAFE] text-[#2F39A9]", Message = "system.maintenance: รีสตาร์ทบริการหน้าร้าน (POS) ตามแผนบำรุงรักษาประจำสัปดาห์" },
-        new { Time = "20:41:00", Level = "WARNING", Class = "bg-[#FEF3C7] text-[#D97706]", Message = "auth.session: เซสชันหมดอายุก่อนกำหนด — บัญชี arthit.k@email.com (ไม่มีการใช้งาน 45 นาที)" }
-    };
 }
 
 <div class="space-y-6">
@@ -119,28 +105,11 @@
                     }
                     else
                     {
-                        @foreach (var log in logs)
-                        {
-                            <tr class="hover:bg-gray-50/70 transition-colors log-row cursor-pointer" data-level="@log.Level" onclick="openLogDetail('@log.Time', '@log.Level', '@log.Message')">
-                                <!-- Timestamp -->
-                                <td class="py-3.5 px-6 text-gray-400 whitespace-nowrap">
-                                    @log.Time
-                                </td>
-
-                                <!-- Level Badge -->
-                                <td class="py-3.5 px-6 text-center">
-                                    <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold @log.Class">
-                                        @log.Level
-                                    </span>
-                                </td>
-
-                                <!-- Message Content -->
-                                <td class="py-3.5 px-6 text-gray-800 leading-relaxed font-sans">
-                                    <span class="font-mono text-gray-900 font-semibold">@log.Message.Split(':')[0]:</span>
-                                    <span>@log.Message.Substring(log.Message.IndexOf(':') + 1)</span>
-                                </td>
-                            </tr>
-                        }
+                        <tr>
+                            <td colspan="3" class="py-12 text-center text-xs text-gray-400 font-sans">
+                                ยังไม่มีบันทึกกิจกรรมในระบบฐานข้อมูล
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>
@@ -148,10 +117,7 @@
 
         <!-- Footer pagination / load more (frame_9_21.png) -->
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 font-sans">
-            <span>แสดง 12 จาก 96 รายการ ในช่วง 24 ชั่วโมงล่าสุด</span>
-            <button type="button" class="px-4 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold cursor-pointer">
-                โหลดเพิ่มเติม
-            </button>
+            <span>แสดง @(Model?.Count() ?? 0) รายการจากฐานข้อมูลจริง</span>
         </div>
     </div>
 </div>

@@ -525,6 +525,22 @@
         <span class="text-text font-semibold truncate">@product.Name</span>
     </nav>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
     <!-- Main Product Layout Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
         <!-- Left: Product Media Gallery (Edge-to-edge, full cover image stretching to match right column height) -->
@@ -607,11 +623,18 @@
                     }
                     else
                     {
-                        <!-- Add to Cart Button -->
-                        <button type="button" onclick="addToCart(@product.Id)"
-                           class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
-                            เพิ่มลงตะกร้า
-                        </button>
+                        @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                        <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
+                            @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            @* ตัวแปรซ่อนกำหนดจำนวนสินค้าเริ่มต้นเป็น 1 ชิ้น *@
+                            <input type="hidden" name="quantity" value="1" />
+                            @* ปุ่มกดยืนยันเพิ่มสินค้าลงในตะกร้า *@
+                            <button type="submit"
+                               class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
+                                เพิ่มลงตะกร้า
+                            </button>
+                        </form>
                     }
                 }
             </div>
@@ -656,29 +679,34 @@
             </div>
         </div>
 
-        <!-- Appointment Form (No method attribute per rule) -->
-        @* Form Parameters expected by Controller:
-           [PickupDate: DateTime, ContactPhone: string, ProductId: int, Quantity: int]
-        *@
+        @* ฟอร์มส่งข้อมูลบันทึกสิทธิ์จองสินค้าหรือแลกของรางวัล ไปยัง HomeController แอ็กชัน DirectPreorder *@
         <form asp-controller="Home" asp-action="DirectPreorder" class="space-y-4">
+            @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
             <input type="hidden" name="productId" value="@product.Id" />
+            @* ตัวแปรซ่อนกำหนดจำนวนสั่งจอง 1 ชิ้น *@
             <input type="hidden" name="quantity" value="1" />
             <div>
+                @* ป้ายกำกับช่องเลือกวันที่สะดวกเข้ารับสินค้า *@
                 <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าโดยประมาณ</label>
+                @* ช่องเลือกวันที่นัดรับสินค้าพร้อมป้องกันการเลือกวันย้อนหลังด้วย min วันที่ปัจจุบัน *@
                 <input type="date" id="pickupDate" name="pickupDate" required autocomplete="off" min="@DateTime.Today.ToString("yyyy-MM-dd")"
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 
             <div>
+                @* ป้ายกำกับช่องกรอกหมายเลขโทรศัพท์ *@
                 <label for="contactPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS แจ้งเตือนเมื่อสินค้าถึงร้าน</label>
+                @* ช่องกรอกหมายเลขโทรศัพท์สำหรับติดต่อและรับการแจ้งเตือน *@
                 <input type="tel" id="contactPhone" name="contactPhone" placeholder="08x-xxx-xxxx" required
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 
             <div class="pt-2 flex items-center justify-end gap-3">
+                @* ปุ่มกดยกเลิกและปิดหน้าต่าง Modal *@
                 <button type="button" id="btn-cancel-modal" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
                     ยกเลิก
                 </button>
+                @* ปุ่มกดยืนยันการสั่งจองหรือยืนยันแลกของรางวัล *@
                 <button type="submit" class="rounded-xl bg-accent px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
                     @(isRewardItem ? "ยืนยันการใช้แต้มแลก" : "ยืนยันการสั่งจอง")
                 </button>
@@ -689,34 +717,6 @@
 
 @section Scripts {
 <script>
-    function addToCart(productId) {
-        var formData = new URLSearchParams();
-        formData.append('productId', productId);
-        formData.append('quantity', 1);
-
-        fetch('/Home/AddToCart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.requireLogin) {
-                alert(data.message || 'กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า');
-                window.location.href = data.redirectUrl || '/Account/Login';
-                return;
-            }
-            if (data.success) {
-                window.location.href = '/Home/Cart';
-            } else {
-                alert(data.message || 'เกิดข้อผิดพลาด');
-            }
-        })
-        .catch(() => {
-            window.location.href = '/Home/Cart';
-        });
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         var modal = document.getElementById('preorder-modal');
         var openBtn = document.getElementById('btn-open-preorder-modal');

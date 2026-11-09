@@ -49,6 +49,11 @@
                 <div class="text-xs font-bold leading-tight text-white">@brand.UserName</div>
                 <div class="text-[10px] text-white/70 leading-tight">@brand.UserRole</div>
             </div>
+            @* ลิงก์ออกจากระบบ สไตล์เดียวกับ Customer พร้อมเอฟเฟกต์ hover สีแดง นำทางไปยัง AccountController แอ็กชัน Logout *@
+            <a asp-controller="Account" asp-action="Logout" asp-route-role="itsupport"
+               class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer">
+                ออกจากระบบ
+            </a>
         </div>
     </div>
 
@@ -57,5 +62,10 @@
         <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard") text-xs py-1.5 px-3 shrink-0">Dashboard</a>
         <a asp-controller="ITSupport" asp-action="Users" class="@NavClass("Users") text-xs py-1.5 px-3 shrink-0">ผู้ใช้งาน</a>
         <a asp-controller="ITSupport" asp-action="Logs" class="@NavClass("Logs") text-xs py-1.5 px-3 shrink-0">Logs</a>
+        @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
+        <a asp-controller="Account" asp-action="Logout" asp-route-role="itsupport"
+           class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
+            ออกจากระบบ
+        </a>
     </div>
 </div>

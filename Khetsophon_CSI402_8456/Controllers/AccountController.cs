@@ -101,6 +101,25 @@ public class AccountController : Controller
                     HttpContext.Session.SetString("OwnerUserName", user.FullName ?? user.Email);
                 }
                 
+                // บันทึก Log ประวัติการเข้าสู่ระบบลงตาราง Systemlogs
+                _db.Systemlogs.Add(new Systemlog
+                {
+                    // กำหนดรหัส Log
+                    LogCode = "AUTH-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                    // กำหนดระดับความสำคัญเป็น INFO
+                    LogLevel = "INFO",
+                    // กำหนดโมดูลที่เกี่ยวข้อง
+                    Module = "auth.login",
+                    // ข้อความรายละเอียดการเข้าสู่ระบบ
+                    Message = $"ผู้ใช้งานเข้าสู่ระบบสำเร็จ: {user.Email} (สิทธิ์: {user.RoleName})",
+                    // รหัสผู้ใช้งานที่เข้าสู่ระบบ
+                    UserId = user.UserId,
+                    // วันเวลาที่ทำการเข้าสู่ระบบ
+                    Timestamp = DateTime.Now
+                });
+                // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล MySQL
+                _db.SaveChanges();
+
                 // Login สำเร็จ
                 return RedirectToAction("Index", "Home" );
             }
@@ -209,29 +228,47 @@ public class AccountController : Controller
             HttpContext.Session.SetString("ITSupportUserName", name);
         }
 
+        // บันทึก Log การเข้าสู่ระบบด่วนลงตาราง Systemlogs
+        _db.Systemlogs.Add(new Systemlog
+        {
+            // กำหนดรหัส Log
+            LogCode = "AUTH-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            // กำหนดระดับความสำคัญ
+            LogLevel = "INFO",
+            // กำหนดโมดูลที่เกี่ยวข้อง
+            Module = "auth.login",
+            // ข้อความรายละเอียด
+            Message = $"ผู้ใช้งานเข้าสู่ระบบด่วนสำเร็จ (FastLogin): {email} (สิทธิ์: {normalizedRole})",
+            // รหัสผู้ใช้งาน
+            UserId = mockUserId,
+            // วันเวลาที่ทำการเข้าสู่ระบบ
+            Timestamp = DateTime.Now
+        });
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล MySQL
+        _db.SaveChanges();
+
         TempData["SuccessMessage"] = $"เข้าสู่ระบบด่วนในบทบาท {normalizedRole} สำเร็จ";
         return RedirectToAction(targetAction, targetController);
     }
 
+    // Action สำหรับออกจากระบบ (Logout) และล้าง Session
     public IActionResult Logout(string? role)
     {
-        // WHY: หากระบุ Role ให้เคลียร์เฉพาะ Session ของ Role นั้น เพื่อไม่ให้กระทบแท็บของ Role อื่น
-        if (string.Equals(role, "staff", StringComparison.OrdinalIgnoreCase))
+        // ตรวจสอบกรณีเป็นลูกค้า (Customer) ให้ออกจากระบบแล้วนำทางกลับไปยังหน้าแรก
+        if (string.Equals(role, "customer", StringComparison.OrdinalIgnoreCase))
         {
-            HttpContext.Session.Remove("StaffUserId");
-            HttpContext.Session.Remove("StaffUserName");
-            return RedirectToAction("Login", "Account");
-        }
-        else if (string.Equals(role, "customer", StringComparison.OrdinalIgnoreCase))
-        {
+            // ลบ Session รหัสลูกค้า
             HttpContext.Session.Remove("CustomerUserId");
+            // ลบ Session ชื่อลูกค้า
             HttpContext.Session.Remove("CustomerUserName");
+            // นำทางกลับไปยังหน้าแรกของเว็บไซต์
             return RedirectToAction("Index", "Home");
         }
 
-        // กรณีไม่ระบุ Role หรือกด Logout ปกติ เคลียร์ทั้งระบบ
+        // ล้างข้อมูลเซสชันทั้งหมดของผู้ใช้งานออกจากหน่วยความจำ
         HttpContext.Session.Clear();
-        return RedirectToAction("Index", "Home");
+        // นำทางกลับไปยังหน้าเข้าสู่ระบบ (Login) สำหรับทุกบทบาทการทำงาน
+        return RedirectToAction("Login", "Account");
     }
 
     public IActionResult ResetPassword()

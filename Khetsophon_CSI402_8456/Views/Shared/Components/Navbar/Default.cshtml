@@ -162,7 +162,7 @@
         @if (isCustomer)
         {
           <a class="flex-1 rounded-xl bg-primary py-2 text-center text-sm font-semibold text-white" asp-controller="Account" asp-action="Profile">โปรไฟล์ของฉัน</a>
-          <a class="rounded-xl border border-slate-200 px-3 py-2 text-center text-xs font-semibold text-slate-500" asp-controller="Home" asp-action="Index">ออก</a>
+          <a class="rounded-xl border border-slate-200 px-3 py-2 text-center text-xs font-semibold text-slate-500 hover:text-rose-600 hover:border-rose-300 transition-colors" asp-controller="Account" asp-action="Logout">ออกจากระบบ</a>
         }
         else
         {

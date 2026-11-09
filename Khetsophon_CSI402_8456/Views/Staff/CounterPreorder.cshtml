@@ -12,7 +12,6 @@
 
     var preorderResult = ViewBag.SearchResult as Khetsophon_CSI402_8456.Models.Preorder;
     var redemptionResult = ViewBag.SearchResultRedemption as Khetsophon_CSI402_8456.Models.Rewardredemption;
-    var firstItem = preorderResult?.Preorderitems.FirstOrDefault();
     string currentContactPhone = preorderResult?.ContactPhone ?? preorderResult?.User?.Phone ?? "";
 
     // กำหนดการแสดงชื่อลูกค้าตามลำดับ Fallback: FullName -> Email -> ไม่พบข้อมูลผู้จอง
@@ -39,34 +38,65 @@
 }
 
 <div class="max-w-3xl mx-auto space-y-6">
-    <!-- Header Center (frame_9_5.png) -->
+    <!-- Header Center -->
     <div class="text-center space-y-1">
         <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
         <p class="text-sm text-gray-500">@pageHeader.Subtitle</p>
     </div>
 
-    <!-- Search Card (frame_9_5.png) -->
-    @* Form Parameters expected by Controller:
-       [ReservationNumber: string (ค้นหาด้วยเบอร์โทรศัพท์ของลูกค้า หรือหมายเลขใบจองพรีออเดอร์)]
-    *@
+    <!-- Notification Messages (Flash TempData) -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-semibold flex items-center gap-3 shadow-xs">
+            <div class="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <div>@TempData["SuccessMessage"]</div>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm font-semibold flex items-center gap-3 shadow-xs">
+            <div class="size-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <div>@TempData["ErrorMessage"]</div>
+        </div>
+    }
+
+    @* ฟอร์มค้นหาใบสั่งจองพรีออเดอร์และรหัสแลกของรางวัล ส่งข้อมูลไปยัง StaffController แอ็กชัน CounterPreorder *@
     <form asp-controller="Staff" asp-action="CounterPreorder" class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6">
+        @* ป้ายข้อความกำกับช่องค้นหา *@
         <label class="text-xs font-bold text-[#050315] block mb-2">ค้นหาด้วยรหัสพรีออเดอร์ / รหัสแลกรางวัล / เบอร์โทร / ชื่อลูกค้า</label>
         <div class="flex items-center gap-2.5">
             <div class="relative flex-1">
+                @* ไอคอนรูปโทรศัพท์ SVG แสดงด้านหน้าช่องค้นหา *@
                 <svg class="size-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.68 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0 1 22 16.92z"></path>
                 </svg>
+                @* กล่องกรอกข้อความค้นหาผูกกับโมเดลฟิลด์ ReservationNumber *@
                 <input asp-for="ReservationNumber" id="searchPreorderInput" type="text" placeholder="พิมพ์เลขใบจอง (เช่น PO-2026-1001, DB123456) หรือเบอร์โทร 081-234-5678"
                        class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-base font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9] focus:ring-1 focus:ring-[#2F39A9] shadow-2xs" />
             </div>
+            @* ปุ่มกดยืนยันการค้นหาข้อมูลในระบบฐานข้อมูลจริง *@
             <button type="submit" class="bg-[#2F39A9] hover:bg-[#232B80] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xs flex items-center gap-2 transition-colors cursor-pointer shrink-0">
+                @* ไอคอนรูปแว่นขยาย SVG *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
+                @* ข้อความบนปุ่มค้นหา *@
                 <span>ค้นหา</span>
             </button>
         </div>
+        @* ข้อความแนะนำวิธีการค้นหาเพิ่มเติมด้านล่าง *@
         <p class="text-xs text-gray-400 mt-2.5">พิมพ์รหัสใบจองหรือเบอร์โทร ระบบจะค้นหาและแสดงรายละเอียดใบสั่งจองจากฐานข้อมูลทันที</p>
     </form>
 
@@ -77,9 +107,9 @@
         </div>
     }
 
+    <!-- 1. กรณีพบรายการแลกของรางวัลในระบบ (Reward Redemption Card) -->
     @if (redemptionResult != null)
     {
-        <!-- Found Reward Redemption Card -->
         <div class="bg-white rounded-2xl border-2 border-primary/25 shadow-xs p-6 space-y-5">
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
@@ -131,114 +161,119 @@
                 }
                 else
                 {
-                    <button type="button" onclick="completeReward(@redemptionResult.RedemptionId)" class="w-full py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
-                        <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                        <span>ส่งมอบของรางวัลให้ลูกค้าเรียบร้อยแล้ว</span>
-                    </button>
+                    @* ฟอร์มส่งข้อมูลยืนยันการส่งมอบของรางวัลไปยัง StaffController แอ็กชัน CompleteRewardRedemption *@
+                    <form asp-controller="Staff" asp-action="CompleteRewardRedemption">
+                        @* ตัวแปรซ่อนเก็บรหัสการแลกของรางวัล redemptionId *@
+                        <input type="hidden" name="redemptionId" value="@redemptionResult.RedemptionId" />
+                        @* ปุ่มกดยืนยันการส่งมอบของรางวัลและปิดสถานะเป็น Completed *@
+                        <button type="submit" class="w-full py-3 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+                            @* ไอคอนเครื่องหมายถูก SVG *@
+                            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            @* ข้อความบนปุ่มส่งมอบของรางวัล *@
+                            <span>ส่งมอบของรางวัลให้ลูกค้าเรียบร้อยแล้ว</span>
+                        </button>
+                    </form>
                 }
             </div>
         </div>
     }
 
-    <!-- Found Result Card (frame_9_5.png) -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
-        <!-- Top Status -->
-        <div class="flex items-center justify-between flex-wrap gap-2">
-            <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
-                <svg class="size-5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                <span>@(preorderResult != null ? "พบรายการพรีออเดอร์ในระบบ" : "พบรายการพรีออเดอร์ 1 รายการ (ตัวอย่าง)")</span>
-            </div>
-            @{
-                string topBadgeClass = preorderResult?.CurrentStatus switch {
-                    "Completed" => "bg-emerald-600 text-white",
-                    "Cancelled" => "bg-rose-600 text-white",
-                    "ReadyForPickup" => "bg-blue-600 text-white",
-                    _ => "bg-[#2F39A9] text-white"
-                };
-            }
-            <span class="text-xs font-bold px-3.5 py-1.5 rounded-full @topBadgeClass shadow-xs">
-                @(preorderResult?.CurrentStatus ?? "รอรับที่ร้าน")
-            </span>
-        </div>
-
-        <!-- Product Items List Block -->
-        <div class="space-y-3">
-            @if (preorderResult?.Preorderitems != null && preorderResult.Preorderitems.Any())
-            {
-                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    รายการสินค้าที่สั่งจอง (@preorderResult.Preorderitems.Sum(pi => pi.Quantity) ชิ้น)
+    <!-- 2. การแสดงรายการพรีออเดอร์ (Preorder Card) -->
+    @if (preorderResult != null)
+    {
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
+            <!-- Top Status Header -->
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
+                    <svg class="size-5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>พบรายการพรีออเดอร์ในระบบ</span>
                 </div>
-                @foreach (var item in preorderResult.Preorderitems)
+                @{
+                    string topBadgeClass = preorderResult.CurrentStatus switch {
+                        "Completed" => "bg-emerald-600 text-white",
+                        "Cancelled" => "bg-rose-600 text-white",
+                        "ReadyForPickup" => "bg-blue-600 text-white",
+                        _ => "bg-[#2F39A9] text-white"
+                    };
+                }
+                <span class="text-xs font-bold px-3.5 py-1.5 rounded-full @topBadgeClass shadow-xs">
+                    @preorderResult.CurrentStatus
+                </span>
+            </div>
+
+            <!-- Product Items List Block -->
+            <div class="space-y-3">
+                @if (preorderResult.Preorderitems != null && preorderResult.Preorderitems.Any())
                 {
-                    <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                        <div class="size-14 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 flex items-center justify-center">
-                            @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
-                            {
-                                <img src="@Url.Content(item.Product.ImageUrl)" alt="@item.Product.Name" class="size-full object-cover" />
-                            }
-                            else
-                            {
-                                <div class="size-full bg-[#BAF2FF]/40 text-[#2F39A9] flex items-center justify-center">
-                                    <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <rect x="2" y="2" width="20" height="20" rx="5"></rect>
-                                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                                    </svg>
-                                </div>
-                            }
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        รายการสินค้าที่สั่งจอง (@preorderResult.Preorderitems.Sum(pi => pi.Quantity) ชิ้น)
+                    </div>
+                    @foreach (var item in preorderResult.Preorderitems)
+                    {
+                        <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            <div class="size-14 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 flex items-center justify-center">
+                                @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
+                                {
+                                    <img src="@Url.Content(item.Product.ImageUrl)" alt="@item.Product.Name" class="size-full object-cover" />
+                                }
+                                else
+                                {
+                                    <div class="size-full bg-[#BAF2FF]/40 text-[#2F39A9] flex items-center justify-center">
+                                        <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                        </svg>
+                                    </div>
+                                }
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-sm font-bold text-[#050315] truncate">@(item.Product?.Name ?? "สินค้าพรีออเดอร์")</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">จำนวนที่จอง: @item.Quantity ชิ้น · ราคาต่อหน่วย: ฿@item.UnitPrice.ToString("N0")</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-extrabold text-[#2F39A9]">฿@((item.UnitPrice * item.Quantity).ToString("N0"))</span>
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-bold text-[#050315] truncate">@(item.Product?.Name ?? "สินค้าพรีออเดอร์")</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">จำนวนที่จอง: @item.Quantity ชิ้น · ราคาต่อหน่วย: ฿@item.UnitPrice.ToString("N0")</p>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-sm font-extrabold text-[#2F39A9]">฿@((item.UnitPrice * item.Quantity).ToString("N0"))</span>
-                        </div>
+                    }
+                    <div class="flex justify-between items-center text-xs font-bold text-gray-700 px-1 pt-1">
+                        <span>จำนวนสินค้ารวมทั้งหมด: @(preorderResult.Preorderitems.Sum(pi => pi.Quantity)) ชิ้น</span>
+                        <span class="text-sm font-extrabold text-[#2F39A9]">ยอดชำระสุทธิ: ฿@preorderResult.TotalFinalPrice.ToString("N0")</span>
                     </div>
                 }
-                <div class="flex justify-between items-center text-xs font-bold text-gray-700 px-1 pt-1">
-                    <span>จำนวนสินค้ารวมทั้งหมด: @(preorderResult.Preorderitems.Sum(pi => pi.Quantity)) ชิ้น</span>
-                    <span class="text-sm font-extrabold text-[#2F39A9]">ยอดชำระสุทธิ: ฿@preorderResult.TotalFinalPrice.ToString("N0")</span>
+                else
+                {
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center text-xs font-semibold text-slate-500">
+                        ไม่มีรายการสินค้าในคำสั่งจองนี้
+                    </div>
+                }
+            </div>
+
+            <!-- Details Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-2 border-t border-gray-100">
+                <div>
+                    <div class="text-xs text-gray-400 font-medium">รหัสพรีออเดอร์ / เบอร์โทร</div>
+                    <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.ReservationNumber · @preorderResult.ContactPhone</div>
                 </div>
-            }
-            else
-            {
-                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center text-xs font-semibold text-slate-500">
-                    @(preorderResult != null ? "ไม่มีรายการสินค้าในคำสั่งจองนี้" : "ค้นหาใบจองพรีออเดอร์เพื่อดูรายละเอียดสินค้า")
+                <div>
+                    <div class="text-xs text-gray-400 font-medium">ชื่อลูกค้า / ข้อมูลผู้จอง</div>
+                    <div class="text-sm font-bold text-[#050315] mt-0.5">@customerDisplay</div>
                 </div>
-            }
-        </div>
+                <div>
+                    <div class="text-xs text-gray-400 font-medium">วันที่สั่งจอง</div>
+                    <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.CreatedAt.ToString("dd MMM yyyy")</div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400 font-medium">กำหนดมารับภายใน</div>
+                    <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.EstimatedPickupDate.ToString("dd MMM yyyy")</div>
+                </div>
+            </div>
 
-        <!-- Details Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-2 border-t border-gray-100">
-            <div>
-                <div class="text-xs text-gray-400 font-medium">รหัสพรีออเดอร์ / เบอร์โทร</div>
-                <div class="text-sm font-bold text-[#050315] mt-0.5">@(preorderResult != null ? $"{preorderResult.ReservationNumber} · {preorderResult.ContactPhone}" : "DB123456 · 081-234-5xxx")</div>
-            </div>
-            <div>
-                <div class="text-xs text-gray-400 font-medium">ชื่อลูกค้า / ข้อมูลผู้จอง</div>
-                <div class="text-sm font-bold text-[#050315] mt-0.5">@customerDisplay</div>
-            </div>
-            <div>
-                <div class="text-xs text-gray-400 font-medium">วันที่สั่งจอง</div>
-                <div class="text-sm font-bold text-[#050315] mt-0.5">@(preorderResult != null ? preorderResult.CreatedAt.ToString("dd MMM yyyy") : "28 ส.ค. 2569")</div>
-            </div>
-            <div>
-                <div class="text-xs text-gray-400 font-medium">กำหนดมารับภายใน</div>
-                <div class="text-sm font-bold text-[#050315] mt-0.5">@(preorderResult != null ? preorderResult.EstimatedPickupDate.ToString("dd MMM yyyy") : "09 ก.ย. 2569 · ก่อน 20:00 น.")</div>
-            </div>
-        </div>
-
-        @{
-            bool isOrderClosed = preorderResult != null && (preorderResult.CurrentStatus == "Completed" || preorderResult.CurrentStatus == "Cancelled");
-        }
-
-        @if (isOrderClosed)
-        {
-            @if (preorderResult?.CurrentStatus == "Completed")
+            <!-- สถานะของคำสั่งจอง และฟอร์มการดำเนินการ -->
+            @if (preorderResult.CurrentStatus == "Completed")
             {
-                <!-- Completed Order Banner (Disables repeated actions to prevent point exploitation) -->
+                <!-- ป้องกันการกดซ้ำ: ออเดอร์ที่ Completed จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
                     <div class="flex items-center gap-3.5">
                         <div class="size-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -249,7 +284,7 @@
                         <div>
                             <h4 class="text-sm font-extrabold text-emerald-950">รายการนี้ส่งมอบและชำระเงินเสร็จสิ้นแล้ว (Completed)</h4>
                             <p class="text-xs text-emerald-700 mt-0.5">
-                                @(preorderResult.CompletedAt.HasValue ? $"บันทึกส่งมอบเมื่อ: {preorderResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : "ออเดอร์นี้ถูกปิดรายการเรียบร้อยแล้ว ไม่สามารถดำเนินการซ้ำได้")
+                                @(preorderResult.CompletedAt.HasValue ? $"บันทึกส่งมอบเมื่อ: {preorderResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : "ออเดอร์นี้ถูกปิดยอดเรียบร้อยแล้ว ไม่สามารถดำเนินการซ้ำได้เพื่อป้องกันการปั๊มแต้ม")
                             </p>
                         </div>
                     </div>
@@ -257,13 +292,13 @@
                         <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
-                        <span>เสร็จสมบูรณ์แล้ว</span>
+                        <span>ปิดยอดสมบูรณ์แล้ว</span>
                     </span>
                 </div>
             }
-            else if (preorderResult?.CurrentStatus == "Cancelled")
+            else if (preorderResult.CurrentStatus == "Cancelled")
             {
-                <!-- Cancelled Order Banner -->
+                <!-- ออเดอร์ที่ Cancelled จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
                 <div class="rounded-2xl border border-rose-200 bg-rose-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
                     <div class="flex items-center gap-3.5">
                         <div class="size-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -282,57 +317,121 @@
                     </span>
                 </div>
             }
-        }
-        else
-        {
-            <!-- 3 Action Buttons in single row (frame_9_5.png) -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3">
-                <button type="button" onclick="openRejectReasonModal()" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
-                    <svg class="size-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>ไม่รับสินค้า</span>
-                </button>
-                <button type="button" onclick="openConfirmNoShowModal()" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-[#FCA5A5] bg-white hover:bg-red-50 text-[#DC2626] font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
-                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    <span>ไม่มารับสินค้า</span>
-                </button>
-                <button type="button" onclick="openMemberPointsModal()" class="w-full sm:flex-1 py-3 px-6 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
-                    <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>มารับแล้ว / ชำระเงินแล้ว</span>
-                </button>
-            </div>
+            else
+            {
+                <div class="space-y-4 pt-3 border-t border-gray-100">
+                    @* ฟอร์มยืนยันการรับสินค้าและตัดสต็อกจริง ส่งข้อมูลไปยัง StaffController แอ็กชัน CompletePickup *@
+                    <form asp-controller="Staff" asp-action="CompletePickup" class="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 space-y-3">
+                        @* ตัวแปรซ่อนเก็บรหัสใบสั่งจองพรีออเดอร์ preorderId *@
+                        <input type="hidden" name="preorderId" value="@preorderResult.PreorderId" />
+                        <div>
+                            @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์สมาชิกสำหรับสะสมแต้ม *@
+                            <label class="text-xs font-bold text-gray-700 block mb-1">
+                                หมายเลขโทรศัพท์สมาชิก (Member Phone Number) สำหรับสะสมแต้ม:
+                            </label>
+                            @* ช่องกรอกหมายเลขโทรศัพท์สมาชิกเพื่อใช้สะสมแต้ม 10% ของยอดซื้อ *@
+                            <input type="text" name="memberPhone" value="@currentContactPhone" placeholder="08X-XXX-XXXX (เว้นว่างได้หากไม่ต้องการสะสมแต้ม)"
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]" />
+                            @* ข้อความชี้แจงยอดเงินที่จะนำไปคำนวณแต้มสะสม *@
+                            <p class="text-[11px] text-gray-500 mt-1">ระบบจะนำยอดชำระ ฿@preorderResult.TotalFinalPrice.ToString("N0") ไปคำนวณแต้มสะสมเข้าบัญชีสมาชิกทันที</p>
+                        </div>
 
-            <!-- Explanatory Notes Below (frame_9_5.png) -->
-            <div class="space-y-1.5 text-xs text-gray-400 pt-1">
-                <div class="flex items-start gap-1.5">
-                    <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>เมื่อกด "มารับแล้ว" สถานะพรีออเดอร์ของลูกค้าจะถูกปิดโดยอัตโนมัติ และต้องกรอกเบอร์ลูกค้าเพื่อสะสมแต้ม แต่หากไม่เป็นสมาชิกกดปุ่มไม่ได้เป็นสมาชิก</span>
-                </div>
-                <div class="flex items-start gap-1.5">
-                    <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>เมื่อกด "ไม่รับสินค้า" ระบบจะให้กรอกสาเหตุว่าทำไมถึงไม่รับ</span>
-                </div>
-            </div>
-        }
-    </div>
+                        @* ปุ่มกดยืนยันรับสินค้าพร้อมตัดสต็อกจริงออกจากร้านและออกใบเสร็จรับเงิน *@
+                        <button type="submit" class="w-full py-3.5 px-6 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+                            @* ไอคอนเครื่องหมายถูก SVG *@
+                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            @* ข้อความบนปุ่มยืนยันรับสินค้าและตัดสต็อก *@
+                            <span>มารับแล้ว / ชำระเงินแล้ว (ตัดสต็อกและออกใบเสร็จจริง)</span>
+                        </button>
+                    </form>
 
-    <!-- Recent Searches Card (Dynamic from Database) -->
+                    <div class="w-full">
+                        @* กล่องพับเก็บสำหรับกรณียกเลิก/ลูกค้าไม่มารับสินค้า *@
+                        <details class="group rounded-2xl border border-red-200 bg-red-50/40 p-4 transition-all">
+                            @* แถบหัวข้อกดเปิด-ปิดฟอร์มยกเลิก/ไม่มารับสินค้า *@
+                            <summary class="text-xs font-bold text-red-700 cursor-pointer list-none flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    @* ไอคอนเครื่องหมายกากบาท SVG *@
+                                    <svg class="size-4 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                    <span>ลูกค้าไม่มารับสินค้า / ยกเลิกคำสั่งจอง</span>
+                                </div>
+                                <span class="text-xs text-red-600 group-open:rotate-180 transition-transform">▼</span>
+                            </summary>
+                            @* ฟอร์มส่งข้อมูลบันทึกกรณีลูกค้าไม่มารับสินค้า ส่งไปยัง StaffController แอ็กชัน NoShowPreorder *@
+                            <form asp-controller="Staff" asp-action="NoShowPreorder" class="space-y-3 pt-3 mt-2 border-t border-red-100">
+                                @* ตัวแปรซ่อนเก็บรหัสใบสั่งจองพรีออเดอร์ preorderId *@
+                                <input type="hidden" name="preorderId" value="@preorderResult.PreorderId" />
+                                <div>
+                                    @* ป้ายกำกับตัวเลือกสาเหตุที่ไม่มารับ *@
+                                    <label class="text-[11px] font-bold text-gray-700 block mb-1">เลือกสาเหตุที่ไม่มารับ</label>
+                                    @* เมนูดรอปดาวน์เลือกสาเหตุ มีเพียง 3 ข้อตามที่กำหนด *@
+                                    <select name="reason" required class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:border-[#2F39A9]">
+                                        <option value="ไม่มารับสินค้าตามกำหนด">ไม่มารับสินค้าตามกำหนด</option>
+                                        <option value="ลูกค้าแจ้งยกเลิกผ่านโทรศัพท์">ลูกค้าแจ้งยกเลิกผ่านโทรศัพท์</option>
+                                        <option value="อื่นๆ">อื่นๆ</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    @* ป้ายกำกับช่องกรอกหมายเหตุเพิ่มเติม *@
+                                    <label class="text-[11px] font-bold text-gray-700 block mb-1">หมายเหตุเพิ่มเติม</label>
+                                    @* ช่องกรอกหมายเหตุหรือบันทึกของเจ้าหน้าที่ *@
+                                    <input type="text" name="remark" placeholder="ระบุเหตุผลหรือบันทึกของเจ้าหน้าที่ (ถ้ามี)"
+                                           class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs focus:outline-none focus:border-[#2F39A9]" />
+                                </div>
+                                @* ปุ่มกดยืนยันไม่มารับสินค้าและปลดสต็อกคืน *@
+                                <button type="submit" class="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs cursor-pointer">
+                                    ยืนยันไม่มารับสินค้า (ปลดสต็อกที่จองไว้คืนสู่ร้าน)
+                                </button>
+                            </form>
+                        </details>
+                    </div>
+
+                    <!-- คำชี้แจงขั้นตอนการทำงาน -->
+                    <div class="space-y-1.5 text-xs text-gray-400 pt-2 border-t border-gray-100">
+                        <div class="flex items-start gap-1.5">
+                            <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>เมื่อกด "มารับแล้ว" สถานะพรีออเดอร์จะถูกปิดเป็น Completed ตัดยอดคงเหลือออกจากร้าน และออกใบเสร็จรับเงินจริงลง Database</span>
+                        </div>
+                        <div class="flex items-start gap-1.5">
+                            <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span>เมื่อกด "ไม่มารับสินค้า" หรือ "ไม่รับสินค้า" ระบบจะยกเลิกคำสั่งจองและปลดสต็อกที่จองไว้กลับสู่ร้านทันที</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (redemptionResult == null)
+    {
+        <!-- กล่องกรณีค้นหาไม่พบ หรือยังไม่ได้ค้นหา -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-10 text-center space-y-3">
+            <div class="size-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            <h3 class="text-base font-bold text-[#050315]">ไม่พบข้อมูลคำสั่งจองพรีออเดอร์</h3>
+            <p class="text-xs text-gray-500 max-w-md mx-auto">
+                กรุณาตรวจสอบหมายเลขใบสั่งจองหรือเบอร์โทรศัพท์ของลูกค้า แล้วกดปุ่มค้นหาใหม่อีกครั้ง
+            </p>
+        </div>
+    }
+
+    <!-- Recent Searches Card (ลิงก์ค้นหาด่วนแบบ Pure HTML ไม่ใช้ JavaScript) -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5">
         <h4 class="text-xs font-bold text-gray-400 mb-3">ใบจองล่าสุดในระบบฐานข้อมูลจริง (คลิกเพื่อค้นหาทันที)</h4>
         <div class="flex items-center gap-2 flex-wrap">
@@ -347,9 +446,10 @@
                         "Cancelled" => "border-rose-200 bg-rose-50/70 text-rose-800 hover:bg-rose-100",
                         _ => "border-blue-200 bg-blue-50/70 text-[#2F39A9] hover:bg-blue-100"
                     };
-                    <button type="button" onclick="quickSearch('@ro.ReservationNumber')" class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-full border @badgeColor transition-colors cursor-pointer">
+                    <a asp-controller="Staff" asp-action="CounterPreorder" asp-route-query="@ro.ReservationNumber"
+                       class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-full border @badgeColor transition-colors">
                         @ro.ReservationNumber (@pName ฿@ro.TotalFinalPrice.ToString("N0"))
-                    </button>
+                    </a>
                 }
             }
             else
@@ -359,384 +459,3 @@
         </div>
     </div>
 </div>
-
-<!-- ==================== MODALS ==================== -->
-
-<!-- 1. Member Points Modal [65:4007] -->
-<div id="memberPointsModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 animate-scale-up">
-        <div class="text-center space-y-1">
-            <h3 class="text-lg font-bold text-[#050315]">สะสมแต้มสมาชิก</h3>
-            <p class="text-xs text-gray-500">กรอกหมายเลขโทรศัพท์ลูกค้า เพื่อนำยอดคำสั่งซื้อไปสะสมแต้มเข้าบัญชีสมาชิก</p>
-        </div>
-        <div>
-            <label class="text-xs font-bold text-gray-700 block mb-1">หมายเลขโทรศัพท์สมาชิก (Member Phone Number)</label>
-            <input type="text" id="memberPhoneInput" placeholder="ตัวอย่าง 08X-XXX-XXXX" value="@currentContactPhone"
-                   class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]" />
-        </div>
-        <div id="memberNotFoundWarning" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-2">
-            <div class="font-bold flex items-center gap-1.5">
-                <svg class="size-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>ไม่พบเบอร์สมาชิกในระบบ</span>
-            </div>
-            <p class="text-amber-700">ท่านต้องการดำเนินการต่อแบบลูกค้าทั่วไป (ไม่ได้รับแต้มสะสม) หรือต้องการแก้ไขหมายเลขโทรศัพท์?</p>
-            <div class="flex items-center gap-2 pt-1">
-                <button type="button" onclick="skipPointsAndComplete()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-1.5 px-3 rounded-lg font-bold text-xs cursor-pointer">
-                    ดำเนินการต่อแบบทั่วไป
-                </button>
-                <button type="button" onclick="document.getElementById('memberNotFoundWarning').classList.add('hidden')" class="bg-white border border-amber-300 text-amber-900 py-1.5 px-3 rounded-lg font-semibold text-xs cursor-pointer">
-                    แก้ไขเบอร์
-                </button>
-            </div>
-        </div>
-        <div class="space-y-2 pt-2">
-            <button type="button" onclick="submitPointsAndComplete()" class="w-full bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm shadow-xs cursor-pointer">
-                ยืนยันและสะสมแต้ม
-            </button>
-            <button type="button" onclick="skipPointsAndComplete()" class="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
-                ไม่ได้เป็นสมาชิก / ข้าม
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 2. Pickup Success Modal [65:3099] / [65:4060] -->
-<div id="pickupSuccessModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 animate-scale-up">
-        <div class="size-14 rounded-full bg-[#DCFCE7] text-[#16A34A] mx-auto flex items-center justify-center">
-            <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-base font-bold text-[#050315]">ลูกค้าจ่ายเงินและมารับสินค้าเรียบร้อย</h3>
-            <p class="text-sm font-semibold text-gray-700 mt-1">จำนวนเงิน: ฿1,250.00</p>
-            <p class="text-xs text-[#16A34A] font-bold mt-1" id="pointsEarnedText">จำนวนแต้มที่ได้รับ: +150 คะแนน</p>
-        </div>
-        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm shadow-xs cursor-pointer">
-            สำเร็จ
-        </button>
-    </div>
-</div>
-
-<!-- 3. Confirm No-Show Modal [65:3720] -->
-<div id="confirmNoShowModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 animate-scale-up">
-        <div class="flex items-center gap-3">
-            <div class="size-10 rounded-full bg-red-100 text-[#DC2626] flex items-center justify-center shrink-0">
-                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-            </div>
-            <div>
-                <h3 class="text-base font-bold text-[#050315]">คุณแน่ใจหรือไม่ว่าลูกค้าไม่มารับสินค้า</h3>
-                <p class="text-xs font-mono text-gray-400">Order @(preorderResult?.ReservationNumber ?? "#PO-2026-9912")</p>
-            </div>
-        </div>
-        <p class="text-xs text-gray-500 leading-relaxed">
-            ระบบจะเปลี่ยนสถานะเป็น "ไม่มารับสินค้า" และปลดรายการจองออกจากระบบ พร้อมปล่อยสินค้ากลับสู่สต็อกเพื่อให้ลูกค้าท่านอื่นสามารถซื้อได้
-        </p>
-
-        <!-- Dropdown เหตุผลไม่มารับสินค้า ตาม Requirement ผู้ใช้ -->
-        <div class="space-y-3 pt-1">
-            <div>
-                <label class="text-xs font-bold text-gray-700 block mb-1">เลือกสาเหตุที่ไม่มารับ</label>
-                <select id="noShowReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
-                    <option value="">เลือกเหตุผล...</option>
-                    <option value="ไม่มารับสินค้าตามกำหนด">ไม่มารับสินค้าตามกำหนด</option>
-                    <option value="ลูกค้าแจ้งยกเลิกผ่านโทรศัพท์">ลูกค้าแจ้งยกเลิกผ่านโทรศัพท์</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
-                </select>
-            </div>
-            <div id="noShowRemarkContainer" class="hidden">
-                <label class="text-xs font-bold text-gray-700 block mb-1">
-                    ข้อความเพิ่มเติม <span class="text-rose-500">* (จำเป็นเมื่อเลือก "อื่นๆ")</span>
-                </label>
-                <textarea id="noShowReasonRemark" rows="2" placeholder="ระบุเหตุผลหรือบันทึกของเจ้าหน้าที่..."
-                          class="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
-            </div>
-            <p id="noShowValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
-        </div>
-
-        <div class="flex items-center gap-2.5 pt-2">
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
-                ยกเลิก
-            </button>
-            <button type="button" onclick="confirmNoShow()" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
-                ยืนยัน
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 4. No-Show Success Modal [65:3082] -->
-<div id="noShowSuccessModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 animate-scale-up">
-        <div class="size-14 rounded-full bg-red-100 text-[#DC2626] mx-auto flex items-center justify-center">
-            <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-base font-bold text-[#050315]">ลูกค้าไม่มารับสินค้า</h3>
-            <p class="text-xs font-mono text-gray-400 mt-1" id="noShowOrderIdText">Order ID: @(preorderResult?.ReservationNumber ?? "#ORD-7741")</p>
-            <p class="text-xs text-gray-500 mt-2">สถานะถูกปรับเป็นลูกค้ายกเลิก/ไม่มารับสินค้า และคืนสต็อกแล้ว</p>
-        </div>
-        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm shadow-xs cursor-pointer">
-            สำเร็จ
-        </button>
-    </div>
-</div>
-
-<!-- 5. Reject Reason Modal [65:3348] -->
-<div id="rejectReasonModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 animate-scale-up">
-        <div>
-            <h3 class="text-base font-bold text-[#050315]">เหตุผลการปฏิเสธรายการบันทึก</h3>
-            <p class="text-xs font-mono text-gray-400">Order @(preorderResult?.ReservationNumber ?? "#PO-2026-9912")</p>
-        </div>
-        <div class="space-y-3">
-            <div>
-                <label class="text-xs font-bold text-gray-700 block mb-1">เลือกเหตุผล</label>
-                <select id="rejectReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
-                    <option value="">เลือกเหตุผล...</option>
-                    <option value="บรรจุภัณฑ์ชำรุดเสียหาย">บรรจุภัณฑ์ชำรุดเสียหาย</option>
-                    <option value="สินค้าไม่ตรงตามที่สั่งจอง">สินค้าไม่ตรงตามที่สั่งจอง</option>
-                    <option value="ลูกค้าเปลี่ยนใจ">ลูกค้าเปลี่ยนใจ</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
-                </select>
-            </div>
-            <div id="rejectRemarkContainer" class="hidden">
-                <label class="text-xs font-bold text-gray-700 block mb-1">
-                    ข้อความเพิ่มเติม <span class="text-rose-500">* (จำเป็นเมื่อเลือก "อื่นๆ")</span>
-                </label>
-                <textarea id="rejectReasonRemark" rows="3" placeholder="โปรดระบุเหตุผลเฉพาะหรือหมายเหตุจากเจ้าหน้าที่ที่นี่..."
-                          class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
-            </div>
-            <p id="rejectValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
-        </div>
-        <div class="flex items-center gap-2.5 pt-2">
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
-                ยกเลิก
-            </button>
-            <button type="button" onclick="submitRejectReason()" class="flex-1 bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
-                บันทึก
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 6. Reject Success Modal [65:3065] -->
-<div id="rejectSuccessModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 animate-scale-up">
-        <div class="size-14 rounded-full bg-gray-100 text-gray-600 mx-auto flex items-center justify-center">
-            <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-base font-bold text-[#050315]">ลูกค้าไม่รับสินค้า</h3>
-            <p class="text-xs font-mono text-gray-400 mt-1" id="rejectOrderIdText">Order ID: @(preorderResult?.ReservationNumber ?? "#ORD-8829")</p>
-            <p class="text-xs text-gray-500 mt-2">รายละเอียดการปฏิเสธรับสินค้าของลูกค้าถูกบันทึกเรียบร้อย</p>
-        </div>
-        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm shadow-xs cursor-pointer">
-            สำเร็จ
-        </button>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        const currentPreorderId = @(preorderResult?.PreorderId ?? 0);
-
-        // Toggle Textarea เมื่อเลือก "อื่นๆ"
-        document.getElementById('rejectReasonSelect')?.addEventListener('change', function() {
-            const container = document.getElementById('rejectRemarkContainer');
-            if (this.value === 'อื่นๆ') {
-                container?.classList.remove('hidden');
-            } else {
-                container?.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('noShowReasonSelect')?.addEventListener('change', function() {
-            const container = document.getElementById('noShowRemarkContainer');
-            if (this.value === 'อื่นๆ') {
-                container?.classList.remove('hidden');
-            } else {
-                container?.classList.add('hidden');
-            }
-        });
-
-        const orderPhone = '@Html.Raw(currentContactPhone)';
-        function openMemberPointsModal() {
-            document.getElementById('memberNotFoundWarning')?.classList.add('hidden');
-            const inputEl = document.getElementById('memberPhoneInput');
-            if (inputEl) {
-                inputEl.value = orderPhone;
-            }
-            document.getElementById('memberPointsModal')?.classList.remove('hidden');
-        }
-
-        async function submitPointsAndComplete() {
-            const phone = document.getElementById('memberPhoneInput')?.value || '';
-            const warningEl = document.getElementById('memberNotFoundWarning');
-            warningEl?.classList.add('hidden');
-
-            if (!phone.trim()) {
-                skipPointsAndComplete();
-                return;
-            }
-
-            if (currentPreorderId > 0) {
-                const formData = new FormData();
-                formData.append('preorderId', currentPreorderId);
-                formData.append('memberPhone', phone);
-                try {
-                    const res = await fetch('/Staff/CompletePickup', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        if (data.memberFound === false) {
-                            warningEl?.classList.remove('hidden');
-                            return;
-                        }
-
-                        if (data.pointsEarned > 0) {
-                            document.getElementById('pointsEarnedText').innerText = `จำนวนแต้มที่ได้รับ: +${data.pointsEarned} คะแนน`;
-                        } else {
-                            document.getElementById('pointsEarnedText').innerText = 'ไม่ได้สะสมแต้มสมาชิก';
-                        }
-                    }
-                } catch (e) { }
-            } else {
-                document.getElementById('pointsEarnedText').innerText = 'จำนวนแต้มที่ได้รับ: +150 คะแนน';
-            }
-            document.getElementById('memberPointsModal')?.classList.add('hidden');
-            document.getElementById('pickupSuccessModal')?.classList.remove('hidden');
-        }
-
-        async function skipPointsAndComplete() {
-            if (currentPreorderId > 0) {
-                const formData = new FormData();
-                formData.append('preorderId', currentPreorderId);
-                try {
-                    await fetch('/Staff/CompletePickup', { method: 'POST', body: formData });
-                } catch (e) { }
-            }
-            document.getElementById('pointsEarnedText').innerText = 'ไม่ได้สะสมแต้มสมาชิก';
-            document.getElementById('memberPointsModal')?.classList.add('hidden');
-            document.getElementById('pickupSuccessModal')?.classList.remove('hidden');
-        }
-
-        function openConfirmNoShowModal() {
-            document.getElementById('confirmNoShowModal')?.classList.remove('hidden');
-        }
-
-        async function confirmNoShow() {
-            const select = document.getElementById('noShowReasonSelect');
-            const remark = document.getElementById('noShowReasonRemark');
-            const msg = document.getElementById('noShowValidationMsg');
-
-            if (!select.value) {
-                msg.innerText = 'กรุณาเลือกสาเหตุที่ไม่มารับสินค้า';
-                msg.classList.remove('hidden');
-                return;
-            }
-            if (select.value === 'อื่นๆ' && !remark.value.trim()) {
-                msg.innerText = 'กรุณาระบุข้อความเพิ่มเติมสำหรับสาเหตุ "อื่นๆ"';
-                msg.classList.remove('hidden');
-                return;
-            }
-            msg.classList.add('hidden');
-
-            if (currentPreorderId > 0) {
-                const formData = new FormData();
-                formData.append('preorderId', currentPreorderId);
-                formData.append('reason', select.value);
-                formData.append('remark', remark.value);
-                try {
-                    await fetch('/Staff/NoShowPreorder', { method: 'POST', body: formData });
-                } catch (e) { }
-            }
-
-            document.getElementById('confirmNoShowModal')?.classList.add('hidden');
-            document.getElementById('noShowSuccessModal')?.classList.remove('hidden');
-        }
-
-        function openRejectReasonModal() {
-            document.getElementById('rejectReasonModal')?.classList.remove('hidden');
-        }
-
-        async function submitRejectReason() {
-            const select = document.getElementById('rejectReasonSelect');
-            const remark = document.getElementById('rejectReasonRemark');
-            const msg = document.getElementById('rejectValidationMsg');
-
-            if (!select.value) {
-                msg.innerText = 'กรุณาเลือกเหตุผลการปฏิเสธ';
-                msg.classList.remove('hidden');
-                return;
-            }
-            if (select.value === 'อื่นๆ' && !remark.value.trim()) {
-                msg.innerText = 'กรุณาระบุข้อความเพิ่มเติมสำหรับเหตุผล "อื่นๆ"';
-                msg.classList.remove('hidden');
-                return;
-            }
-            msg.classList.add('hidden');
-
-            if (currentPreorderId > 0) {
-                const formData = new FormData();
-                formData.append('preorderId', currentPreorderId);
-                formData.append('reason', select.value);
-                formData.append('remark', remark.value);
-                try {
-                    await fetch('/Staff/RejectPreorder', { method: 'POST', body: formData });
-                } catch (e) { }
-            }
-
-            document.getElementById('rejectReasonModal')?.classList.add('hidden');
-            document.getElementById('rejectSuccessModal')?.classList.remove('hidden');
-        }
-
-        async function completeReward(redemptionId) {
-            if (!confirm('ยืนยันว่าลูกค้ามารับของรางวัลชิ้นนี้เรียบร้อยแล้ว?')) return;
-
-            const formData = new FormData();
-            formData.append('redemptionId', redemptionId);
-
-            try {
-                const res = await fetch('/Staff/CompleteRewardRedemption', { method: 'POST', body: formData });
-                const data = await res.json();
-                if (data.success) {
-                    alert(data.message || 'บันทึกส่งมอบของรางวัลเรียบร้อย');
-                    location.reload();
-                } else {
-                    alert(data.message || 'เกิดข้อผิดพลาด');
-                }
-            } catch (e) {
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-            }
-        }
-
-        function quickSearch(code) {
-            const input = document.getElementById('searchPreorderInput');
-            if (input) {
-                input.value = code;
-                input.form.submit();
-            }
-        }
-
-        function closeAllModals() {
-            document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
-            location.reload();
-        }
-    </script>
-}

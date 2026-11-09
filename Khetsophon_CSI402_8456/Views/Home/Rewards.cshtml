@@ -42,6 +42,22 @@
         <span class="text-text font-semibold">แคตตาล็อกแลกแต้มสะสม</span>
     </nav>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
     @if (!isCustomer)
     {
         <!-- Guest Gate / Member-only Notification -->
@@ -160,10 +176,26 @@
                             @if (item.Available)
                             {
                                 bool canAfford = userPoints >= item.Points;
-                                <button type="button" onclick="openRedeemModal(@item.Id, '@item.Title', @item.Points, '@Url.Content(item.ImageUrl)', @userPoints)"
-                                   class="w-full flex items-center justify-center rounded-xl @(canAfford ? "bg-accent text-white hover:opacity-90 shadow-accent/20" : "bg-slate-100 text-slate-600 border border-slate-200") py-2.5 px-3 text-xs font-bold shadow-xs transition-all cursor-pointer">
-                                    @(canAfford ? "แลกของรางวัลนี้" : "แต้มสะสมไม่เพียงพอ")
-                                </button>
+                                if (canAfford)
+                                {
+                                    @* ฟอร์มส่งข้อมูลแลกของรางวัลด้วยแต้มสะสม ไปยัง HomeController แอ็กชัน RedeemReward *@
+                                    <form asp-controller="Home" asp-action="RedeemReward" class="w-full">
+                                        @* ตัวแปรซ่อนเก็บรหัสของรางวัล rewardId *@
+                                        <input type="hidden" name="rewardId" value="@item.Id" />
+                                        @* ปุ่มกดยืนยันการแลกของรางวัลด้วยแต้มสะสม *@
+                                        <button type="submit"
+                                           class="w-full flex items-center justify-center rounded-xl bg-accent text-white hover:opacity-90 shadow-accent/20 py-2.5 px-3 text-xs font-bold shadow-xs transition-all cursor-pointer">
+                                            แลกของรางวัลนี้
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <button type="button" disabled
+                                       class="w-full flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 border border-slate-200 py-2.5 px-3 text-xs font-bold cursor-not-allowed">
+                                        แต้มสะสมไม่เพียงพอ
+                                    </button>
+                                }
                             }
                             else
                             {
@@ -182,72 +214,7 @@
 
 <!-- ================= MODALS ================= -->
 
-<!-- 1. Redeem Confirmation Modal -->
-<div id="redeemConfirmModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl space-y-5 animate-scale-up">
-        <div class="text-center space-y-1">
-            <h3 class="text-xl font-extrabold text-text">ยืนยันการแลกของรางวัล</h3>
-            <p class="text-xs text-slate-500">แต้มสะสมจะถูกหักออกจากบัญชีของคุณทันทีเมื่อยืนยัน</p>
-        </div>
-
-        <!-- Reward Preview Card -->
-        <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-            <img id="modalRewardImage" src="" alt="Reward" class="size-16 rounded-xl object-cover border border-slate-200 shrink-0" />
-            <div class="min-w-0 flex-1">
-                <h4 id="modalRewardTitle" class="text-sm font-bold text-text truncate">ชื่อของรางวัล</h4>
-                <div class="text-xs font-semibold text-primary mt-1">ใช้แต้ม: <span id="modalRewardPoints" class="font-extrabold">0</span> แต้ม</div>
-            </div>
-        </div>
-
-        <div class="rounded-2xl bg-blue-50 border border-blue-100 p-3.5 text-xs text-blue-900 space-y-1">
-            <div class="flex justify-between">
-                <span>แต้มปัจจุบัน:</span>
-                <span class="font-bold">@userPoints.ToString("N0") แต้ม</span>
-            </div>
-            <div class="flex justify-between border-t border-blue-200/60 pt-1 text-primary">
-                <span>แต้มคงเหลือหลังแลก:</span>
-                <span id="modalRemainingPoints" class="font-extrabold">0 แต้ม</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3 pt-2">
-            <button type="button" onclick="closeRedeemModal()" class="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-                ยกเลิก
-            </button>
-            <button type="button" id="btnConfirmRedeem" onclick="submitRedeem()" class="flex-1 rounded-xl bg-accent px-4 py-3 text-xs font-bold text-white shadow-lg shadow-accent/25 hover:opacity-90 transition-opacity cursor-pointer">
-                ยืนยันการแลกแต้ม
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- 2. Redeem Success Modal with Real Redemption Code -->
-<div id="redeemSuccessModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl space-y-5 animate-scale-up">
-        <div class="size-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
-            <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-xl font-extrabold text-text">แลกของรางวัลสำเร็จ!</h3>
-            <p id="successRewardTitle" class="text-sm font-semibold text-slate-700 mt-1">ชื่อของรางวัล</p>
-        </div>
-
-        <!-- Redemption Code Box -->
-        <div class="rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-1">
-            <span class="text-xs font-bold text-primary uppercase tracking-wider block">รหัสสำหรับรับของรางวัลที่หน้าร้าน</span>
-            <div id="successRedemptionCode" class="text-2xl sm:text-3xl font-black font-mono text-primary tracking-widest">RWD-2026-XXXX</div>
-            <p class="text-[11px] text-slate-500 pt-1">กรุณาแจ้งรหัสนี้หรือเบอร์โทรศัพท์ของคุณที่เคาน์เตอร์ FriendHouse เพื่อรับของรางวัล</p>
-        </div>
-
-        <button type="button" onclick="window.location.reload()" class="w-full rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
-            เสร็จสิ้น
-        </button>
-    </div>
-</div>
-
-<!-- 3. Redemptions History Modal -->
+<!-- Redemptions History Modal -->
 <div id="historyModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto animate-scale-up">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -308,77 +275,6 @@
 
 @section Scripts {
 <script>
-    let activeRewardId = 0;
-
-    function openRedeemModal(id, title, points, imageUrl, currentPoints) {
-        if (currentPoints < points) {
-            alert('แต้มสะสมของคุณไม่เพียงพอสำหรับการแลกของรางวัลนี้');
-            return;
-        }
-
-        activeRewardId = id;
-        document.getElementById('modalRewardTitle').innerText = title;
-        document.getElementById('modalRewardPoints').innerText = points.toLocaleString();
-        document.getElementById('modalRewardImage').src = imageUrl;
-        document.getElementById('modalRemainingPoints').innerText = (currentPoints - points).toLocaleString() + ' แต้ม';
-
-        const modal = document.getElementById('redeemConfirmModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeRedeemModal() {
-        const modal = document.getElementById('redeemConfirmModal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-
-    function submitRedeem() {
-        if (!activeRewardId) return;
-
-        const btn = document.getElementById('btnConfirmRedeem');
-        btn.disabled = true;
-        btn.innerText = 'กำลังดำเนินการ...';
-
-        const params = new URLSearchParams();
-        params.append('rewardId', activeRewardId);
-
-        fetch('/Home/RedeemReward', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-            btn.disabled = false;
-            btn.innerText = 'ยืนยันการแลกแต้ม';
-            closeRedeemModal();
-
-            if (data.requireLogin) {
-                alert(data.message || 'กรุณาเข้าสู่ระบบก่อน');
-                window.location.href = data.redirectUrl || '/Account/Login';
-                return;
-            }
-
-            if (data.success) {
-                document.getElementById('successRewardTitle').innerText = data.rewardTitle;
-                document.getElementById('successRedemptionCode').innerText = data.redemptionCode;
-                document.getElementById('currentPointsDisplay').innerText = Number(data.remainingPoints).toLocaleString();
-
-                const successModal = document.getElementById('redeemSuccessModal');
-                successModal.classList.remove('hidden');
-                successModal.classList.add('flex');
-            } else {
-                alert(data.message || 'เกิดข้อผิดพลาดในการทำรายการ');
-            }
-        })
-        .catch(err => {
-            btn.disabled = false;
-            btn.innerText = 'ยืนยันการแลกแต้ม';
-            alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-        });
-    }
-
     function openHistoryModal() {
         const modal = document.getElementById('historyModal');
         modal.classList.remove('hidden');

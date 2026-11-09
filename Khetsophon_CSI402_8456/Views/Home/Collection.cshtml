@@ -38,6 +38,22 @@
         <span class="text-text font-semibold">สินค้าทั้งหมด</span>
     </nav>
 
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
     <!-- Page Title & Header -->
     @* <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -169,18 +185,27 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-1.5">
-                        <!-- Button 1: ตะกร้า (Add to cart via AJAX) -->
-                        <button type="button" onclick="addToCart(@item.Id)"
-                           class="flex items-center justify-center gap-1 rounded-xl border border-primary/20 bg-primary/5 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
-                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="9" cy="21" r="1"></circle>
-                                <circle cx="20" cy="21" r="1"></circle>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
-                            <span>ตะกร้า</span>
-                        </button>
+                        @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                        <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                            @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
+                            <input type="hidden" name="productId" value="@item.Id" />
+                            @* ตัวแปรซ่อนกำหนดจำนวนสินค้าเริ่มต้นเป็น 1 ชิ้น *@
+                            <input type="hidden" name="quantity" value="1" />
+                            @* ปุ่มกดยืนยันเพิ่มสินค้าลงในตะกร้า *@
+                            <button type="submit"
+                               class="w-full flex items-center justify-center gap-1 rounded-xl border border-primary/20 bg-primary/5 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
+                                @* ไอคอนรูปตะกร้าสินค้า SVG *@
+                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="9" cy="21" r="1"></circle>
+                                    <circle cx="20" cy="21" r="1"></circle>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                </svg>
+                                @* ข้อความบนปุ่มตะกร้าสินค้า *@
+                                <span>ตะกร้า</span>
+                            </button>
+                        </form>
 
-                        <!-- Button 2: พรีออเดอร์สินค้านี้ -->
+                        @* ลิงก์นำทางไปยังหน้ารายละเอียดเพื่อสั่งจองสินค้านี้ *@
                         <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.Id"
                            class="flex items-center justify-center rounded-xl bg-accent py-2 px-1 text-[11px] font-bold text-white shadow-xs transition-opacity hover:opacity-90 cursor-pointer text-center leading-tight">
                             สั่งจองสินค้านี้
@@ -220,35 +245,3 @@
         </button>
     </div>
 </div>
-
-@section Scripts {
-<script>
-    function addToCart(productId) {
-        var formData = new URLSearchParams();
-        formData.append('productId', productId);
-        formData.append('quantity', 1);
-
-        fetch('/Home/AddToCart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.requireLogin) {
-                alert(data.message || 'กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า');
-                window.location.href = data.redirectUrl || '/Account/Login';
-                return;
-            }
-            if (data.success) {
-                window.location.href = '/Home/Cart';
-            } else {
-                alert(data.message || 'เกิดข้อผิดพลาด');
-            }
-        })
-        .catch(() => {
-            window.location.href = '/Home/Cart';
-        });
-    }
-</script>
-}

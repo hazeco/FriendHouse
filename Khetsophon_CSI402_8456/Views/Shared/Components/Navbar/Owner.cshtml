@@ -48,6 +48,11 @@
                 <div class="text-xs font-bold leading-tight text-white">@brand.UserName</div>
                 <div class="text-[10px] text-white/70 leading-tight">@brand.UserRole</div>
             </div>
+            @* ลิงก์ออกจากระบบ สไตล์เดียวกับ Customer พร้อมเอฟเฟกต์ hover สีแดง นำทางไปยัง AccountController แอ็กชัน Logout *@
+            <a asp-controller="Account" asp-action="Logout" asp-route-role="owner"
+               class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer">
+                ออกจากระบบ
+            </a>
         </div>
     </div>
 
@@ -55,5 +60,10 @@
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
         <a asp-controller="Owner" asp-action="Promotions" class="@NavClass("Promotions") text-xs py-1.5 px-3 shrink-0">โปรโมชั่น</a>
         <a asp-controller="Owner" asp-action="MonthlyReport" class="@NavClass("MonthlyReport") text-xs py-1.5 px-3 shrink-0">รายงาน</a>
+        @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
+        <a asp-controller="Account" asp-action="Logout" asp-route-role="owner"
+           class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
+            ออกจากระบบ
+        </a>
     </div>
 </div>

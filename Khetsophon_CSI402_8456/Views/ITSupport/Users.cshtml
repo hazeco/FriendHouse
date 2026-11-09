@@ -4,6 +4,7 @@
     Layout = "_ITSupportLayout";
 
     var hasDbUsers = Model != null && Model.Any();
+    var lastLogins = ViewBag.LastLogins as Dictionary<int, DateTime> ?? new Dictionary<int, DateTime>();
 
     // Top-of-file Media & Content Configuration
     var pageHeader = new {
@@ -88,14 +89,15 @@
     <!-- Users Table (frame_9_20.png) -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-sm min-w-[760px]" id="usersTable">
+            <table class="w-full text-sm min-w-[840px]" id="usersTable">
                 <thead>
                     <tr class="border-b border-gray-100 text-left text-xs font-semibold text-gray-400 bg-[#FBFBFE]">
                         <th class="py-4 px-6">อีเมล</th>
                         <th class="py-4 px-6">เบอร์โทร</th>
                         <th class="py-4 px-6 text-center">สถานะบัญชี</th>
-                        <th class="py-4 px-6">วันที่สมัคร</th>
+                        <th class="py-4 px-6 text-center">แต้มสะสม</th>
                         <th class="py-4 px-6">เข้าสู่ระบบล่าสุด</th>
+                        <th class="py-4 px-6">วันที่สมัคร</th>
                         <th class="py-4 px-6 text-center">จัดการบัญชี</th>
                         <th class="py-4 px-6 text-right">การช่วยเหลือ</th>
                     </tr>
@@ -132,14 +134,26 @@
                                     </span>
                                 </td>
 
+                                <!-- User Points: แยกคอลัมน์แต้มสะสมให้ถูกต้องตรงกับ Database -->
+                                <td class="py-4 px-6 text-center font-bold text-xs text-[#2F39A9]">
+                                    @u.Points.ToString("N0") แต้ม
+                                </td>
+
+                                <!-- Last Login: ดึงจากตาราง Systemlogs ประวัติการล็อกอินจริง -->
+                                <td class="py-4 px-6 text-gray-500 text-xs">
+                                    @if (lastLogins.ContainsKey(u.UserId))
+                                    {
+                                        <span>@lastLogins[u.UserId].ToString("dd MMM yyyy HH:mm น.")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400 italic">ยังไม่มีประวัติ</span>
+                                    }
+                                </td>
+
                                 <!-- Registration Date -->
                                 <td class="py-4 px-6 text-gray-500 text-xs">
                                     @u.CreatedAt.ToString("dd MMM yyyy")
-                                </td>
-
-                                <!-- Last Login / Points -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @(u.Points > 0 ? $"{u.Points} แต้ม" : "ปกติ")
                                 </td>
 
                                 <!-- Management Icons: Edit & Delete -->
@@ -175,7 +189,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="7" class="py-8 text-center text-xs text-gray-400">
+                            <td colspan="8" class="py-8 text-center text-xs text-gray-400">
                                 ไม่พบรายชื่อบัญชีผู้ใช้งานในระบบ
                             </td>
                         </tr>
@@ -213,9 +227,12 @@
                 </svg>
             </button>
         </div>
+        @* ฟอร์มเพิ่มผู้ใช้งานใหม่ ส่งข้อมูลไปยัง ITSupportController แอ็กชัน CreateUser *@
         <form asp-controller="ITSupport" asp-action="CreateUser" class="space-y-3">
             <div>
+                @* ป้ายกำกับตัวเลือกบทบาท *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">บทบาท (Role)</label>
+                @* ดรอปดาวน์เลือกบทบาทผู้ใช้งาน *@
                 <select name="role" id="newUserRole" onchange="toggleAvatarUpload(this.value)" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
                     <option value="Customer">Customer (ลูกค้า)</option>
                     <option value="Staff">Staff (พนักงานหน้าร้าน)</option>
@@ -225,25 +242,35 @@
                 </select>
             </div>
             <div id="nameFieldContainer" class="hidden">
+                @* ป้ายกำกับช่องกรอกชื่อ-นามสกุล *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">ชื่อ-นามสกุล</label>
+                @* ช่องกรอกชื่อ-นามสกุลเจ้าหน้าที่ *@
                 <input type="text" name="fullName" placeholder="ชื่อ-นามสกุลเจ้าหน้าที่" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]" />
             </div>
             <div>
+                @* ป้ายกำกับช่องกรอกอีเมล *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">อีเมล</label>
+                @* ช่องกรอกอีเมลผู้ใช้งานใหม่ *@
                 <input type="email" name="email" placeholder="example@email.com" required class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]" />
             </div>
             <div>
+                @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์ *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">เบอร์โทรศัพท์</label>
+                @* ช่องกรอกเบอร์โทรศัพท์ *@
                 <input type="tel" name="phone" placeholder="08X-XXX-XXXX" required class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]" />
             </div>
             <div>
+                @* ป้ายกำกับช่องกรอกรหัสผ่านเริ่มต้น *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">รหัสผ่านเริ่มต้น</label>
+                @* ช่องกรอกรหัสผ่านเริ่มต้นสำหรับบัญชีใหม่ *@
                 <input type="password" name="password" placeholder="ตั้งรหัสผ่านชั่วคราว" required class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]" />
             </div>
             <div class="flex items-center gap-2 pt-2">
+                @* ปุ่มกดยกเลิกและปิด Modal *@
                 <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
                     ยกเลิก
                 </button>
+                @* ปุ่มกดยืนยันการสร้างบัญชีผู้ใช้งานใหม่ *@
                 <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
                     สร้างบัญชี
                 </button>

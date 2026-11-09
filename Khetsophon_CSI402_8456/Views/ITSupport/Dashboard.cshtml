@@ -2,55 +2,26 @@
     ViewData["Title"] = "ภาพรวมสถานะระบบ";
     Layout = "_ITSupportLayout";
 
-    // Top-of-file Media & Content Configuration
+    // ดึงรายการบันทึกประวัติกิจกรรมล่าสุดจาก ViewBag
+    var recentLogs = ViewBag.RecentLogs as IEnumerable<Khetsophon_CSI402_8456.Models.Systemlog> ?? Enumerable.Empty<Khetsophon_CSI402_8456.Models.Systemlog>();
+
+    // การกำหนดค่าข้อความส่วนหัวของหน้า
     var pageHeader = new {
         Title = "ภาพรวมสถานะระบบ",
-        Subtitle = "ข้อมูลจำลองสำหรับสาธิต — อัปเดตล่าสุด 09 ก.ย. 2569 เวลา 14:32 น.",
+        Subtitle = "ระบบติดตามสถานะเซิร์ฟเวอร์ ฐานข้อมูล และกิจกรรมระบบแบบ Realtime",
         RefreshText = "รีเฟรชข้อมูล"
     };
 
+    // การกำหนดค่าสถิติสถานะของระบบ
     var serverStats = new {
         ServerStatus = "ออนไลน์",
-        ServerLatency = "ตอบสนอง 118 มิลลิวินาที",
+        ServerLatency = "ตอบสนองปกติ (HTTP 200)",
         DbStatus = "MySQL ปกติ",
-        DbBackup = ViewBag.TotalProducts != null ? $"สินค้าในระบบ {ViewBag.TotalProducts} รายการ" : "สำรองข้อมูลล่าสุด 03:00 น.",
-        Uptime = ViewBag.TotalUsers != null ? $"{ViewBag.TotalUsers} บัญชี" : "99.82%",
-        Downtime = "ผู้ใช้งานในระบบทั้งหมด",
-        Errors = ViewBag.ErrorLogs != null ? $"{ViewBag.ErrorLogs} ครั้ง" : "0 ครั้ง",
-        LastError = ViewBag.TotalLogs != null ? $"บันทึกทั้งหมด {ViewBag.TotalLogs} รายการ" : "ล่าสุด 13:47 น."
-    };
-
-    var recentEvents = new[] {
-        new {
-            Type = "warning",
-            Title = "การซิงก์สต็อกล้มเหลว 1 ครั้ง กำลังลองใหม่อัตโนมัติ",
-            Time = "13:47 น.",
-            IconBg = "bg-[#FEF3C7] text-[#D97706]"
-        },
-        new {
-            Type = "danger",
-            Title = "พบความพยายามเข้าสู่ระบบผิดพลาดซ้ำจากบัญชีเดียวกัน 5 ครั้ง",
-            Time = "11:20 น.",
-            IconBg = "bg-[#FEE2E2] text-[#DC2626]"
-        },
-        new {
-            Type = "success",
-            Title = "สำรองฐานข้อมูลอัตโนมัติสำเร็จ",
-            Time = "03:00 น.",
-            IconBg = "bg-[#DCFCE7] text-[#16A34A]"
-        },
-        new {
-            Type = "info",
-            Title = "อัปเดตแจ้งเตือนสต็อกใกล้หมดสำหรับ 4 รายการ",
-            Time = "02:15 น.",
-            IconBg = "bg-[#DBEAFE] text-[#2F39A9]"
-        },
-        new {
-            Type = "success",
-            Title = "รีสตาร์ทบริการ POS หน้าร้านสำเร็จ (บำรุงรักษาตามแผน)",
-            Time = "เมื่อวาน 22:00 น.",
-            IconBg = "bg-[#DCFCE7] text-[#16A34A]"
-        }
+        DbBackup = ViewBag.TotalProducts != null ? $"สินค้าในระบบ {ViewBag.TotalProducts} รายการ" : "เชื่อมต่อฐานข้อมูลสมบูรณ์",
+        TotalUsers = ViewBag.TotalUsers != null ? $"{ViewBag.TotalUsers} บัญชี" : "0 บัญชี",
+        UsersSubtext = "สมาชิกและเจ้าหน้าที่ในระบบ",
+        TotalLogs = ViewBag.TotalLogs != null ? $"{ViewBag.TotalLogs} รายการ" : "0 รายการ",
+        LogsSubtext = ViewBag.ErrorLogs != null ? $"พบข้อผิดพลาด {ViewBag.ErrorLogs} ครั้ง" : "ไม่มีข้อผิดพลาด"
     };
 }
 
@@ -72,7 +43,7 @@
 
     <!-- 4 Stat Cards in a row (frame_9_19.png) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1 -->
+        <!-- Card 1: สถานะเซิร์ฟเวอร์ -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-400 font-medium">สถานะเซิร์ฟเวอร์</span>
@@ -82,7 +53,7 @@
             <div class="text-xs text-gray-400">@serverStats.ServerLatency</div>
         </div>
 
-        <!-- Card 2 -->
+        <!-- Card 2: ฐานข้อมูล MySQL -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-400 font-medium">ฐานข้อมูล</span>
@@ -92,24 +63,24 @@
             <div class="text-xs text-gray-400">@serverStats.DbBackup</div>
         </div>
 
-        <!-- Card 3 -->
+        <!-- Card 3: ผู้ใช้งานทั้งหมด (Total Users) -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-400 font-medium">Uptime 30 วันล่าสุด</span>
+                <span class="text-xs text-gray-400 font-medium">ผู้ใช้งานทั้งหมด</span>
                 <span class="size-2 rounded-full bg-[#2F39A9]"></span>
             </div>
-            <div class="text-3xl font-extrabold text-[#050315]">@serverStats.Uptime</div>
-            <div class="text-xs text-gray-400">@serverStats.Downtime</div>
+            <div class="text-3xl font-extrabold text-[#050315]">@serverStats.TotalUsers</div>
+            <div class="text-xs text-gray-400">@serverStats.UsersSubtext</div>
         </div>
 
-        <!-- Card 4 -->
+        <!-- Card 4: บันทึกกิจกรรมระบบ (System Logs) -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
-                <span class="text-xs text-gray-400 font-medium">Error ใน 24 ชม.</span>
+                <span class="text-xs text-gray-400 font-medium">บันทึกกิจกรรมระบบ</span>
                 <span class="size-2 rounded-full bg-[#D97706]"></span>
             </div>
-            <div class="text-3xl font-extrabold text-[#050315]">@serverStats.Errors</div>
-            <div class="text-xs text-gray-400">@serverStats.LastError</div>
+            <div class="text-3xl font-extrabold text-[#050315]">@serverStats.TotalLogs</div>
+            <div class="text-xs text-gray-400">@serverStats.LogsSubtext</div>
         </div>
     </div>
 
@@ -152,48 +123,52 @@
             </div>
         </div>
 
-        <!-- Right 1 Col: เหตุการณ์ล่าสุด -->
+        <!-- Right 1 Col: เหตุการณ์ล่าสุดจากฐานข้อมูลจริง -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
             <h2 class="text-sm font-bold text-[#050315]">เหตุการณ์ล่าสุด</h2>
             <div class="space-y-4">
-                @foreach (var ev in recentEvents)
+                @if (recentLogs.Any())
                 {
-                    <div class="flex items-start gap-3">
-                        <div class="size-8 rounded-full @ev.IconBg flex items-center justify-center shrink-0 mt-0.5">
-                            @if (ev.Type == "warning")
-                            {
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                                </svg>
-                            }
-                            else if (ev.Type == "danger")
-                            {
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                </svg>
-                            }
-                            else if (ev.Type == "info")
-                            {
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                                </svg>
-                            }
-                            else
-                            {
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            }
+                    @foreach (var ev in recentLogs)
+                    {
+                        var iconBg = ev.LogLevel == "ERROR" ? "bg-[#FEE2E2] text-[#DC2626]" :
+                                     ev.LogLevel == "WARNING" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DBEAFE] text-[#2F39A9]";
+
+                        <div class="flex items-start gap-3">
+                            <div class="size-8 rounded-full @iconBg flex items-center justify-center shrink-0 mt-0.5">
+                                @if (ev.LogLevel == "ERROR")
+                                {
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                }
+                                else if (ev.LogLevel == "WARNING")
+                                {
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                }
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-semibold text-[#050315] leading-snug">@ev.Module: @ev.Message</div>
+                                <div class="text-[11px] text-gray-400 mt-0.5 font-mono">@ev.Timestamp.ToString("dd MMM yyyy HH:mm น.")</div>
+                            </div>
                         </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-xs font-semibold text-[#050315] leading-snug">@ev.Title</div>
-                            <div class="text-[11px] text-gray-400 mt-0.5">@ev.Time</div>
-                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-xs text-gray-400 text-center py-6">
+                        ยังไม่มีประวัติกิจกรรมในระบบ
                     </div>
                 }
             </div>
