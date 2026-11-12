@@ -79,16 +79,19 @@ public class ITSupportController : Controller
         // สร้างคำสั่งคิวรีพื้นฐานสำหรับดึงข้อมูลผู้ใช้งานจากตารางผู้ใช้งาน
         var query = _db.Users.AsQueryable();
 
-        // ตรวจสอบว่ามีการกรอกคำค้นหาหรือไม่
+        // ตรวจสอบว่ามีการกรอกคำค้นหาหรือไม่ (รองรับการค้นหาเบอร์โทรและรหัสผู้ใช้โดยไม่ต้องพิมพ์ขีด -)
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            var cleanKeyword = searchQuery.Trim();
-            // กรองผู้ใช้งานด้วยอีเมล เบอร์โทรศัพท์ รหัสผู้ใช้ หรือชื่อ-นามสกุล
+            var cleanKeyword = searchQuery.Trim().ToLower();
+            var keywordNoHyphen = cleanKeyword.Replace("-", "").Replace("#", "").Replace(" ", "");
+            // กรองผู้ใช้งานด้วยอีเมล เบอร์โทรศัพท์ รหัสผู้ใช้ หรือชื่อ-นามสกุล ทั้งแบบมีขีดและไม่มีขีด
             query = query.Where(u =>
-                u.Email.Contains(cleanKeyword) ||
-                u.Phone.Contains(cleanKeyword) ||
-                u.UserCode.Contains(cleanKeyword) ||
-                (u.FullName != null && u.FullName.Contains(cleanKeyword)));
+                u.Email.ToLower().Contains(cleanKeyword) ||
+                u.Phone.ToLower().Contains(cleanKeyword) ||
+                (!string.IsNullOrEmpty(keywordNoHyphen) && u.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(keywordNoHyphen)) ||
+                u.UserCode.ToLower().Contains(cleanKeyword) ||
+                (!string.IsNullOrEmpty(keywordNoHyphen) && u.UserCode.Replace("-", "").ToLower().Contains(keywordNoHyphen)) ||
+                (u.FullName != null && u.FullName.ToLower().Contains(cleanKeyword)));
         }
 
         // ตรวจสอบว่ามีการกรองตามบทบาทผู้ใช้งานหรือไม่

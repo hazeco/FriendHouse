@@ -82,26 +82,32 @@ public class StaffController : Controller
         // ประกาศตัวแปรเก็บข้อมูลการแลกของรางวัลที่ค้นหาพบ (เริ่มต้นเป็นค่าว่าง null)
         Rewardredemption? foundRedemption = null;
 
-        // ตรวจสอบว่าผู้ใช้ส่งข้อความค้นหา (query) เข้ามาหรือไม่
+        // ตรวจสอบว่าผู้ใช้ส่งข้อความค้นหา (query) เข้ามาหรือไม่ (รองรับการค้นหาโดยไม่ต้องพิมพ์ขีด - หรือ #)
         if (!string.IsNullOrWhiteSpace(query))
         {
             // ตัดช่องว่างหัวท้ายและตัดเครื่องหมาย # ออกจากข้อความค้นหา
             string cleanQuery = query.Trim().Replace("#", "");
-            // ตัดเครื่องหมายขีดลบ (-) ออกเพื่อเตรียมค้นหาเบอร์โทรศัพท์ที่ไม่มีขีด
-            string phoneWithoutHyphen = cleanQuery.Replace("-", "");
+            string lowerQuery = cleanQuery.ToLower();
+            // ตัดเครื่องหมายขีดลบ (-) และช่องว่างออกเพื่อรองรับการค้นหาเลขใบจอง รหัสของรางวัล และเบอร์โทรศัพท์แบบไม่ใส่ขีด
+            string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
 
             // ดึงข้อมูลใบสั่งจองจากตาราง Preorders โดยโหลดตาราง Preorderitems, Product และ User ร่วมด้วย
-            foundPreorder = _db.Preorders
+            var allPreorders = _db.Preorders
                 .Include(p => p.Preorderitems)
                     .ThenInclude(item => item.Product)
                 .Include(p => p.User)
-                // ตรวจสอบเงื่อนไขว่าตรงกับรหัสใบจอง, เบอร์โทรผู้ติดต่อ หรือชื่อลูกค้าในฐานข้อมูล
-                .FirstOrDefault(p => p.ReservationNumber == cleanQuery
-                                  || p.ReservationNumber == query.Trim()
-                                  || p.ContactPhone == cleanQuery
-                                  || p.ContactPhone.Replace("-", "") == phoneWithoutHyphen
-                                  || (p.User != null && p.User.Phone == cleanQuery)
-                                  || (p.User != null && p.User.FullName != null && p.User.FullName.Contains(cleanQuery)));
+                .OrderByDescending(p => p.CreatedAt)
+                .ToList();
+
+            // ตรวจสอบเงื่อนไขว่าตรงกับรหัสใบจอง เบอร์โทรผู้ติดต่อ หรือชื่อลูกค้า ทั้งแบบมีขีดและไม่มีขีด (รองรับทั้งพิมพ์เต็มและพิมพ์บางส่วน)
+            foundPreorder = allPreorders.FirstOrDefault(p =>
+                p.ReservationNumber.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+                || p.ContactPhone.ToLower().Contains(lowerQuery)
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ContactPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+                || (p.User != null && p.User.Phone != null && p.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+                || (p.User != null && p.User.FullName != null && p.User.FullName.ToLower().Contains(lowerQuery)));
 
             // ตรวจสอบว่าค้นพบข้อมูลใบสั่งจองในฐานข้อมูลหรือไม่
             if (foundPreorder != null)
@@ -109,19 +115,23 @@ public class StaffController : Controller
                 // ส่งข้อมูลใบจองที่พบไปยัง View ผ่านตัวแปร ViewBag.SearchResult
                 ViewBag.SearchResult = foundPreorder;
                 // กำหนดข้อความแจ้งผลการค้นหาใบจองสำเร็จเพื่อแสดงบนหน้าจอ
-                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{foundPreorder.ReservationNumber} (ลูกค้า: {foundPreorder.User?.FullName ?? foundPreorder.ContactPhone})";
+                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{foundPreorder.ReservationNumber} ลูกค้า: {foundPreorder.User?.FullName ?? foundPreorder.ContactPhone}";
             }
             // หากไม่พบใบจองในตาราง Preorders ให้ตรวจสอบต่อในตารางแลกของรางวัล
             else
             {
                 // ดึงข้อมูลการแลกของรางวัลจากตาราง Rewardredemptions พร้อมข้อมูล Reward และ User
-                foundRedemption = _db.Rewardredemptions
+                var allRedemptions = _db.Rewardredemptions
                     .Include(r => r.Reward)
                     .Include(r => r.User)
-                    // ตรวจสอบว่าตรงกับรหัสแลกของรางวัล หรือเบอร์โทรสมาชิกหรือไม่
-                    .FirstOrDefault(r => r.RedemptionCode == cleanQuery
-                                      || r.RedemptionCode == query.Trim()
-                                      || (r.User != null && r.User.Phone == cleanQuery));
+                    .OrderByDescending(r => r.RedeemedAt)
+                    .ToList();
+
+                // ตรวจสอบว่าตรงกับรหัสแลกของรางวัล หรือเบอร์โทรสมาชิก ทั้งแบบมีขีดและไม่มีขีด
+                foundRedemption = allRedemptions.FirstOrDefault(r =>
+                    r.RedemptionCode.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+                    || (!string.IsNullOrEmpty(normalizedQuery) && r.RedemptionCode.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+                    || (r.User != null && r.User.Phone != null && r.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery)));
 
                 // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลในฐานข้อมูลหรือไม่
                 if (foundRedemption != null)
@@ -129,7 +139,7 @@ public class StaffController : Controller
                     // ส่งข้อมูลการแลกของรางวัลที่พบไปยัง View ผ่าน ViewBag.SearchResultRedemption
                     ViewBag.SearchResultRedemption = foundRedemption;
                     // กำหนดข้อความแจ้งผลการค้นหารหัสของรางวัลเพื่อแสดงบนหน้าจอ
-                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{foundRedemption.RedemptionCode} (ลูกค้า: {foundRedemption.User?.FullName ?? foundRedemption.User?.Email})";
+                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{foundRedemption.RedemptionCode} ลูกค้า: {foundRedemption.User?.FullName ?? foundRedemption.User?.Email}";
                 }
             }
         }
@@ -172,6 +182,13 @@ public class StaffController : Controller
             .Take(6)
             .ToList();
 
+        // ดึงรายชื่อเบอร์โทรศัพท์และอีเมลสมาชิกทั้งหมดในระบบ เพื่อใช้ตรวจสอบเบอร์สมาชิกในหน้าต่างสะสมแต้ม
+        ViewBag.KnownMemberPhones = _db.Users
+            .Where(u => !string.IsNullOrEmpty(u.Phone))
+            .Select(u => u.Phone!.Replace("-", "").Replace(" ", "").Trim().ToLower())
+            .Distinct()
+            .ToList();
+
         // ส่ง ViewModel พร้อมรหัสใบจองที่ค้นพบไปยังหน้า View เพื่อแสดงผล
         return View(new CounterPreorderViewModel { ReservationNumber = foundPreorder?.ReservationNumber ?? query ?? "" });
     }
@@ -194,24 +211,30 @@ public class StaffController : Controller
         string rawQuery = (data?.ReservationNumber ?? data?.Phone ?? "").Trim();
         // ตัดเครื่องหมาย # ออกจากข้อความค้นหา
         string cleanQuery = rawQuery.Replace("#", "").Trim();
-        // ตัดเครื่องหมายขีด (-) ออกเพื่อรองรับเบอร์โทรศัพท์ทั้งสองรูปแบบ
-        string phoneWithoutHyphen = cleanQuery.Replace("-", "");
+        string lowerQuery = cleanQuery.ToLower();
+        // ตัดเครื่องหมายขีด (-) และช่องว่างออกเพื่อรองรับทั้งเลขใบจอง รหัสของรางวัล และเบอร์โทรศัพท์แบบไม่ใส่ขีด
+        string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
 
         // ตรวจสอบว่าผู้ใช้งานกรอกข้อความค้นหาเข้ามาหรือไม่
         if (!string.IsNullOrEmpty(cleanQuery))
         {
-            // ค้นหาข้อมูลใบสั่งจองในตาราง Preorders ด้วยรหัสใบจอง เบอร์โทรศัพท์ หรือชื่อลูกค้า
-            var preorder = _db.Preorders
+            // ค้นหาข้อมูลใบสั่งจองในตาราง Preorders ด้วยรหัสใบจอง เบอร์โทรศัพท์ หรือชื่อลูกค้า (รองรับการค้นหาโดยไม่ใส่ขีด - และค้นหาบางส่วน)
+            var allPreorders = _db.Preorders
                 .Include(p => p.Preorderitems)
                     .ThenInclude(item => item.Product)
                 .Include(p => p.User)
-                // ตรวจสอบเงื่อนไขว่าตรงกับข้อความค้นหาจุดใดจุดหนึ่งหรือไม่
-                .FirstOrDefault(p => p.ReservationNumber == cleanQuery
-                                  || p.ReservationNumber == rawQuery
-                                  || p.ContactPhone == cleanQuery
-                                  || p.ContactPhone.Replace("-", "") == phoneWithoutHyphen
-                                  || (p.User != null && (p.User.FullName != null && p.User.FullName.Contains(cleanQuery)))
-                                  || (p.User != null && p.User.Email.Contains(cleanQuery)));
+                .OrderByDescending(p => p.CreatedAt)
+                .ToList();
+
+            var preorder = allPreorders.FirstOrDefault(p =>
+                p.ReservationNumber.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+                || p.ContactPhone.ToLower().Contains(lowerQuery)
+                || (!string.IsNullOrEmpty(normalizedQuery) && p.ContactPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+                || (p.User != null && p.User.Phone != null && p.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+                || (p.User != null && p.User.FullName != null && p.User.FullName.ToLower().Contains(lowerQuery))
+                || (p.User != null && p.User.Email.ToLower().Contains(lowerQuery)));
 
             // ตรวจสอบว่าพบข้อมูลใบสั่งจองหรือไม่
             if (preorder != null)
@@ -219,20 +242,22 @@ public class StaffController : Controller
                 // นำใบสั่งจองที่พบส่งต่อไปยัง View
                 ViewBag.SearchResult = preorder;
                 // กำหนดข้อความแจ้งผลการค้นหาใบจองสำเร็จ
-                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{preorder.ReservationNumber} (ลูกค้า: {preorder.User?.FullName ?? preorder.ContactPhone})";
+                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{preorder.ReservationNumber} ลูกค้า: {preorder.User?.FullName ?? preorder.ContactPhone}";
             }
             // หากไม่พบใบสั่งจอง ให้ค้นหาต่อในตารางของรางวัล
             else
             {
-                // ค้นหาข้อมูลในตาราง Rewardredemptions ด้วยรหัสแลกของรางวัลหรือเบอร์โทร
-                var redemption = _db.Rewardredemptions
+                // ค้นหาข้อมูลในตาราง Rewardredemptions ด้วยรหัสแลกของรางวัลหรือเบอร์โทร (รองรับการพิมพ์แบบไม่ใส่ขีด -)
+                var allRedemptions = _db.Rewardredemptions
                     .Include(r => r.Reward)
                     .Include(r => r.User)
-                    // ตรวจสอบว่าตรงกับรหัสของรางวัลหรือเบอร์โทรสมาชิกหรือไม่
-                    .FirstOrDefault(r => r.RedemptionCode == cleanQuery
-                                      || r.RedemptionCode == rawQuery
-                                      || (r.User != null && r.User.Phone == cleanQuery)
-                                      || (r.User != null && r.User.Phone.Replace("-", "") == phoneWithoutHyphen));
+                    .OrderByDescending(r => r.RedeemedAt)
+                    .ToList();
+
+                var redemption = allRedemptions.FirstOrDefault(r =>
+                    r.RedemptionCode.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+                    || (!string.IsNullOrEmpty(normalizedQuery) && r.RedemptionCode.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+                    || (r.User != null && r.User.Phone != null && r.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery)));
 
                 // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลหรือไม่
                 if (redemption != null)
@@ -240,7 +265,7 @@ public class StaffController : Controller
                     // นำข้อมูลของรางวัลที่พบส่งไปยัง View
                     ViewBag.SearchResultRedemption = redemption;
                     // กำหนดข้อความแจ้งผลการค้นหาของรางวัลสำเร็จ
-                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{redemption.RedemptionCode} (ลูกค้า: {redemption.User.FullName ?? redemption.User.Email})";
+                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{redemption.RedemptionCode} ลูกค้า: {redemption.User.FullName ?? redemption.User.Email}";
                 }
                 // กรณีค้นหาไม่พบทั้งใบจองและของรางวัล
                 else
@@ -265,14 +290,21 @@ public class StaffController : Controller
             .Take(6)
             .ToList();
 
+        // ดึงรายชื่อเบอร์โทรศัพท์สมาชิกทั้งหมดในระบบ เพื่อใช้ตรวจสอบเบอร์สมาชิกในหน้าต่างสะสมแต้ม
+        ViewBag.KnownMemberPhones = _db.Users
+            .Where(u => !string.IsNullOrEmpty(u.Phone))
+            .Select(u => u.Phone!.Replace("-", "").Replace(" ", "").Trim().ToLower())
+            .Distinct()
+            .ToList();
+
         // ส่ง ViewModel กลับไปแสดงผลที่ View
         return View(data);
     }
 
     // Action สำหรับบันทึกการมารับสินค้า ชำระเงิน ตัดสต็อก และสะสมแต้ม (POST Method)
     [HttpPost]
-    // ฟังก์ชัน CompletePickup รับ preorderId (รหัสใบจอง) และ memberPhone (เบอร์โทรสมาชิก)
-    public IActionResult CompletePickup(int? preorderId, string? memberPhone)
+    // ฟังก์ชัน CompletePickup รับ preorderId (รหัสใบจอง), memberPhone (เบอร์โทรสมาชิก) และ forceWithoutMember (ยืนยันดำเนินการต่อแบบลูกค้าทั่วไปเมื่อไม่พบเบอร์สมาชิก)
+    public IActionResult CompletePickup(int? preorderId, string? memberPhone, bool? forceWithoutMember)
     {
         // ขั้นตอนที่ 0: ตรวจสอบสิทธิ์ว่าผู้ใช้งานคือพนักงานเคาน์เตอร์หรือไม่
         if (!IsAuthorizedStaff())
@@ -316,11 +348,6 @@ public class StaffController : Controller
             return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
         }
 
-        // ปรับเปลี่ยนสถานะใบสั่งจองใน Entity ให้เป็น "Completed"
-        preorder.CurrentStatus = "Completed";
-        // บันทึกวันและเวลาปัจจุบันที่ลูกค้ามารับสินค้าจริง (CompletedAt)
-        preorder.CompletedAt = DateTime.Now;
-
         // ประกาศตัวแปรเก็บจำนวนแต้มสะสมที่สมาชิกจะได้รับ (เริ่มต้นที่ 0)
         int pointsEarned = 0;
         // ประกาศตัวแปรเก็บข้อความรายละเอียดการสะสมแต้มสำหรับนำไปแสดงผล
@@ -330,9 +357,13 @@ public class StaffController : Controller
         if (!string.IsNullOrWhiteSpace(memberPhone))
         {
             // ทำความสะอาดเบอร์โทรศัพท์โดยตัดช่องว่างและเครื่องหมายขีดลบ (-) ออก
-            string cleanPhone = memberPhone.Trim().Replace("-", "");
-            // ค้นหาข้อมูลสมาชิกในตาราง Users ด้วยเบอร์โทรศัพท์ หรืออีเมล
-            var memberUser = _db.Users.FirstOrDefault(u => u.Phone == cleanPhone || u.Phone == memberPhone.Trim() || u.Email == memberPhone.Trim());
+            string cleanPhone = memberPhone.Trim().Replace("-", "").Replace(" ", "");
+            // ค้นหาข้อมูลสมาชิกในตาราง Users ด้วยเบอร์โทรศัพท์ (รองรับทั้งแบบมีขีดและไม่มีขีด) หรืออีเมล
+            var memberUser = _db.Users
+                .ToList()
+                .FirstOrDefault(u =>
+                    (!string.IsNullOrEmpty(u.Phone) && u.Phone.Replace("-", "").Replace(" ", "").Equals(cleanPhone, StringComparison.OrdinalIgnoreCase))
+                    || u.Email.Equals(memberPhone.Trim(), StringComparison.OrdinalIgnoreCase));
 
             // ตรวจสอบว่าพบข้อมูลสมาชิกในระบบหรือไม่
             if (memberUser != null)
@@ -344,13 +375,25 @@ public class StaffController : Controller
                 // กำหนดข้อความรายละเอียดการสะสมแต้มสำเร็จ พร้อมระบุชื่อสมาชิกและแต้มคงเหลือรวม
                 memberLogMsg = $" (สะสมแต้มให้คุณ {memberUser.FullName ?? memberUser.Email}: +{pointsEarned} แต้ม รวมปัจจุบัน {memberUser.Points} แต้ม)";
             }
-            // กรณีพนักงานกรอกเบอร์โทรเข้ามาแต่ไม่พบข้อมูลสมาชิกในระบบ
+            // กรณีพนักงานกรอกเบอร์โทรเข้ามาแต่ไม่พบข้อมูลสมาชิกในระบบ และยังไม่ได้ยืนยันข้ามการสะสมแต้ม
+            else if (forceWithoutMember != true)
+            {
+                // แจ้งเตือนกลับไปยังหน้าต่างสะสมแต้มเพื่อให้พนักงานเลือกดำเนินการต่อแบบทั่วไปหรือแก้ไขเบอร์โทร
+                TempData["MemberNotFoundPhone"] = memberPhone.Trim();
+                return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
+            }
+            // กรณีพนักงานยืนยันดำเนินการต่อแบบลูกค้าทั่วไปเมื่อไม่พบเบอร์สมาชิก
             else
             {
-                // บันทึกข้อความแจ้งว่าไม่พบเบอร์สมาชิก และจะดำเนินการต่อแบบลูกค้าทั่วไป
+                // บันทึกข้อความแจ้งว่าไม่พบเบอร์สมาชิก และดำเนินการต่อแบบลูกค้าทั่วไป
                 memberLogMsg = " (ไม่พบเบอร์สมาชิก ดำเนินการต่อแบบลูกค้าทั่วไป)";
             }
         }
+
+        // ปรับเปลี่ยนสถานะใบสั่งจองใน Entity ให้เป็น "Completed"
+        preorder.CurrentStatus = "Completed";
+        // บันทึกวันและเวลาปัจจุบันที่ลูกค้ามารับสินค้าจริง (CompletedAt)
+        preorder.CompletedAt = DateTime.Now;
 
         // สร้างเลขที่ใบเสร็จรับเงินอัตโนมัติขึ้นต้นด้วย RCP ตามด้วยวันเวลาปัจจุบัน
         string receiptNo = "RCP" + DateTime.Now.ToString("yyyyMMddHHmmss");
@@ -719,12 +762,16 @@ public class StaffController : Controller
             cleanSku = "FIG-NARUTO-001";
         }
 
-        // ค้นหาข้อมูลสินค้าในตาราง Products ด้วยรหัส SKU หรือบาร์โค้ด
+        // ค้นหาข้อมูลสินค้าในตาราง Products ด้วยรหัส SKU หรือบาร์โค้ด (รองรับการพิมพ์รหัสแบบไม่ใส่ขีด -)
+        string normalizedSku = cleanSku.Replace("-", "").Replace("#", "").Replace(" ", "").ToLower();
         var product = _db.Products
             // โหลดข้อมูลสต็อกคงคลัง Inventory ร่วมด้วย
             .Include(p => p.Inventory)
-            // เปรียบเทียบรหัส SKU หรือ บาร์โค้ด
-            .FirstOrDefault(p => p.Sku == cleanSku || p.Barcode == cleanSku)
+            .ToList()
+            // เปรียบเทียบรหัส SKU หรือ บาร์โค้ด ทั้งแบบมีขีดและไม่มีขีด
+            .FirstOrDefault(p => p.Sku.Equals(cleanSku, StringComparison.OrdinalIgnoreCase)
+                              || p.Barcode == cleanSku
+                              || (!string.IsNullOrEmpty(normalizedSku) && p.Sku.Replace("-", "").ToLower().Contains(normalizedSku)))
             // หากไม่พบ ให้เลือกสินค้าชิ้นแรกในระบบเป็นตัวอย่าง
             ?? _db.Products.Include(p => p.Inventory).FirstOrDefault();
 

@@ -386,15 +386,17 @@
     }
     function closeExportReceiptsSuccessModal() { document.getElementById('exportReceiptsSuccessModal').classList.add('hidden'); }
 
-    // Combined search and promo filter
+    // กรองรายการใบเสร็จตามคำค้นหาและโปรโมชั่น (รองรับการพิมพ์รหัสโดยไม่ต้องใส่ขีด - หรือ #)
     function applyReceiptFilters() {
         const query = document.getElementById('receiptSearch')?.value.toLowerCase().trim() || '';
+        const queryNoHyphen = query.replace(/[-#\s]/g, '');
         const promo = document.getElementById('promoFilter')?.value.trim() || '';
         const rows = document.querySelectorAll('.receipt-row');
         
         rows.forEach(row => {
             const text = row.innerText.toLowerCase();
-            const matchesQuery = !query || text.includes(query);
+            const textNoHyphen = text.replace(/[-#\s]/g, '');
+            const matchesQuery = !query || text.includes(query) || (queryNoHyphen.length > 0 && textNoHyphen.includes(queryNoHyphen));
             const matchesPromo = !promo || text.includes(promo.toLowerCase());
             row.style.display = (matchesQuery && matchesPromo) ? '' : 'none';
         });

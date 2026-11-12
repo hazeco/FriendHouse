@@ -259,11 +259,15 @@
         }
 
         document.getElementById('stockSearch')?.addEventListener('input', function (e) {
+            // รองรับการค้นหารหัสสินค้าและชื่อสินค้าโดยไม่ต้องพิมพ์เครื่องหมายขีด (-) หรือ #
             const q = e.target.value.toLowerCase().trim();
+            const qNoHyphen = q.replace(/[-#\s]/g, '');
             const rows = document.querySelectorAll('.stock-row');
             rows.forEach(r => {
                 const text = r.innerText.toLowerCase();
-                r.style.display = text.includes(q) ? '' : 'none';
+                const textNoHyphen = text.replace(/[-#\s]/g, '');
+                const matched = !q || text.includes(q) || (qNoHyphen.length > 0 && textNoHyphen.includes(qNoHyphen));
+                r.style.display = matched ? '' : 'none';
             });
         });
 

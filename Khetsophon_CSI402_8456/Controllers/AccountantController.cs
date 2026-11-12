@@ -62,9 +62,16 @@ public class AccountantController : Controller
             .Include(r => r.Customer)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchTerm))
+        // กรองรายการใบเสร็จตามคำค้นหา เลขที่ใบเสร็จ รหัสใบจองพรีออเดอร์ หรือเบอร์โทรศัพท์ลูกค้า (รองรับการพิมพ์แบบไม่ใส่ขีด -)
+        if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            query = query.Where(r => r.ReceiptNo.Contains(searchTerm) || (r.CustomerPhone != null && r.CustomerPhone.Contains(searchTerm)));
+            var term = searchTerm.Trim().ToLower();
+            var termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+            query = query.Where(r =>
+                r.ReceiptNo.ToLower().Contains(term) ||
+                (!string.IsNullOrEmpty(termNoHyphen) && r.ReceiptNo.Replace("-", "").ToLower().Contains(termNoHyphen)) ||
+                (r.BarcodeData != null && (r.BarcodeData.ToLower().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && r.BarcodeData.Replace("-", "").ToLower().Contains(termNoHyphen)))) ||
+                (r.CustomerPhone != null && (r.CustomerPhone.ToLower().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && r.CustomerPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(termNoHyphen)))));
         }
 
         var receipts = query.OrderByDescending(r => r.IssuedAt).ToList();

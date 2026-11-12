@@ -123,16 +123,19 @@ public class HomeController : Controller
         // ขั้นตอนที่ 1: สร้าง Query พื้นฐานจากตาราง Users ในฐานข้อมูล MySQL
         var query = _db.Users.AsQueryable();
 
-        // ขั้นตอนที่ 2: กรองตามคำค้นหา (อีเมล เบอร์โทรศัพท์ ชื่อ-นามสกุล หรือรหัสผู้ใช้)
+        // ขั้นตอนที่ 2: กรองตามคำค้นหา (อีเมล เบอร์โทรศัพท์ ชื่อ-นามสกุล หรือรหัสผู้ใช้ รองรับการพิมพ์แบบไม่ใส่ขีด -)
         if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            // ตัดช่องว่างหัวท้ายของคำค้นหา
-            string term = searchQuery.Trim();
-            // กรองข้อมูลที่ตรงกับคำค้นหา
-            query = query.Where(u => u.Email.Contains(term)
-                || u.Phone.Contains(term)
-                || u.UserCode.Contains(term)
-                || (u.FullName != null && u.FullName.Contains(term)));
+            // ตัดช่องว่างหัวท้ายและสร้างคำค้นหาแบบตัดเครื่องหมายขีด (-) และ # ออก
+            string term = searchQuery.Trim().ToLower();
+            string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+            // กรองข้อมูลที่ตรงกับคำค้นหาทั้งแบบมีขีดและไม่มีขีด
+            query = query.Where(u => u.Email.ToLower().Contains(term)
+                || u.Phone.ToLower().Contains(term)
+                || (!string.IsNullOrEmpty(termNoHyphen) && u.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(termNoHyphen))
+                || u.UserCode.ToLower().Contains(term)
+                || (!string.IsNullOrEmpty(termNoHyphen) && u.UserCode.Replace("-", "").ToLower().Contains(termNoHyphen))
+                || (u.FullName != null && u.FullName.ToLower().Contains(term)));
         }
 
         // ขั้นตอนที่ 3: กรองตามบทบาทผู้ใช้งาน (เช่น customer)
@@ -253,10 +256,10 @@ public class HomeController : Controller
     }
 
     // UPDATE: แก้ไขข้อมูลสมาชิกจากหน้าจัดการรายชื่อผู้ใช้งานผ่านแบบฟอร์ม MVC มาตรฐาน (POST Method)
-    // WHY: รองรับการอัปเดตชื่อ-นามสกุล เบอร์โทรศัพท์ แต้มสะสม บทบาท และสถานะการใช้งานของสมาชิก
+    // WHY: รองรับการอัปเดตชื่อ-นามสกุล อีเมล เบอร์โทรศัพท์ แต้มสะสม บทบาท และสถานะการใช้งานของสมาชิก
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult UpdateCustomerUser(int userId, string? fullName, string phone, string? role, int points, string? status)
+    public IActionResult UpdateCustomerUser(int userId, string? fullName, string? email, string phone, string? role, int points, string? status, bool? isActive)
     {
         // ขั้นตอนที่ 1: ค้นหาข้อมูลสมาชิกในตาราง Users ตามรหัส UserId
         var user = _db.Users.FirstOrDefault(u => u.UserId == userId);
@@ -268,8 +271,12 @@ public class HomeController : Controller
             return RedirectToAction("UserList");
         }
 
-        // ขั้นตอนที่ 2: อัปเดตชื่อ-นามสกุล เบอร์โทรศัพท์ บทบาท แต้มสะสม และสถานะ
+        // ขั้นตอนที่ 2: อัปเดตชื่อ-นามสกุล อีเมล เบอร์โทรศัพท์ บทบาท แต้มสะสม และสถานะ
         user.FullName = string.IsNullOrWhiteSpace(fullName) ? user.FullName : fullName.Trim();
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            user.Email = email.Trim();
+        }
         if (!string.IsNullOrWhiteSpace(phone))
         {
             // อัปเดตเบอร์โทรศัพท์
@@ -282,10 +289,15 @@ public class HomeController : Controller
         }
         // อัปเดตแต้มสะสมโดยไม่ให้น้อยกว่า 0
         user.Points = Math.Max(0, points);
-        if (!string.IsNullOrWhiteSpace(status))
+        if (isActive.HasValue)
         {
-            // อัปเดตสถานะการใช้งานบัญชี
-            user.IsActive = (status == "ปกติ" || status.ToLower() == "active");
+            // อัปเดตสถานะการใช้งานบัญชีจากค่าบูลีน
+            user.IsActive = isActive.Value;
+        }
+        else if (!string.IsNullOrWhiteSpace(status))
+        {
+            // อัปเดตสถานะการใช้งานบัญชีจากข้อความสถานะ
+            user.IsActive = (status == "ปกติ" || status.ToLower() == "active" || status.ToLower() == "true");
         }
 
         // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล MySQL
@@ -525,14 +537,16 @@ public class HomeController : Controller
                     // ขั้นตอนที่ 3: กรองข้อมูลสินค้าตามเงื่อนไขผ่าน LINQ
                     var query = baseQuery.AsQueryable();
 
-                    // เงื่อนไขที่ 1: ค้นหาคำค้นหา searchTerm แบบไม่แยกตัวพิมพ์เล็กใหญ่ ในชื่อสินค้า ซีรีส์ แบรนด์ หรือรหัสสินค้า
+                    // เงื่อนไขที่ 1: ค้นหาคำค้นหา searchTerm แบบไม่แยกตัวพิมพ์เล็กใหญ่ ในชื่อสินค้า ซีรีส์ แบรนด์ หรือรหัสสินค้า (รองรับการพิมพ์รหัสโดยไม่ใส่ขีด -)
                     if (!string.IsNullOrWhiteSpace(viewModel.SearchTerm))
                     {
                         string term = viewModel.SearchTerm.ToLower();
+                        string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
                         query = query.Where(p => p.Name.ToLower().Contains(term)
                             || (p.SeriesName != null && p.SeriesName.ToLower().Contains(term))
                             || (p.BrandName != null && p.BrandName.ToLower().Contains(term))
-                            || (p.Sku != null && p.Sku.ToLower().Contains(term)));
+                            || (p.Sku != null && (p.Sku.ToLower().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && p.Sku.Replace("-", "").ToLower().Contains(termNoHyphen))))
+                            || (p.Barcode != null && !string.IsNullOrEmpty(termNoHyphen) && p.Barcode.Replace("-", "").ToLower().Contains(termNoHyphen)));
                     }
 
                     // เงื่อนไขที่ 2: กรองตามหมวดหมู่สินค้า category
@@ -624,15 +638,16 @@ public class HomeController : Controller
 
             var query = fallbackProducts.AsEnumerable();
 
-            // เงื่อนไขที่ 1: คำค้นหา
+            // เงื่อนไขที่ 1: คำค้นหา (รองรับการค้นหารหัสสินค้าแบบไม่ใส่ขีด -)
             if (!string.IsNullOrWhiteSpace(viewModel.SearchTerm))
             {
                 string term = viewModel.SearchTerm.ToLower();
+                string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
                 query = query.Where(p =>
                     (p.Name != null && p.Name.ToLower().Contains(term)) ||
                     (p.SeriesName != null && p.SeriesName.ToLower().Contains(term)) ||
                     (p.BrandName != null && p.BrandName.ToLower().Contains(term)) ||
-                    (p.Sku != null && p.Sku.ToLower().Contains(term)));
+                    (p.Sku != null && (p.Sku.ToLower().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && p.Sku.Replace("-", "").ToLower().Contains(termNoHyphen)))));
             }
 
             // เงื่อนไขที่ 2: หมวดหมู่
@@ -1032,11 +1047,14 @@ public class HomeController : Controller
         // ขั้นตอนที่ 1: ดึงรายการโปรโมชั่นที่เปิดใช้งานจากฐานข้อมูล
         var query = _db.Promotions.Where(p => p.IsActive == true || p.IsActive == null);
 
-        // ขั้นตอนที่ 2: กรองตามคำค้นหาชื่อโปรโมชั่นหรือรหัสคูปอง
+        // ขั้นตอนที่ 2: กรองตามคำค้นหาชื่อโปรโมชั่นหรือรหัสคูปอง (รองรับการค้นหาแบบไม่ใส่ขีด -)
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            string term = searchTerm.Trim();
-            query = query.Where(p => p.Name.Contains(term) || p.VoucherCode.Contains(term));
+            string term = searchTerm.Trim().ToLower();
+            string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+            query = query.Where(p => p.Name.ToLower().Contains(term)
+                || p.VoucherCode.ToLower().Contains(term)
+                || (!string.IsNullOrEmpty(termNoHyphen) && p.VoucherCode.Replace("-", "").ToLower().Contains(termNoHyphen)));
         }
 
         // ขั้นตอนที่ 3: กรองตามประเภทโปรโมชั่น
@@ -1726,15 +1744,30 @@ public class HomeController : Controller
                 .ToList();
         }
 
-        // กรองตามคำค้นหาหมายเลขใบจองหรือชื่อสินค้า
+        // กรองตามคำค้นหาหมายเลขใบจอง เบอร์โทรศัพท์ หรือชื่อสินค้า (รองรับการค้นหาโดยไม่ต้องพิมพ์ขีด - หรือ # เช่น PO20269187, 20269187, 9187)
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
+            // แปลงคำค้นหาเป็นตัวพิมพ์เล็กและสร้างตัวแปรที่ตัดเครื่องหมายขีด (-) เครื่องหมาย # และช่องว่างออกทั้งหมด
             string term = searchTerm.Trim().ToLower();
+            string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+
             rawPreorders = rawPreorders.Where(p =>
-                p.ReservationNumber.ToLower().Contains(term) ||
-                p.ContactPhone.ToLower().Contains(term) ||
-                p.Preorderitems.Any(pi => pi.Product != null && pi.Product.Name.ToLower().Contains(term))
-            ).ToList();
+            {
+                // เตรียมรหัสใบจองและเบอร์โทรศัพท์แบบตัดเครื่องหมายขีด (-) และ # เพื่อเปรียบเทียบ
+                string resNoLower = (p.ReservationNumber ?? "").ToLower();
+                string resNoNormalized = resNoLower.Replace("-", "").Replace("#", "").Replace(" ", "");
+                string phoneLower = (p.ContactPhone ?? "").ToLower();
+                string phoneNormalized = phoneLower.Replace("-", "").Replace(" ", "");
+
+                return resNoLower.Contains(term)
+                    || (!string.IsNullOrEmpty(termNoHyphen) && resNoNormalized.Contains(termNoHyphen))
+                    || phoneLower.Contains(term)
+                    || (!string.IsNullOrEmpty(termNoHyphen) && phoneNormalized.Contains(termNoHyphen))
+                    || p.Preorderitems.Any(pi => pi.Product != null && (
+                        pi.Product.Name.ToLower().Contains(term) ||
+                        (!string.IsNullOrEmpty(termNoHyphen) && pi.Product.Sku != null && pi.Product.Sku.Replace("-", "").ToLower().Contains(termNoHyphen))
+                    ));
+            }).ToList();
         }
 
         // กรองตามสถานะใบจองพรีออเดอร์
