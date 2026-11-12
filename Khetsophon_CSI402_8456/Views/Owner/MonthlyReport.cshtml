@@ -1,48 +1,33 @@
-@* Form Parameters: [ReportFormat: string (Excel/PDF), PeriodType: string (Monthly/Quarterly), SelectedMonth: string, SelectedQuarter: string, IncludeSales: bool, IncludePreorder: bool, IncludeStockIn: bool] *@
+@model Khetsophon_CSI402_8456.ViewModels.FinancialReportViewModel
 @{
     ViewData["Title"] = "รายงานสรุปยอดประจำเดือน";
     Layout = "_OwnerLayout";
 
-    // Media & Content Configuration (Top of File)
+    // การกำหนดค่าหัวข้อและข้อความแสดงผลทั้งหมดไว้ส่วนบนสุดของไฟล์ โดยใช้ตัวเลขจริงจากฐานข้อมูลชุดเดียวกับฝ่ายบัญชี
     var pageHeader = new {
         Breadcrumb = "รายงาน",
         Title = "รายงานสรุปยอดประจำเดือน",
-        Subtitle = "ภาพรวมรายรับ สต็อกเข้า-ออก และพรีออเดอร์ รายเดือน",
-        SelectedMonth = "สิงหาคม 2569"
+        Subtitle = "ภาพรวมรายรับ สต็อกเข้า-ออก และพรีออเดอร์ รายเดือน (เชื่อมโยงข้อมูลตรงจากฐานข้อมูลร้าน)",
+        SelectedMonth = Model.SelectedMonthLabel
     };
 
     var stats = new {
-        Revenue = "฿268,400",
-        RevenueDelta = "↑ +21.8% จากเดือนก่อน",
-        StockIn = "1,240 ชิ้น",
-        StockInDelta = "↑ +180 ชิ้น",
-        StockOut = "1,065 ชิ้น",
-        StockOutDelta = "↓ -3.2% จากเดือนก่อน",
-        Preorder = "37 ออเดอร์",
-        PreorderDelta = "↑ +6 ออเดอร์"
+        Revenue = "฿" + Model.TotalRevenue.ToString("N0"),
+        RevenueDelta = Model.RevenueDeltaText,
+        StockIn = Model.TotalStockInQty.ToString("N0") + " ชิ้น",
+        StockInDelta = Model.StockInDeltaText,
+        StockOut = Model.TotalStockOutQty.ToString("N0") + " ชิ้น",
+        StockOutDelta = Model.StockOutDeltaText,
+        Preorder = Model.TotalPreorderCount.ToString("N0") + " ออเดอร์",
+        PreorderDelta = Model.PreorderDeltaText
     };
 
-    var monthlyTrends = new[] {
-        new { Month = "มี.ค.", Value = "185K", HeightPct = "69%", IsCurrent = false },
-        new { Month = "เม.ย.", Value = "210K", HeightPct = "78%", IsCurrent = false },
-        new { Month = "พ.ค.", Value = "198K", HeightPct = "74%", IsCurrent = false },
-        new { Month = "มิ.ย.", Value = "235K", HeightPct = "88%", IsCurrent = false },
-        new { Month = "ก.ค.", Value = "220K", HeightPct = "82%", IsCurrent = false },
-        new { Month = "ส.ค.", Value = "268K", HeightPct = "100%", IsCurrent = true }
-    };
-
-    var tableRows = new[] {
-        new { Name = "สมุดปกแข็ง A5", Category = "เครื่องเขียน", InQty = 300, OutQty = 245, Remain = 55, InVal = "฿21,000", OutVal = "฿24,500" },
-        new { Name = "ปากกาเจลสีน้ำเงิน", Category = "เครื่องเขียน", InQty = 500, OutQty = 420, Remain = 80, InVal = "฿15,000", OutVal = "฿16,800" },
-        new { Name = "ตุ๊กตาผ้าไซส์ M", Category = "ของเล่น/ของสะสม", InQty = 150, OutQty = 130, Remain = 20, InVal = "฿45,000", OutVal = "฿52,000" },
-        new { Name = "กระเป๋าผ้าแคนวาส", Category = "ของใช้ทั่วไป", InQty = 120, OutQty = 95, Remain = 25, InVal = "฿18,000", OutVal = "฿19,000" },
-        new { Name = "สติกเกอร์ลายการ์ตูน", Category = "เครื่องเขียน", InQty = 400, OutQty = 380, Remain = 20, InVal = "฿8,000", OutVal = "฿9,500" },
-        new { Name = "แก้วเซรามิกเปรียวกราฟิก", Category = "ของใช้ทั่วไป", InQty = 90, OutQty = 78, Remain = 12, InVal = "฿27,000", OutVal = "฿31,200" }
-    };
+    int startRow = Model.TotalProductRowCount == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int endRow = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalProductRowCount);
 }
 
 <div class="space-y-6">
-    <!-- Breadcrumb, Header & Month Navigator (frame_9_9.png) -->
+    <!-- ส่วนหัวหน้าเพจและตัวเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง -->
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
             <div class="text-xs text-slate-400 font-medium mb-1">@pageHeader.Breadcrumb</div>
@@ -50,24 +35,35 @@
             <p class="text-sm text-slate-500 mt-1">@pageHeader.Subtitle</p>
         </div>
 
-        <!-- Month Navigation & Export Buttons (frame_9_9.png) -->
+        <!-- ปุ่มเลื่อนช่วงเดือนและการส่งออกรายงาน -->
         <div class="flex items-center gap-2">
-            <button type="button" class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer">
+            <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.PrevMonthKey"
+               class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="ช่วงก่อนหน้า">
                 ‹
-            </button>
+            </a>
             <div class="relative">
-                <select class="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-[#050315] shadow-2xs focus:outline-none">
-                    <option>@pageHeader.SelectedMonth</option>
-                    <option>กรกฎาคม 2569</option>
-                    <option>มิถุนายน 2569</option>
+                <select id="headerMonthSelect" onchange="navigateReportMonth(this.value)"
+                        class="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-[#050315] shadow-2xs focus:outline-none cursor-pointer">
+                    @foreach (var m in Model.AvailableMonths)
+                    {
+                        if (m.Key.Equals(Model.SelectedMonthKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <option value="@m.Key" selected>@m.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@m.Key">@m.Label</option>
+                        }
+                    }
                 </select>
                 <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <button type="button" class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer">
+            <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.NextMonthKey"
+               class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="ช่วงถัดไป">
                 ›
-            </button>
+            </a>
             <button type="button" onclick="openExportModal()" class="inline-flex items-center gap-1.5 bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer text-sm ml-1">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16"></path>
@@ -77,7 +73,7 @@
         </div>
     </div>
 
-    <!-- 4 Stat Cards in a row (frame_9_9.png) -->
+    <!-- การ์ดสถิติสรุปยอด 4 รายการจากฐานข้อมูลจริง (ยอดรายได้ตรงกับหน้าภาพรวมการเงินบัญชี) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
             <div class="text-xs text-slate-400 font-medium">ยอดรายได้รวม</div>
@@ -87,21 +83,21 @@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
             <div class="text-xs text-slate-400 font-medium">จำนวนสต็อกที่รับเข้า</div>
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.StockIn</div>
-            <div class="text-xs font-semibold text-[#16A34A] mt-2">@stats.StockInDelta</div>
+            <div class="text-xs font-semibold text-[#2F39A9] mt-2">@stats.StockInDelta</div>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
             <div class="text-xs text-slate-400 font-medium">จำนวนสต็อกที่ขายออก</div>
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.StockOut</div>
-            <div class="text-xs font-semibold text-[#DC2626] mt-2">@stats.StockOutDelta</div>
+            <div class="text-xs font-semibold text-slate-500 mt-2">@stats.StockOutDelta</div>
         </div>
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
-            <div class="text-xs text-slate-400 font-medium">พรีออเดอร์ที่สำเร็จ</div>
+            <div class="text-xs text-slate-400 font-medium">คำสั่งจองพรีออเดอร์</div>
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.Preorder</div>
             <div class="text-xs font-semibold text-[#16A34A] mt-2">@stats.PreorderDelta</div>
         </div>
     </div>
 
-    <!-- 6-Month Trend Bar Chart Card (Exact frame_9_9.png) -->
+    <!-- กราฟแท่งแสดงแนวโน้มรายได้จริงย้อนหลัง 6 เดือนจากฐานข้อมูล -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-6 space-y-4">
         <div class="flex items-center justify-between">
             <h2 class="text-sm font-bold text-[#050315]">แนวโน้มรายได้ 6 เดือนล่าสุด</h2>
@@ -109,32 +105,32 @@
         </div>
 
         <div class="pt-6 pb-2 h-64 flex items-end justify-between gap-4 max-w-4xl mx-auto px-4">
-            @foreach (var bar in monthlyTrends)
+            @foreach (var bar in Model.MonthlyTrends)
             {
-                <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group" title="@bar.MonthShort: ฿@bar.Revenue.ToString("N0")">
                     <span class="text-xs font-semibold @(bar.IsCurrent ? "text-[#2F39A9] font-bold" : "text-slate-400")">
-                        @bar.Value
+                        @bar.RevenueShortLabel
                     </span>
-                    <div class="w-full max-w-[56px] rounded-t-xl transition-all duration-300 @(bar.IsCurrent ? "bg-[#2F39A9] shadow-xs" : "bg-[#BAF2FF]/70 hover:bg-[#BAF2FF]")"
-                         style="height: @bar.HeightPct;">
+                    <div class="w-full max-w-[56px] rounded-t-xl transition-all duration-300 @(bar.IsCurrent ? "bg-[#2F39A9] shadow-xs" : "bg-[#92EEFF]/60 hover:bg-[#92EEFF]")"
+                         style="height: @(bar.RevenueHeightPct)%;">
                     </div>
                     <span class="text-xs font-semibold mt-1 @(bar.IsCurrent ? "text-[#050315] font-bold" : "text-slate-500")">
-                        @bar.Month
+                        @bar.MonthShort
                     </span>
                 </div>
             }
         </div>
     </div>
 
-    <!-- Detailed Stock Movement Table (Exact frame_9_9.png) -->
+    <!-- ตารางรายละเอียดความเคลื่อนไหวสต็อกสินค้าจริงจากฐานข้อมูลพร้อมระบบแบ่งหน้า -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 class="text-sm font-bold text-[#050315]">รายละเอียดสต็อกเข้า-ออก · สิงหาคม 2569</h2>
-            <span class="text-xs text-slate-400">6 รายการ</span>
+            <h2 id="reportTableMonthHeading" class="text-sm font-bold text-[#050315]">รายละเอียดสต็อกเข้า-ออก · @pageHeader.SelectedMonth</h2>
+            <span class="text-xs text-slate-400">@Model.TotalProductRowCount รายการ</span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-sm">
+            <table class="w-full text-sm min-w-[740px]">
                 <thead>
                     <tr class="border-b border-slate-100 text-left text-xs font-semibold text-slate-400 bg-[#FBFBFE]">
                         <th class="py-4 px-6">สินค้า</th>
@@ -147,30 +143,90 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @foreach (var row in tableRows)
+                    @foreach (var row in Model.StockMovementRows)
                     {
                         <tr class="hover:bg-slate-50/70 transition-colors">
-                            <td class="py-3.5 px-6 font-semibold text-[#050315]">@row.Name</td>
-                            <td class="py-3.5 px-6 text-slate-500 text-xs">@row.Category</td>
-                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.InQty</td>
-                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.OutQty</td>
-                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.Remain</td>
-                            <td class="py-3.5 px-6 text-right text-slate-600 font-medium">@row.InVal</td>
-                            <td class="py-3.5 px-6 text-right font-bold text-[#050315]">@row.OutVal</td>
+                            <td class="py-3.5 px-6">
+                                <div class="font-semibold text-[#050315]">@row.ProductName</div>
+                                <div class="text-[11px] font-mono text-slate-400">@row.Sku</div>
+                            </td>
+                            <td class="py-3.5 px-6 text-slate-500 text-xs">@row.CategoryName</td>
+                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.InQty.ToString("N0")</td>
+                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.OutQty.ToString("N0")</td>
+                            <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.RemainQty.ToString("N0")</td>
+                            <td class="py-3.5 px-6 text-right text-slate-600 font-medium">฿@row.InValue.ToString("N0")</td>
+                            <td class="py-3.5 px-6 text-right font-bold text-[#050315]">฿@row.OutValue.ToString("N0")</td>
                         </tr>
                     }
-                    <!-- Total Row (frame_9_9.png) -->
+                    <!-- แถวยอดรวมทั้งหมดของสินค้าทุกชิ้นในฐานข้อมูล -->
                     <tr class="bg-slate-50/80 font-bold text-[#050315]">
-                        <td class="py-4 px-6">รวมทั้งหมด</td>
+                        <td class="py-4 px-6">รวมทั้งหมด (@Model.TotalProductRowCount รายการ)</td>
                         <td class="py-4 px-6"></td>
-                        <td class="py-4 px-6 text-center">1,560</td>
-                        <td class="py-4 px-6 text-center">1,348</td>
-                        <td class="py-4 px-6 text-center">212</td>
-                        <td class="py-4 px-6 text-right">฿134,000</td>
-                        <td class="py-4 px-6 text-right text-base text-[#2F39A9]">฿153,000</td>
+                        <td class="py-4 px-6 text-center">@Model.GrandTotalInQty.ToString("N0")</td>
+                        <td class="py-4 px-6 text-center">@Model.GrandTotalOutQty.ToString("N0")</td>
+                        <td class="py-4 px-6 text-center">@Model.GrandTotalRemainQty.ToString("N0")</td>
+                        <td class="py-4 px-6 text-right">฿@Model.GrandTotalInValue.ToString("N0")</td>
+                        <td class="py-4 px-6 text-right text-base text-[#2F39A9]">฿@Model.GrandTotalOutValue.ToString("N0")</td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- แถบแบ่งหน้าตารางรายงานประจำเดือน -->
+        <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+            <span>แสดง @startRow–@endRow จากทั้งหมด @Model.TotalProductRowCount รายการ</span>
+            <div class="flex items-center gap-1.5">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a asp-controller="Owner" asp-action="MonthlyReport"
+                       asp-route-selectedMonth="@Model.SelectedMonthKey"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium cursor-pointer">
+                        ก่อนหน้า
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
+                        ก่อนหน้า
+                    </span>
+                }
+
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    if (p == Model.CurrentPage)
+                    {
+                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
+                            @p
+                        </span>
+                    }
+                    else
+                    {
+                        <a asp-controller="Owner" asp-action="MonthlyReport"
+                           asp-route-selectedMonth="@Model.SelectedMonthKey"
+                           asp-route-page="@p"
+                           class="size-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium flex items-center justify-center cursor-pointer">
+                            @p
+                        </a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a asp-controller="Owner" asp-action="MonthlyReport"
+                       asp-route-selectedMonth="@Model.SelectedMonthKey"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium cursor-pointer">
+                        ถัดไป
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
+                        ถัดไป
+                    </span>
+                }
+            </div>
         </div>
     </div>
 </div>
@@ -246,10 +302,17 @@
                 <label id="periodSelectLabel" class="text-[13px] font-semibold text-[#050315] block mb-2">เลือกเดือน</label>
                 <div class="relative">
                     <select id="periodSelect" class="w-full appearance-none px-4 py-3 rounded-2xl border border-slate-200 text-sm font-medium text-[#050315] bg-white focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 cursor-pointer pr-10">
-                        <option value="สิงหาคม 2569">สิงหาคม 2569</option>
-                        <option value="กรกฎาคม 2569">กรกฎาคม 2569</option>
-                        <option value="มิถุนายน 2569">มิถุนายน 2569</option>
-                        <option value="พฤษภาคม 2569">พฤษภาคม 2569</option>
+                        @foreach (var m in Model.AvailableMonths)
+                        {
+                            if (m.Key.Equals(Model.SelectedMonthKey, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@m.Key" selected>@m.Label</option>
+                            }
+                            else
+                            {
+                                <option value="@m.Key">@m.Label</option>
+                            }
+                        }
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -353,13 +416,14 @@
 
         <!-- Action Buttons -->
         <div class="space-y-3">
-            <button type="button" onclick="closeExportSuccessModal()"
-                    class="w-full py-3 px-4 rounded-xl bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-[#2F39A9]/20 transition cursor-pointer">
+            <a id="downloadExportFileLink" asp-controller="Owner" asp-action="ExportMonthlyReport" asp-route-selectedMonth="@Model.SelectedMonthKey"
+               onclick="closeExportSuccessModal()"
+               class="w-full py-3 px-4 rounded-xl bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-[#2F39A9]/20 transition cursor-pointer">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
                 <span>ดาวน์โหลดไฟล์ตอนนี้</span>
-            </button>
+            </a>
             <button type="button" onclick="closeExportSuccessModal()"
                     class="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition cursor-pointer">
                 ปิด
@@ -404,43 +468,31 @@
             const tabMonthly = document.getElementById('tabMonthly');
             const tabQuarterly = document.getElementById('tabQuarterly');
             const label = document.getElementById('periodSelectLabel');
-            const select = document.getElementById('periodSelect');
 
             if (type === 'month') {
                 tabMonthly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center bg-white shadow-xs text-[#050315] transition cursor-pointer';
                 tabQuarterly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center text-slate-400 hover:text-slate-700 transition cursor-pointer';
                 label.innerText = 'เลือกเดือน';
-                select.innerHTML = `
-                    <option value="สิงหาคม 2569">สิงหาคม 2569</option>
-                    <option value="กรกฎาคม 2569">กรกฎาคม 2569</option>
-                    <option value="มิถุนายน 2569">มิถุนายน 2569</option>
-                    <option value="พฤษภาคม 2569">พฤษภาคม 2569</option>
-                `;
             } else {
                 tabQuarterly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center bg-white shadow-xs text-[#050315] transition cursor-pointer';
                 tabMonthly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center text-slate-400 hover:text-slate-700 transition cursor-pointer';
-                label.innerText = 'เลือกไตรมาส';
-                select.innerHTML = `
-                    <option value="ไตรมาสที่ 3 ปี 2569">ไตรมาสที่ 3 (ก.ค. - ก.ย. 2569)</option>
-                    <option value="ไตรมาสที่ 2 ปี 2569">ไตรมาสที่ 2 (เม.ย. - มิ.ย. 2569)</option>
-                    <option value="ไตรมาสที่ 1 ปี 2569">ไตรมาสที่ 1 (ม.ค. - มี.ค. 2569)</option>
-                `;
+                label.innerText = 'เลือกช่วงเวลา';
             }
         }
 
         function executeExportReport() {
-            const periodVal = document.getElementById('periodSelect').value;
-            const ext = currentFormat === 'Excel' ? '.xlsx' : '.pdf';
-            let fileName = '';
-
-            if (currentPeriodType === 'quarter') {
-                fileName = `Sales_Report_Q3_2569${ext}`;
-            } else {
-                fileName = `Sales_Report_Aug_2569${ext}`;
-            }
+            const select = document.getElementById('periodSelect');
+            const periodKey = select ? select.value : '@Model.SelectedMonthKey';
+            const periodLabel = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : '@Model.SelectedMonthLabel';
+            const ext = currentFormat === 'Excel' ? '.csv' : '.pdf';
+            const fileName = `FriendHouse_Report_${periodKey}${ext}`;
 
             document.getElementById('successFileName').innerText = fileName;
-            document.getElementById('successPeriod').innerText = periodVal;
+            document.getElementById('successPeriod').innerText = periodLabel;
+            const downloadLink = document.getElementById('downloadExportFileLink');
+            if (downloadLink) {
+                downloadLink.href = '/Owner/ExportMonthlyReport?selectedMonth=' + encodeURIComponent(periodKey);
+            }
 
             if (currentFormat === 'Excel') {
                 document.getElementById('fileIconExcel').classList.remove('hidden');
@@ -456,6 +508,12 @@
 
         function closeExportSuccessModal() {
             document.getElementById('exportSuccessModal')?.classList.add('hidden');
+        }
+
+        // ฟังก์ชันนำทางเมื่อเลือกช่วงเดือนจากรายการเลือกเพื่อดึงข้อมูลใหม่จากฐานข้อมูลจริง
+        function navigateReportMonth(monthKey) {
+            if (!monthKey) return;
+            window.location.href = '/Owner/MonthlyReport?selectedMonth=' + encodeURIComponent(monthKey);
         }
     </script>
 }

@@ -1,0 +1,1172 @@
+@model Khetsophon_CSI402_8456.ViewModels.OwnerCatalogViewModel
+@{
+    ViewData["Title"] = "จัดการสินค้าและของรางวัล";
+    Layout = "_OwnerLayout";
+
+    // การกำหนดค่าสื่อ รูปภาพ ไอคอน และข้อความสำคัญทั้งหมดไว้ส่วนบนสุดของไฟล์ตามมาตรฐาน
+    var pageConfig = new
+    {
+        Breadcrumb = "เจ้าของร้าน / สินค้าและของรางวัล",
+        Title = "จัดการสินค้าและของแลกแต้ม",
+        Subtitle = "เพิ่ม แก้ไข หรือลบรายการสินค้าในร้าน และกำหนดสิทธิ์เลือกว่าสินค้าใดใช้สำหรับขายหรือแลกแต้มสะสม",
+        FallbackImage = "/media/images/tanjiro_kamado.png",
+        AddProductBtn = "เพิ่มสินค้าใหม่",
+        AddRewardBtn = "เพิ่มของแลกแต้มใหม่",
+        ProductTabLabel = "สินค้าวางขายและพรีออเดอร์",
+        RewardTabLabel = "ของแลกแต้มสมาชิก",
+        Icons = new
+        {
+            Plus = "M12 4v16m8-8H4",
+            Search = "M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z",
+            Edit = "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z",
+            Trash = "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+            Gift = "M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z",
+            Box = "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z",
+            Close = "M18 6L6 18M6 6l12 12"
+        }
+    };
+
+    bool isProductsTab = Model.ActiveTab != "rewards";
+    int startRow = Model.TotalCount == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+    int endRow = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount);
+}
+
+<div class="space-y-6">
+    <!-- ส่วนหัวหน้าเพจและปุ่มเพิ่มรายการใหม่ -->
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <div class="text-xs text-slate-400 font-medium mb-1">@pageConfig.Breadcrumb</div>
+            <h1 class="text-2xl font-bold text-[#050315]">@pageConfig.Title</h1>
+            <p class="text-sm text-slate-500 mt-1">@pageConfig.Subtitle</p>
+        </div>
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <button type="button" onclick="openCreateRewardModal()"
+                    class="inline-flex items-center gap-2 rounded-xl border border-[#2F39A9]/25 bg-white hover:bg-[#92EEFF]/20 text-[#2F39A9] font-bold px-4 py-2.5 text-sm shadow-2xs transition cursor-pointer">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="@pageConfig.Icons.Gift"></path>
+                </svg>
+                <span>@pageConfig.AddRewardBtn</span>
+            </button>
+            <button type="button" onclick="openCreateProductModal()"
+                    class="inline-flex items-center gap-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white font-bold px-5 py-2.5 text-sm shadow-xs transition cursor-pointer">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="@pageConfig.Icons.Plus"></path>
+                </svg>
+                <span>@pageConfig.AddProductBtn</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แถบการ์ดสรุปข้อมูลสินค้าและของแลกแต้มทั้งร้าน -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            <div class="text-xs text-slate-400 font-medium">สินค้าในฐานข้อมูลทั้งหมด</div>
+            <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@Model.TotalProducts</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            <div class="text-xs text-slate-400 font-medium">เปิดวางขายหน้าร้าน</div>
+            <div class="text-3xl font-extrabold text-[#2F39A9] mt-1.5">@Model.ActiveSaleProducts</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            <div class="text-xs text-slate-400 font-medium">รายการเปิดรับพรีออเดอร์</div>
+            <div class="text-3xl font-extrabold text-[#3027FF] mt-1.5">@Model.PreorderProducts</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            <div class="text-xs text-slate-400 font-medium">ของแลกแต้มที่เปิดใช้งาน</div>
+            <div class="text-3xl font-extrabold text-emerald-600 mt-1.5">@Model.ActiveRewards <span class="text-sm font-medium text-slate-400">/ @Model.TotalRewards</span></div>
+        </div>
+    </div>
+
+    <!-- กล่องแจ้งเตือนสถานะผลการดำเนินการ -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 flex items-center gap-3 text-xs text-emerald-800 shadow-xs">
+            <svg class="size-5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span class="font-bold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-xs text-rose-700 shadow-xs">
+            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <!-- แถบสลับแท็บระหว่างรายการสินค้าขาย กับ รายการของแลกแต้ม -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="inline-flex rounded-2xl bg-slate-100 p-1 self-start">
+            <a asp-controller="Owner" asp-action="Catalog" asp-route-tab="products"
+               class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition @(isProductsTab ? "bg-white text-[#2F39A9] shadow-xs" : "text-slate-500 hover:text-[#050315]")">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Box"></path>
+                </svg>
+                <span>@pageConfig.ProductTabLabel (@Model.TotalProducts)</span>
+            </a>
+            <a asp-controller="Owner" asp-action="Catalog" asp-route-tab="rewards"
+               class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition @(!isProductsTab ? "bg-white text-[#2F39A9] shadow-xs" : "text-slate-500 hover:text-[#050315]")">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Gift"></path>
+                </svg>
+                <span>@pageConfig.RewardTabLabel (@Model.TotalRewards)</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- แถบค้นหาและตัวกรองข้อมูลตามแท็บที่เลือก (ส่งค่าผ่านฟอร์ม MVC มาตรฐานโดยไม่ระบุ method) -->
+    <form asp-controller="Owner" asp-action="Catalog" class="bg-white rounded-2xl border border-slate-100 shadow-xs p-4">
+        <input type="hidden" name="tab" value="@Model.ActiveTab" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+            <div class="lg:col-span-5 relative">
+                <svg class="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Search"></path>
+                </svg>
+                <input type="text" name="searchQuery" value="@Model.SearchQuery"
+                       placeholder="@(isProductsTab ? "ค้นหาชื่อสินค้า รหัสสินค้า บาร์โค้ด หรือซีรีส์..." : "ค้นหาชื่อของรางวัล รหัสของรางวัล หรือหมวดหมู่...")"
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#050315] focus:outline-none focus:border-[#2F39A9]" />
+            </div>
+
+            @if (isProductsTab)
+            {
+                <div class="lg:col-span-3">
+                    <select name="categoryFilter" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                        <option value="all">ทุกหมวดหมู่สินค้า</option>
+                        @foreach (var cat in Model.AllCategories)
+                        {
+                            if (Model.CategoryFilter == cat.CategoryId.ToString())
+                            {
+                                <option value="@cat.CategoryId" selected>@cat.CategoryName</option>
+                            }
+                            else
+                            {
+                                <option value="@cat.CategoryId">@cat.CategoryName</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="lg:col-span-2">
+                    <select name="saleModeFilter" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                        <option value="all" selected="@(Model.SaleModeFilter == "all" ? "selected" : null)">ทุกรูปแบบการขาย</option>
+                        <option value="sale" selected="@(Model.SaleModeFilter == "sale" ? "selected" : null)">พร้อมส่งปกติ</option>
+                        <option value="preorder" selected="@(Model.SaleModeFilter == "preorder" ? "selected" : null)">เปิดพรีออเดอร์</option>
+                        <option value="hidden" selected="@(Model.SaleModeFilter == "hidden" ? "selected" : null)">ซ่อนจากหน้าขาย</option>
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="lg:col-span-5">
+                    <select name="saleModeFilter" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs sm:text-sm text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                        <option value="all" selected="@(Model.SaleModeFilter == "all" ? "selected" : null)">ทุกสถานะของแลกแต้ม</option>
+                        <option value="available" selected="@(Model.SaleModeFilter == "available" ? "selected" : null)">เปิดให้แลกและมีคงเหลือ</option>
+                        <option value="unavailable" selected="@(Model.SaleModeFilter == "unavailable" ? "selected" : null)">ปิดให้แลกชั่วคราว</option>
+                        <option value="outofstock" selected="@(Model.SaleModeFilter == "outofstock" ? "selected" : null)">สิทธิ์แลกหมดสต็อก</option>
+                    </select>
+                </div>
+            }
+
+            <div class="lg:col-span-2 flex items-center gap-2">
+                <button type="submit" class="flex-1 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-xs sm:text-sm font-bold py-2.5 px-4 transition cursor-pointer">
+                    ค้นหา
+                </button>
+                @if (!string.IsNullOrWhiteSpace(Model.SearchQuery) || Model.CategoryFilter != "all" || Model.SaleModeFilter != "all")
+                {
+                    <a asp-controller="Owner" asp-action="Catalog" asp-route-tab="@Model.ActiveTab"
+                       class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-semibold py-2.5 px-3">
+                        ล้างค่า
+                    </a>
+                }
+            </div>
+        </div>
+    </form>
+
+    <!-- ตารางแสดงข้อมูลตามแท็บที่เลือก -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
+        @if (isProductsTab)
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-[920px]">
+                    <thead>
+                        <tr class="border-b border-slate-100 text-left text-xs font-semibold text-slate-400 bg-[#FBFBFE]">
+                            <th class="py-4 px-5">สินค้า</th>
+                            <th class="py-4 px-4">หมวดหมู่ / ซีรีส์</th>
+                            <th class="py-4 px-4 text-right">ราคาขาย</th>
+                            <th class="py-4 px-4 text-center">คงเหลือ</th>
+                            <th class="py-4 px-4 text-center">บทบาทในร้าน</th>
+                            <th class="py-4 px-5 text-right">จัดการและตั้งเป็นของแลก</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.Products.Any())
+                        {
+                            @foreach (var p in Model.Products)
+                            {
+                                var stockQty = p.Inventory?.QuantityOnHand ?? 0;
+                                var safetyQty = p.Inventory?.SafetyStockLevel ?? 5;
+                                var storageLoc = p.Inventory?.StorageLocation ?? "โซน A-01";
+                                bool isSaleActive = p.IsActive == true;
+                                bool hasLinkedReward = Model.LinkedRewardTitles.Contains(p.Name);
+
+                                <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="py-3.5 px-5">
+                                        <div class="flex items-center gap-3">
+                                            <img src="@Url.Content(string.IsNullOrEmpty(p.ImageUrl) ? pageConfig.FallbackImage : p.ImageUrl)"
+                                                 alt="@p.Name" class="size-12 rounded-xl object-cover border border-slate-100 bg-slate-50 shrink-0" />
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-[#050315] text-sm truncate max-w-[260px]">@p.Name</div>
+                                                <div class="text-xs font-mono text-slate-400 mt-0.5">@p.Sku</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <div class="text-xs font-semibold text-[#050315]">@(p.Category?.CategoryName ?? "ทั่วไป")</div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">@(p.SeriesName ?? "-") · @(p.BrandName ?? "-")</div>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-right">
+                                        <div class="font-bold text-[#2F39A9]">฿@p.RetailPrice.ToString("N0")</div>
+                                        @if (p.PreorderPrice.HasValue && p.IsPreorder)
+                                        {
+                                            <div class="text-[11px] text-slate-400">จองล่วงหน้า ฿@p.PreorderPrice.Value.ToString("N0")</div>
+                                        }
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
+                                        <span class="font-bold text-sm @(stockQty <= 0 ? "text-rose-600" : stockQty <= safetyQty ? "text-amber-600" : "text-[#050315]")">
+                                            @stockQty ชิ้น
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
+                                        <div class="flex flex-col items-center gap-1">
+                                            @if (isSaleActive)
+                                            {
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold @(p.IsPreorder ? "bg-indigo-50 text-[#3027FF]" : "bg-emerald-50 text-emerald-700")">
+                                                    @(p.IsPreorder ? "เปิดพรีออเดอร์" : "วางขายหน้าร้าน")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-500">
+                                                    ซ่อนจากหน้าขาย
+                                                </span>
+                                            }
+                                            @if (hasLinkedReward)
+                                            {
+                                                <span class="inline-flex items-center rounded-full bg-[#92EEFF]/35 px-2.5 py-0.5 text-[10px] font-bold text-[#2F39A9]">
+                                                    มีในรายการแลกแต้ม
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-5 text-right">
+                                        <div class="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                                            <!-- ฟอร์มสลับเปิด/ปิดการวางขาย -->
+                                            <form asp-controller="Owner" asp-action="ToggleProductSaleStatus" class="inline">
+                                                <input type="hidden" name="productId" value="@p.ProductId" />
+                                                <input type="hidden" name="mode" value="active" />
+                                                <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                                <button type="submit"
+                                                        class="rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer @(isSaleActive ? "border-amber-200 bg-amber-50/70 text-amber-700 hover:bg-amber-100" : "border-emerald-200 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100")">
+                                                    @(isSaleActive ? "ซ่อนขาย" : "เปิดขาย")
+                                                </button>
+                                            </form>
+
+                                            <!-- ปุ่มกำหนดสินค้ารายการนี้เป็นของแลกแต้ม -->
+                                            <button type="button"
+                                                    onclick="openConvertRewardModal(this)"
+                                                    data-id="@p.ProductId"
+                                                    data-name="@p.Name"
+                                                    data-sku="@p.Sku"
+                                                    data-price="@p.RetailPrice"
+                                                    data-stock="@stockQty"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-[#2F39A9]/25 bg-[#92EEFF]/20 hover:bg-[#92EEFF]/40 px-2.5 py-1.5 text-xs font-bold text-[#2F39A9] transition cursor-pointer">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="@pageConfig.Icons.Gift"></path>
+                                                </svg>
+                                                <span>ตั้งเป็นของแลก</span>
+                                            </button>
+
+                                            <!-- ปุ่มแก้ไขข้อมูลสินค้า -->
+                                            <button type="button"
+                                                    onclick="openEditProductModal(this)"
+                                                    data-id="@p.ProductId"
+                                                    data-sku="@p.Sku"
+                                                    data-barcode="@(p.Barcode ?? p.Sku)"
+                                                    data-name="@p.Name"
+                                                    data-category="@p.CategoryId"
+                                                    data-series="@(p.SeriesName ?? "")"
+                                                    data-brand="@(p.BrandName ?? "")"
+                                                    data-scale="@(p.Scale ?? "")"
+                                                    data-height="@(p.HeightCm?.ToString() ?? "")"
+                                                    data-material="@(p.Material ?? "")"
+                                                    data-retail="@p.RetailPrice"
+                                                    data-preorder="@(p.PreorderPrice?.ToString() ?? "")"
+                                                    data-arrival="@(p.ExpectedArrival ?? "")"
+                                                    data-ispreorder="@(p.IsPreorder ? "true" : "false")"
+                                                    data-isactive="@(isSaleActive ? "true" : "false")"
+                                                    data-stock="@stockQty"
+                                                    data-safety="@safetyQty"
+                                                    data-location="@storageLoc"
+                                                    data-image="@p.ImageUrl"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-[#2F39A9] hover:text-[#2F39A9] px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="@pageConfig.Icons.Edit"></path>
+                                                </svg>
+                                                <span>แก้ไข</span>
+                                            </button>
+
+                                            <!-- ปุ่มลบสินค้า -->
+                                            <button type="button"
+                                                    onclick="openDeleteProductModal(@p.ProductId, '@p.Name.Replace("'", "\\'")', '@p.Sku')"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 hover:bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition cursor-pointer">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="@pageConfig.Icons.Trash"></path>
+                                                </svg>
+                                                <span>ลบ</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-xs text-slate-400">
+                                    ไม่พบรายการสินค้าที่ตรงกับเงื่อนไขการค้นหา
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <!-- ตารางรายการของแลกแต้มสะสมสำหรับสมาชิก -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-[820px]">
+                    <thead>
+                        <tr class="border-b border-slate-100 text-left text-xs font-semibold text-slate-400 bg-[#FBFBFE]">
+                            <th class="py-4 px-5">ของรางวัลแลกแต้ม</th>
+                            <th class="py-4 px-4">หมวดหมู่ / แบรนด์</th>
+                            <th class="py-4 px-4 text-right">แต้มที่ใช้แลก</th>
+                            <th class="py-4 px-4 text-center">จำนวนคงเหลือ</th>
+                            <th class="py-4 px-4 text-center">สถานะแลกแต้ม</th>
+                            <th class="py-4 px-5 text-right">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @if (Model.Rewards.Any())
+                        {
+                            @foreach (var r in Model.Rewards)
+                            {
+                                bool isAvail = r.IsAvailable == true;
+                                <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <td class="py-3.5 px-5">
+                                        <div class="flex items-center gap-3">
+                                            <img src="@Url.Content(string.IsNullOrEmpty(r.ImageUrl) ? pageConfig.FallbackImage : r.ImageUrl)"
+                                                 alt="@r.Title" class="size-12 rounded-xl object-cover border border-slate-100 bg-slate-50 shrink-0" />
+                                            <div class="min-w-0">
+                                                <div class="font-bold text-[#050315] text-sm truncate max-w-[260px]">@r.Title</div>
+                                                <div class="text-xs font-mono text-slate-400 mt-0.5">@r.RewardCode</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3.5 px-4">
+                                        <div class="text-xs font-semibold text-[#050315]">@r.CategoryTag</div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5">@(r.Brand ?? "FriendHouse")</div>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-right font-extrabold text-[#2F39A9]">
+                                        @r.PointsRequired.ToString("N0") แต้ม
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
+                                        <span class="font-bold text-sm @(r.StockQuantity <= 0 ? "text-rose-600" : "text-[#050315]")">
+                                            @r.StockQuantity ชิ้น
+                                        </span>
+                                    </td>
+                                    <td class="py-3.5 px-4 text-center">
+                                        @if (isAvail)
+                                        {
+                                            <span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                                                เปิดให้แลกแต้ม
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500">
+                                                ปิดแลกชั่วคราว
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="py-3.5 px-5 text-right">
+                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                            <!-- ฟอร์มเปิด/ปิดสิทธิ์แลกของรางวัล -->
+                                            <form asp-controller="Owner" asp-action="ToggleRewardAvailability" class="inline">
+                                                <input type="hidden" name="rewardId" value="@r.RewardId" />
+                                                <input type="hidden" name="page" value="@Model.CurrentPage" />
+                                                <button type="submit"
+                                                        class="rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition cursor-pointer @(isAvail ? "border-amber-200 bg-amber-50/70 text-amber-700 hover:bg-amber-100" : "border-emerald-200 bg-emerald-50/70 text-emerald-700 hover:bg-emerald-100")">
+                                                    @(isAvail ? "ปิดแลก" : "เปิดแลก")
+                                                </button>
+                                            </form>
+
+                                            <!-- ปุ่มแก้ไขของแลกแต้ม -->
+                                            <button type="button"
+                                                    onclick="openEditRewardModal(this)"
+                                                    data-id="@r.RewardId"
+                                                    data-code="@r.RewardCode"
+                                                    data-title="@r.Title"
+                                                    data-brand="@(r.Brand ?? "")"
+                                                    data-tag="@r.CategoryTag"
+                                                    data-points="@r.PointsRequired"
+                                                    data-stock="@r.StockQuantity"
+                                                    data-available="@(isAvail ? "true" : "false")"
+                                                    data-image="@r.ImageUrl"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white hover:border-[#2F39A9] hover:text-[#2F39A9] px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition cursor-pointer">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="@pageConfig.Icons.Edit"></path>
+                                                </svg>
+                                                <span>แก้ไข</span>
+                                            </button>
+
+                                            <!-- ปุ่มลบของแลกแต้ม -->
+                                            <button type="button"
+                                                    onclick="openDeleteRewardModal(@r.RewardId, '@r.Title.Replace("'", "\\'")', '@r.RewardCode')"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 hover:bg-rose-100 px-2.5 py-1.5 text-xs font-semibold text-rose-700 transition cursor-pointer">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="@pageConfig.Icons.Trash"></path>
+                                                </svg>
+                                                <span>ลบ</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="py-12 text-center text-xs text-slate-400">
+                                    ไม่พบรายการของแลกแต้มในระบบ
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- แถบแบ่งหน้าตารางเจ้าของร้าน เชื่อมโยงกับ OwnerController.Catalog -->
+        <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+            <span>แสดง @startRow–@endRow จากทั้งหมด @Model.TotalCount รายการ</span>
+            <div class="flex items-center gap-1.5">
+                @if (Model.CurrentPage > 1)
+                {
+                    <a asp-controller="Owner" asp-action="Catalog"
+                       asp-route-tab="@Model.ActiveTab"
+                       asp-route-searchQuery="@Model.SearchQuery"
+                       asp-route-categoryFilter="@Model.CategoryFilter"
+                       asp-route-saleModeFilter="@Model.SaleModeFilter"
+                       asp-route-page="@(Model.CurrentPage - 1)"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium cursor-pointer">
+                        ก่อนหน้า
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
+                        ก่อนหน้า
+                    </span>
+                }
+
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    if (p == Model.CurrentPage)
+                    {
+                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
+                            @p
+                        </span>
+                    }
+                    else
+                    {
+                        <a asp-controller="Owner" asp-action="Catalog"
+                           asp-route-tab="@Model.ActiveTab"
+                           asp-route-searchQuery="@Model.SearchQuery"
+                           asp-route-categoryFilter="@Model.CategoryFilter"
+                           asp-route-saleModeFilter="@Model.SaleModeFilter"
+                           asp-route-page="@p"
+                           class="size-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium flex items-center justify-center cursor-pointer">
+                            @p
+                        </a>
+                    }
+                }
+
+                @if (Model.CurrentPage < Model.TotalPages)
+                {
+                    <a asp-controller="Owner" asp-action="Catalog"
+                       asp-route-tab="@Model.ActiveTab"
+                       asp-route-searchQuery="@Model.SearchQuery"
+                       asp-route-categoryFilter="@Model.CategoryFilter"
+                       asp-route-saleModeFilter="@Model.SaleModeFilter"
+                       asp-route-page="@(Model.CurrentPage + 1)"
+                       class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-medium cursor-pointer">
+                        ถัดไป
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
+                        ถัดไป
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== หน้าต่างป๊อปอัปจัดการสินค้าและของแลกแต้ม ==================== -->
+
+<!-- 1. หน้าต่างเพิ่มสินค้าใหม่ -->
+<div id="createProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-[#050315]">เพิ่มสินค้าใหม่เข้าฐานข้อมูลร้าน</h2>
+                <p class="text-xs text-slate-500 mt-0.5">กรอกรายละเอียดสินค้า ราคา และสต็อกเริ่มต้น พร้อมเลือกเปิดให้แลกแต้มได้ทันที</p>
+            </div>
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Close"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Owner" asp-action="CreateProduct" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสสินค้า *</label>
+                    <input type="text" name="sku" required placeholder="เช่น FIG-NARUTO-999"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสบาร์โค้ด</label>
+                    <input type="text" name="barcode" placeholder="เว้นว่างเพื่อใช้รหัสเดียวกับรหัสสินค้า"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-[#050315] block mb-1">ชื่อสินค้า *</label>
+                <input type="text" name="name" required placeholder="ระบุชื่อฟิกเกอร์หรือโมเดลภาษาไทย"
+                       class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หมวดหมู่ *</label>
+                    <select name="categoryId" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var cat in Model.AllCategories)
+                        {
+                            <option value="@cat.CategoryId">@cat.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ซีรีส์อนิเมะ</label>
+                    <input type="text" name="seriesName" placeholder="เช่น ดาบพิฆาตอสูร"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ค่ายผู้ผลิต</label>
+                    <input type="text" name="brandName" placeholder="เช่น Good Smile Company"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ราคาปกติ *</label>
+                    <input type="number" name="retailPrice" required min="0" step="1" value="1890"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ราคาพรีออเดอร์</label>
+                    <input type="number" name="preorderPrice" min="0" step="1" placeholder="ระบุเมื่อเปิดจอง"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">สต็อกเริ่มต้น</label>
+                    <input type="number" name="initialStock" min="0" value="10"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จุดแจ้งเตือนขั้นต่ำ</label>
+                    <input type="number" name="safetyStockLevel" min="1" value="5"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">สเกลโมเดล</label>
+                    <input type="text" name="scale" value="1/7" placeholder="เช่น 1/7 หรือ ไม่มีสเกล"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">วัสดุหลัก</label>
+                    <input type="text" name="material" value="PVC / ABS"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">กำหนดการสินค้าเข้า</label>
+                    <input type="text" name="expectedArrival" placeholder="เช่น ธันวาคม 2569"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">เลือกรูปภาพจากคลังสื่อของร้าน</label>
+                    <select name="imageUrl" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var img in Model.AvailableImages)
+                        {
+                            <option value="@img">@System.IO.Path.GetFileName(img)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หรืออัปโหลดรูปภาพใหม่จากเครื่อง</label>
+                    <input type="file" name="imageFile" accept="image/*"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-[#2F39A9]/10 file:px-3 file:py-1 file:text-xs file:font-bold file:text-[#2F39A9]" />
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-[#FBFBFE] border border-slate-200 p-4 space-y-3">
+                <div class="text-xs font-bold text-[#050315]">กำหนดรูปแบบการแสดงผลในร้าน</div>
+                <div class="flex flex-wrap items-center gap-5 text-xs">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="isActive" value="true" checked class="size-4 accent-[#2F39A9]" />
+                        <span class="font-semibold text-[#050315]">เปิดวางขายหน้าร้านทันที</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="isPreorder" value="true" class="size-4 accent-[#3027FF]" />
+                        <span class="font-semibold text-[#050315]">เปิดรับสั่งจองล่วงหน้า</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="alsoAsReward" value="true" onchange="toggleCreateRewardFields(this.checked)" class="size-4 accent-[#2F39A9]" />
+                        <span class="font-bold text-[#2F39A9]">เปิดใช้เป็นของแลกแต้มด้วย</span>
+                    </label>
+                </div>
+                <div id="createAlsoRewardFields" class="hidden grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                    <div>
+                        <label class="text-[11px] font-bold text-[#2F39A9] block mb-1">แต้มที่ใช้แลก</label>
+                        <input type="number" name="rewardPointsRequired" value="1800" min="50"
+                               class="w-full rounded-xl border border-[#2F39A9]/30 px-3 py-1.5 text-xs font-bold" />
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-[#2F39A9] block mb-1">โควตาจำนวนของแลกแต้ม</label>
+                        <input type="number" name="rewardStockQuantity" value="5" min="1"
+                               class="w-full rounded-xl border border-[#2F39A9]/30 px-3 py-1.5 text-xs font-bold" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2 text-xs font-bold text-white shadow-xs cursor-pointer">
+                    บันทึกสินค้าใหม่
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. หน้าต่างแก้ไขข้อมูลสินค้า -->
+<div id="editProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-[#050315]">แก้ไขข้อมูลสินค้า</h2>
+                <p class="text-xs text-slate-500 mt-0.5">ปรับปรุงรายละเอียด ราคา สต็อกคงเหลือ และรูปภาพของสินค้าในฐานข้อมูล</p>
+            </div>
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Close"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Owner" asp-action="EditProduct" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="productId" id="editProdId" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสสินค้า *</label>
+                    <input type="text" name="sku" id="editProdSku" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสบาร์โค้ด</label>
+                    <input type="text" name="barcode" id="editProdBarcode" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-[#050315] block mb-1">ชื่อสินค้า *</label>
+                <input type="text" name="name" id="editProdName" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หมวดหมู่</label>
+                    <select name="categoryId" id="editProdCategory" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var cat in Model.AllCategories)
+                        {
+                            <option value="@cat.CategoryId">@cat.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ซีรีส์อนิเมะ</label>
+                    <input type="text" name="seriesName" id="editProdSeries" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ค่ายผู้ผลิต</label>
+                    <input type="text" name="brandName" id="editProdBrand" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ราคาปกติ *</label>
+                    <input type="number" name="retailPrice" id="editProdRetail" required min="0" step="1" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">ราคาพรีออเดอร์</label>
+                    <input type="number" name="preorderPrice" id="editProdPreorder" min="0" step="1" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จำนวนสต็อกคงคลัง</label>
+                    <input type="number" name="quantityOnHand" id="editProdStock" min="0" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จุดแจ้งเตือนขั้นต่ำ</label>
+                    <input type="number" name="safetyStockLevel" id="editProdSafety" min="1" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">เส้นทางรูปภาพ</label>
+                    <select name="imageUrl" id="editProdImage" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var img in Model.AvailableImages)
+                        {
+                            <option value="@img">@System.IO.Path.GetFileName(img)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">อัปโหลดรูปภาพใหม่แทนที่เดิม</label>
+                    <input type="file" name="imageFile" accept="image/*"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-[#2F39A9]/10 file:px-3 file:py-1 file:text-xs file:font-bold file:text-[#2F39A9]" />
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-5 text-xs pt-1">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="isActive" id="editProdActive" value="true" class="size-4 accent-[#2F39A9]" />
+                    <span class="font-semibold text-[#050315]">เปิดวางขายหน้าร้าน</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="isPreorder" id="editProdIsPreorder" value="true" class="size-4 accent-[#3027FF]" />
+                    <span class="font-semibold text-[#050315]">เปิดรับสั่งจองล่วงหน้า</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2 text-xs font-bold text-white shadow-xs cursor-pointer">
+                    บันทึกการแก้ไขสินค้า
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. หน้าต่างกำหนดสินค้าให้เป็นของแลกแต้ม (ของขาย หรือ ของไว้แลกแต้ม) -->
+<div id="convertRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-base font-bold text-[#050315]">กำหนดเป็นของแลกแต้มสะสม</h2>
+                <p id="convertProdLabel" class="text-xs text-[#2F39A9] font-semibold mt-0.5"></p>
+            </div>
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Close"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Owner" asp-action="ConvertProductToReward" class="space-y-4">
+            <input type="hidden" name="productId" id="convertProdId" />
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">แต้มที่ใช้แลก *</label>
+                    <input type="number" name="pointsRequired" id="convertPoints" value="1500" min="50" required
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-bold text-[#2F39A9] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จำนวนสิทธิ์ให้แลก *</label>
+                    <input type="number" name="rewardStock" id="convertStock" value="5" min="1" required
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm font-bold text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-[#92EEFF]/20 border border-[#92EEFF] p-3.5 space-y-2 text-xs">
+                <div class="font-bold text-[#050315]">เลือกรูปแบบการจำหน่ายสินค้าชิ้นนี้</div>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="radio" name="hideFromSale" value="false" checked class="mt-0.5 accent-[#2F39A9]" />
+                    <span><strong class="text-[#050315]">เปิดทั้งขายและแลกแต้ม:</strong> ลูกค้ายังสามารถซื้อด้วยเงินปกติได้ และใช้แต้มแลกได้ด้วย</span>
+                </label>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="radio" name="hideFromSale" value="true" class="mt-0.5 accent-[#2F39A9]" />
+                    <span><strong class="text-[#050315]">เฉพาะไว้แลกแต้มเท่านั้น:</strong> ซ่อนสินค้าชิ้นนี้ออกจากหน้าขายปกติทันที</span>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2 text-xs font-bold text-white shadow-xs cursor-pointer">
+                    ยืนยันกำหนดเป็นของแลกแต้ม
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. หน้าต่างยืนยันการลบสินค้า -->
+<div id="deleteProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 space-y-4">
+        <h3 class="text-lg font-bold text-rose-600">ยืนยันการลบสินค้า</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+            ต้องการลบสินค้า <span id="deleteProdName" class="font-bold text-[#050315]"></span> (<span id="deleteProdSku" class="font-mono"></span>) ออกจากร้านหรือไม่ หากสินค้านี้เคยมีคำสั่งซื้อหรือใบเสร็จ ระบบจะปรับเป็นซ่อนการขายแทนเพื่อรักษาประวัติข้อมูล
+        </p>
+        <form asp-controller="Owner" asp-action="DeleteProduct" class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <input type="hidden" name="productId" id="deleteProdId" />
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="submit" class="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 text-xs font-bold text-white cursor-pointer">
+                ยืนยันการลบสินค้า
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 5. หน้าต่างเพิ่มของแลกแต้มใหม่ -->
+<div id="createRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <h2 class="text-lg font-bold text-[#050315]">เพิ่มของแลกแต้มใหม่</h2>
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Close"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Owner" asp-action="CreateReward" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสของรางวัล *</label>
+                    <input type="text" name="rewardCode" required placeholder="เช่น RWD-GIFT-010"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หมวดหมู่ของรางวัล</label>
+                    <input type="text" name="categoryTag" value="ของสะสมพิเศษ"
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-[#050315] block mb-1">ชื่อของแลกแต้ม *</label>
+                <input type="text" name="title" required placeholder="ระบุชื่อของรางวัลสำหรับแลกแต้ม"
+                       class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">แบรนด์</label>
+                    <input type="text" name="brand" value="FriendHouse"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">แต้มที่ใช้แลก *</label>
+                    <input type="number" name="pointsRequired" required min="50" value="1200"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-[#2F39A9] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จำนวนคงเหลือ *</label>
+                    <input type="number" name="stockQuantity" required min="0" value="10"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">เลือกรูปภาพจากคลังสื่อ</label>
+                    <select name="imageUrl" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var img in Model.AvailableImages)
+                        {
+                            <option value="@img">@System.IO.Path.GetFileName(img)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หรืออัปโหลดรูปภาพใหม่</label>
+                    <input type="file" name="imageFile" accept="image/*" class="w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs" />
+                </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 text-xs cursor-pointer">
+                <input type="checkbox" name="isAvailable" value="true" checked class="size-4 accent-[#2F39A9]" />
+                <span class="font-semibold text-[#050315]">เปิดให้ลูกค้าแลกแต้มทันที</span>
+            </label>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2 text-xs font-bold text-white cursor-pointer">
+                    บันทึกของแลกแต้มใหม่
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 6. หน้าต่างแก้ไขของแลกแต้ม -->
+<div id="editRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 my-8 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <h2 class="text-lg font-bold text-[#050315]">แก้ไขข้อมูลของแลกแต้ม</h2>
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="@pageConfig.Icons.Close"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Owner" asp-action="EditReward" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="rewardId" id="editRewardId" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รหัสของรางวัล *</label>
+                    <input type="text" name="rewardCode" id="editRewardCode" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">หมวดหมู่ของรางวัล</label>
+                    <input type="text" name="categoryTag" id="editRewardTag" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-[#050315] block mb-1">ชื่อของแลกแต้ม *</label>
+                <input type="text" name="title" id="editRewardTitle" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:border-[#2F39A9] focus:outline-none" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">แบรนด์</label>
+                    <input type="text" name="brand" id="editRewardBrand" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">แต้มที่ใช้แลก *</label>
+                    <input type="number" name="pointsRequired" id="editRewardPoints" required min="50" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-[#2F39A9] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">จำนวนคงเหลือ *</label>
+                    <input type="number" name="stockQuantity" id="editRewardStock" required min="0" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">รูปภาพในคลังสื่อ</label>
+                    <select name="imageUrl" id="editRewardImage" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs bg-white focus:border-[#2F39A9] focus:outline-none">
+                        @foreach (var img in Model.AvailableImages)
+                        {
+                            <option value="@img">@System.IO.Path.GetFileName(img)</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1">อัปโหลดรูปภาพใหม่</label>
+                    <input type="file" name="imageFile" accept="image/*" class="w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs" />
+                </div>
+            </div>
+
+            <label class="inline-flex items-center gap-2 text-xs cursor-pointer">
+                <input type="checkbox" name="isAvailable" id="editRewardAvailable" value="true" class="size-4 accent-[#2F39A9]" />
+                <span class="font-semibold text-[#050315]">เปิดให้ลูกค้าแลกแต้ม</span>
+            </label>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2 text-xs font-bold text-white cursor-pointer">
+                    บันทึกการแก้ไขของรางวัล
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 7. หน้าต่างยืนยันการลบของแลกแต้ม -->
+<div id="deleteRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 space-y-4">
+        <h3 class="text-lg font-bold text-rose-600">ยืนยันการลบของแลกแต้ม</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+            ต้องการลบของรางวัล <span id="deleteRewardTitle" class="font-bold text-[#050315]"></span> (<span id="deleteRewardCode" class="font-mono"></span>) ออกจากระบบหรือไม่
+        </p>
+        <form asp-controller="Owner" asp-action="DeleteReward" class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <input type="hidden" name="rewardId" id="deleteRewardId" />
+            <button type="button" onclick="closeCatalogModals()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="submit" class="rounded-xl bg-rose-600 hover:bg-rose-700 px-5 py-2 text-xs font-bold text-white cursor-pointer">
+                ยืนยันการลบ
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ฟังก์ชันปิดหน้าต่างป๊อปอัปทั้งหมดในหน้าจัดการสินค้าและของรางวัล
+        function closeCatalogModals() {
+            const ids = [
+                'createProductModal',
+                'editProductModal',
+                'convertRewardModal',
+                'deleteProductModal',
+                'createRewardModal',
+                'editRewardModal',
+                'deleteRewardModal'
+            ];
+            ids.forEach(id => document.getElementById(id)?.classList.add('hidden'));
+        }
+
+        // เปิดหน้าต่างเพิ่มสินค้าใหม่
+        function openCreateProductModal() {
+            closeCatalogModals();
+            document.getElementById('createProductModal')?.classList.remove('hidden');
+        }
+
+        // เปิด-ปิดช่องกรอกแต้มเมื่อเลือกเปิดสินค้าใหม่เป็นของแลกแต้มควบคู่
+        function toggleCreateRewardFields(checked) {
+            const box = document.getElementById('createAlsoRewardFields');
+            if (!box) return;
+            box.classList.toggle('hidden', !checked);
+        }
+
+        // เปิดหน้าต่างแก้ไขสินค้าพร้อมเติมค่าเดิมจากปุ่มที่กด
+        function openEditProductModal(btn) {
+            closeCatalogModals();
+            const d = btn.dataset;
+            document.getElementById('editProdId').value = d.id || '';
+            document.getElementById('editProdSku').value = d.sku || '';
+            document.getElementById('editProdBarcode').value = d.barcode || '';
+            document.getElementById('editProdName').value = d.name || '';
+            document.getElementById('editProdCategory').value = d.category || '';
+            document.getElementById('editProdSeries').value = d.series || '';
+            document.getElementById('editProdBrand').value = d.brand || '';
+            document.getElementById('editProdRetail').value = d.retail || '0';
+            document.getElementById('editProdPreorder').value = d.preorder || '';
+            document.getElementById('editProdStock').value = d.stock || '0';
+            document.getElementById('editProdSafety').value = d.safety || '5';
+            document.getElementById('editProdActive').checked = d.isactive === 'true';
+            document.getElementById('editProdIsPreorder').checked = d.ispreorder === 'true';
+
+            const imgSelect = document.getElementById('editProdImage');
+            if (imgSelect && d.image) {
+                const match = Array.from(imgSelect.options).find(o => o.value.toLowerCase() === d.image.toLowerCase());
+                if (match) imgSelect.value = match.value;
+            }
+
+            document.getElementById('editProductModal')?.classList.remove('hidden');
+        }
+
+        // เปิดหน้าต่างกำหนดสินค้าให้เป็นของแลกแต้มสะสม
+        function openConvertRewardModal(btn) {
+            closeCatalogModals();
+            const d = btn.dataset;
+            const price = parseFloat(d.price || '1000');
+            const suggestedPoints = Math.max(500, Math.round(price / 100) * 100);
+            document.getElementById('convertProdId').value = d.id || '';
+            document.getElementById('convertProdLabel').innerText = `${d.name} (${d.sku})`;
+            document.getElementById('convertPoints').value = suggestedPoints;
+            document.getElementById('convertStock').value = Math.max(1, parseInt(d.stock || '5', 10));
+            document.getElementById('convertRewardModal')?.classList.remove('hidden');
+        }
+
+        // เปิดหน้าต่างยืนยันการลบสินค้า
+        function openDeleteProductModal(id, name, sku) {
+            closeCatalogModals();
+            document.getElementById('deleteProdId').value = id;
+            document.getElementById('deleteProdName').innerText = name;
+            document.getElementById('deleteProdSku').innerText = sku;
+            document.getElementById('deleteProductModal')?.classList.remove('hidden');
+        }
+
+        // เปิดหน้าต่างเพิ่มของแลกแต้มใหม่
+        function openCreateRewardModal() {
+            closeCatalogModals();
+            document.getElementById('createRewardModal')?.classList.remove('hidden');
+        }
+
+        // เปิดหน้าต่างแก้ไขของแลกแต้ม
+        function openEditRewardModal(btn) {
+            closeCatalogModals();
+            const d = btn.dataset;
+            document.getElementById('editRewardId').value = d.id || '';
+            document.getElementById('editRewardCode').value = d.code || '';
+            document.getElementById('editRewardTitle').value = d.title || '';
+            document.getElementById('editRewardBrand').value = d.brand || '';
+            document.getElementById('editRewardTag').value = d.tag || '';
+            document.getElementById('editRewardPoints').value = d.points || '1000';
+            document.getElementById('editRewardStock').value = d.stock || '1';
+            document.getElementById('editRewardAvailable').checked = d.available === 'true';
+
+            const imgSelect = document.getElementById('editRewardImage');
+            if (imgSelect && d.image) {
+                const match = Array.from(imgSelect.options).find(o => o.value.toLowerCase() === d.image.toLowerCase());
+                if (match) imgSelect.value = match.value;
+            }
+
+            document.getElementById('editRewardModal')?.classList.remove('hidden');
+        }
+
+        // เปิดหน้าต่างยืนยันการลบของแลกแต้ม
+        function openDeleteRewardModal(id, title, code) {
+            closeCatalogModals();
+            document.getElementById('deleteRewardId').value = id;
+            document.getElementById('deleteRewardTitle').innerText = title;
+            document.getElementById('deleteRewardCode').innerText = code;
+            document.getElementById('deleteRewardModal')?.classList.remove('hidden');
+        }
+    </script>
+}
+

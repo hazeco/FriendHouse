@@ -28,6 +28,18 @@ public class UserManagementViewModel : List<User>
 
     // รายการข้อมูลผู้ใช้งานที่แปลงเป็น ViewModel พร้อมแสดงผลภาษาไทย
     public List<UserAccountItemViewModel> UserItems { get; set; } = new();
+
+    // จำนวนผู้ใช้งานทั้งหมดที่ตรงตามเงื่อนไขการค้นหาและกรอง
+    public int TotalCount { get; set; }
+
+    // หมายเลขหน้าปัจจุบันสำหรับระบบแบ่งหน้า (เริ่มต้นที่ 1)
+    public int CurrentPage { get; set; } = 1;
+
+    // จำนวนแถวผู้ใช้งานที่แสดงต่อหน้า (มาตรฐานหน้าละ 10 รายการ)
+    public int PageSize { get; set; } = 10;
+
+    // จำนวนหน้าทั้งหมดของการแสดงผลตารางผู้ใช้งาน
+    public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)(TotalCount > 0 ? TotalCount : UserItems.Count) / PageSize));
 }
 
 // READ: ViewModel สำหรับรายการบัญชีผู้ใช้งานแต่ละแถว

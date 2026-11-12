@@ -116,9 +116,9 @@ public class HomeController : Controller
         }
     }
 
-    // READ: แสดงรายชื่อผู้ใช้งานทั้งหมดในระบบจากตาราง Users พร้อมระบบค้นหาและตัวกรอง (GET Method)
+    // READ: แสดงรายชื่อผู้ใช้งานทั้งหมดในระบบจากตาราง Users พร้อมระบบค้นหา ตัวกรอง และแบ่งหน้า (GET Method)
     // WHY: รองรับการทำงาน User Full CRUD และการสืบค้นข้อมูลผู้ใช้งาน (เน้นบทบาทลูกค้า) ผ่าน UserManagementViewModel
-    public IActionResult UserList(string? searchQuery, string? roleFilter, string? statusFilter)
+    public IActionResult UserList(string? searchQuery, string? roleFilter, string? statusFilter, int page = 1)
     {
         // ขั้นตอนที่ 1: สร้าง Query พื้นฐานจากตาราง Users ในฐานข้อมูล MySQL
         var query = _db.Users.AsQueryable();
@@ -162,8 +162,13 @@ public class HomeController : Controller
             }
         }
 
-        // ขั้นตอนที่ 5: ดึงรายการผู้ใช้งานเรียงลำดับจากวันที่สมัครล่าสุด
-        var users = query.OrderByDescending(u => u.CreatedAt).ToList();
+        // ขั้นตอนที่ 5: ดึงรายการผู้ใช้งานเรียงลำดับจากวันที่สมัครล่าสุด และแบ่งหน้า (หน้าละ 10 รายการ)
+        var allFilteredUsers = query.OrderByDescending(u => u.CreatedAt).ToList();
+        int pageSize = 10;
+        int totalCount = allFilteredUsers.Count;
+        int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / pageSize));
+        int currentPage = Math.Clamp(page, 1, totalPages);
+        var pagedUsers = allFilteredUsers.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
         // ขั้นตอนที่ 6: สร้างและประกอบข้อมูลลงใน UserManagementViewModel
         var viewModel = new UserManagementViewModel
@@ -173,14 +178,18 @@ public class HomeController : Controller
             // เก็บตัวกรองบทบาทปัจจุบัน
             RoleFilter = roleFilter ?? "all",
             // เก็บตัวกรองสถานะปัจจุบัน
-            StatusFilter = statusFilter ?? "all"
+            StatusFilter = statusFilter ?? "all",
+            // กำหนดจำนวนทั้งหมดและหมายเลขหน้าปัจจุบัน
+            TotalCount = totalCount,
+            CurrentPage = currentPage,
+            PageSize = pageSize
         };
 
-        // เพิ่มรายการ User ลงในคอลเลกชันพื้นฐานเพื่อความเข้ากันได้
-        viewModel.AddRange(users);
+        // เพิ่มรายการ User ของหน้าปัจจุบันลงในคอลเลกชันพื้นฐานเพื่อความเข้ากันได้
+        viewModel.AddRange(pagedUsers);
 
-        // แปลงแต่ละเรคอร์ดเป็น UserAccountItemViewModel
-        viewModel.UserItems = users.Select(u => new UserAccountItemViewModel
+        // แปลงแต่ละเรคอร์ดในหน้าปัจจุบันเป็น UserAccountItemViewModel
+        viewModel.UserItems = pagedUsers.Select(u => new UserAccountItemViewModel
         {
             UserId = u.UserId,
             UserCode = u.UserCode,
@@ -470,10 +479,10 @@ public class HomeController : Controller
         return View(viewModel);
     }
 
-    // READ: Action สำหรับแสดงรายการสินค้าฟิกเกอร์ทั้งหมดในร้าน พร้อมระบบค้นหาและตัวกรองหลายมิติ
+    // READ: Action สำหรับแสดงรายการสินค้าฟิกเกอร์ทั้งหมดในร้าน พร้อมระบบค้นหา ตัวกรองหลายมิติ และแบ่งหน้า (หน้าละ 20 ชิ้น)
     // WHY: รองรับการสืบค้นข้อมูลผ่านคำค้นหาและการกรองตามหมวดหมู่ ซีรีส์ สถานะสต็อก และช่วงราคา
     // โดยใช้ LINQ กับ Entity Framework Core และมีระบบสำรองข้อมูลแคตตาล็อกรองรับกรณีฐานข้อมูลออฟไลน์
-    public IActionResult Collection(string? searchTerm, string? category, string? series, string? status, string? priceRange)
+    public IActionResult Collection(string? searchTerm, string? category, string? series, string? status, string? priceRange, int page = 1)
     {
         // ขั้นตอนที่ 1: สร้างออบเจกต์ ProductCatalogViewModel และกำหนดค่าตัวกรองเริ่มต้นที่ได้รับจากคำขอ
         var viewModel = new ProductCatalogViewModel
@@ -482,7 +491,8 @@ public class HomeController : Controller
             SelectedCategory = string.IsNullOrWhiteSpace(category) ? null : category.Trim(),
             SelectedSeries = string.IsNullOrWhiteSpace(series) ? null : series.Trim(),
             SelectedStatus = string.IsNullOrWhiteSpace(status) ? null : status.Trim(),
-            SelectedPriceRange = string.IsNullOrWhiteSpace(priceRange) ? null : priceRange.Trim()
+            SelectedPriceRange = string.IsNullOrWhiteSpace(priceRange) ? null : priceRange.Trim(),
+            PageSize = 20
         };
 
         // กำหนดรายการตัวเลือกช่วงราคามาตรฐานสำหรับแสดงใน Select Dropdown
@@ -702,7 +712,16 @@ public class HomeController : Controller
             viewModel.Products = query.ToList();
         }
 
-        // ขั้นตอนที่ 5: ส่งโมเดล ProductCatalogViewModel ไปยังหน้า View
+        // ขั้นตอนที่ 5: คำนวณการแบ่งหน้าสำหรับรายการสินค้าฟิกเกอร์ (หน้าละ 20 ชิ้น)
+        viewModel.TotalCount = viewModel.Products.Count;
+        int totalProductPages = Math.Max(1, (int)Math.Ceiling((double)viewModel.TotalCount / viewModel.PageSize));
+        viewModel.CurrentPage = Math.Clamp(page, 1, totalProductPages);
+        viewModel.Products = viewModel.Products
+            .Skip((viewModel.CurrentPage - 1) * viewModel.PageSize)
+            .Take(viewModel.PageSize)
+            .ToList();
+
+        // ขั้นตอนที่ 6: ส่งโมเดล ProductCatalogViewModel ไปยังหน้า View
         return View(viewModel);
     }
 

@@ -6,40 +6,72 @@
     var hasDbProducts = Model != null && Model.Any();
     var allProducts = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Product>();
 
-    // Top-of-file Media & Content Configuration (Rule-compliant)
+    // การกำหนดค่าเนื้อหา ไอคอน และข้อมูลสำหรับหน้าต่างรับสินค้าไว้ส่วนบนสุดของไฟล์ตามมาตรฐาน
     var pageHeader = new {
         Title = "สต็อกสินค้า",
-        Subtitle = "ภาพรวมคงเหลือทั้งหมดในร้าน อัปเดตอัตโนมัติทุกครั้งที่รับเข้า/ขายออก",
-        ScanButtonText = "สแกนรับสินค้า",
-        ScanAction = "ScanReceive",
-        ScanController = "Staff"
+        Subtitle = "ภาพรวมคงเหลือทั้งหมดในร้าน อัปเดตอัตโนมัติทุกครั้งที่รับเข้าหรือขายออก",
+        ReceiveButtonText = "รับสินค้า"
     };
 
+    var allModalProducts = ViewBag.AllProductsForModal as List<Khetsophon_CSI402_8456.Models.Product> ?? allProducts;
+    var recentRestockLogs = ViewBag.RecentRestockLogs as List<Khetsophon_CSI402_8456.Models.Systemlog> ?? new List<Khetsophon_CSI402_8456.Models.Systemlog>();
+    bool shouldAutoOpenReceive = ViewBag.OpenReceiveModal == true;
+
     var lowStockProducts = allProducts.Where(p => (p.Inventory?.QuantityOnHand ?? 0) <= 3).ToList();
-    var normalCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 3);
-    var lowCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= 3);
-    var outOfStockCount = allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) <= 0);
+    // ดึงจำนวนสถิติรวมของสินค้าทั้งคลังจาก ViewBag เพื่อแสดงผลบนปุ่มตัวกรองและระบบแบ่งหน้า
+    int totalProductCount = ViewBag.TotalProductCount ?? allProducts.Count;
+    int normalCount = ViewBag.NormalStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 3);
+    int lowCount = ViewBag.LowStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= 3);
+    int outOfStockCount = ViewBag.OutOfStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) <= 0);
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int pageSize = ViewBag.PageSize ?? 10;
+    int startRow = totalProductCount == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+    int endRow = Math.Min(currentPage * pageSize, totalProductCount);
 
     var dbCategories = new List<string> { "ทุกหมวดหมู่" };
-    dbCategories.AddRange(allProducts.Select(p => p.Category?.CategoryName).Where(c => !string.IsNullOrEmpty(c)).Distinct()!);
+    dbCategories.AddRange(allModalProducts.Select(p => p.Category?.CategoryName).Where(c => !string.IsNullOrEmpty(c)).Distinct()!);
 }
 
 <div class="space-y-6">
-    <!-- Title & Action Button -->
+    <!-- ส่วนหัวหน้าสต็อกสินค้าและปุ่มเปิดหน้าต่างรับสินค้าเข้าสต็อก -->
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
             <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
         </div>
-        <a asp-controller="@pageHeader.ScanController" asp-action="@pageHeader.ScanAction"
-           class="inline-flex items-center gap-2 bg-[#3027FF] hover:bg-[#261ECC] text-white font-medium px-5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer text-sm">
-            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="13" r="4"></circle>
+        <button type="button" onclick="openReceiveStockModal('scan')"
+                class="inline-flex items-center gap-2 bg-[#3027FF] hover:bg-[#261ECC] text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer text-sm">
+            <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
             </svg>
-            <span>@pageHeader.ScanButtonText</span>
-        </a>
+            <span>@pageHeader.ReceiveButtonText</span>
+        </button>
     </div>
+
+    <!-- กล่องแจ้งเตือนผลการรับสินค้าเข้าสต็อก -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
+            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span class="font-bold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="rounded-2xl bg-[#FEF2F2] border border-[#FECACA] p-4 flex items-center gap-3 text-xs text-[#DC2626] shadow-xs">
+            <svg class="size-5 text-[#DC2626] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
 
     <!-- Alert Banner (Matching frame_9_3.png) -->
     @if (lowStockProducts.Any())
@@ -111,7 +143,7 @@
         <!-- Status Filter Tabs (Figma Buttons) -->
         <div class="flex items-center gap-1.5" id="stockStatusButtons">
             <button type="button" onclick="filterStockStatus('all')" class="status-tab px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-sm font-semibold transition cursor-pointer">
-                ทั้งหมด @allProducts.Count
+                ทั้งหมด @totalProductCount
             </button>
             <button type="button" onclick="filterStockStatus('ปกติ')" class="status-tab px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium transition cursor-pointer shadow-2xs">
                 ปกติ @normalCount
@@ -201,26 +233,101 @@
             </table>
         </div>
 
-        <!-- Pagination (Exact from Figma frame_9_3.png) -->
+        <!-- แถบแบ่งหน้ารายการสต็อกสินค้า เชื่อมโยงกับ StaffController.Index -->
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4 text-sm">
-            <span class="text-xs text-gray-500">แสดง @allProducts.Count รายการ</span>
+            <span class="text-xs text-gray-500">แสดง @startRow–@endRow จากทั้งหมด @totalProductCount รายการ</span>
             <div class="flex items-center gap-1.5">
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
-                    ก่อนหน้า
-                </button>
-                <button type="button" class="size-8 rounded-lg bg-[#2F39A9] text-white text-xs font-bold flex items-center justify-center">
-                    1
-                </button>
-                <button type="button" class="size-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium flex items-center justify-center cursor-pointer">
-                    2
-                </button>
-                <button type="button" class="size-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium flex items-center justify-center cursor-pointer">
-                    3
-                </button>
-                <button type="button" class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
-                    ถัดไป
-                </button>
+                @if (currentPage > 1)
+                {
+                    <a asp-controller="Staff" asp-action="Index" asp-route-page="@(currentPage - 1)"
+                       class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
+                        ก่อนหน้า
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 text-xs font-medium cursor-not-allowed">
+                        ก่อนหน้า
+                    </span>
+                }
+
+                @for (int p = 1; p <= totalPages; p++)
+                {
+                    if (p == currentPage)
+                    {
+                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white text-xs font-bold flex items-center justify-center">
+                            @p
+                        </span>
+                    }
+                    else
+                    {
+                        <a asp-controller="Staff" asp-action="Index" asp-route-page="@p"
+                           class="size-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium flex items-center justify-center cursor-pointer">
+                            @p
+                        </a>
+                    }
+                }
+
+                @if (currentPage < totalPages)
+                {
+                    <a asp-controller="Staff" asp-action="Index" asp-route-page="@(currentPage + 1)"
+                       class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
+                        ถัดไป
+                    </a>
+                }
+                else
+                {
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 text-xs font-medium cursor-not-allowed">
+                        ถัดไป
+                    </span>
+                }
             </div>
+        </div>
+    </div>
+
+    <!-- ประวัติการรับสินค้าเข้าสต็อกล่าสุดจากฐานข้อมูลจริง -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
+                <svg class="size-4.5 text-[#2F39A9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>ประวัติการรับสินค้าเข้าคลังล่าสุด</span>
+            </div>
+            <span class="text-xs text-gray-400">ดึงข้อมูลตรงจากบันทึกคลังสินค้า</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs min-w-[540px]">
+                <thead>
+                    <tr class="text-left font-semibold text-gray-400 border-b border-gray-100 bg-[#FBFBFE]">
+                        <th class="py-3 px-6">วันและเวลา</th>
+                        <th class="py-3 px-6">รหัสรายการ</th>
+                        <th class="py-3 px-6">รายละเอียดการรับเข้าคลัง</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @if (recentRestockLogs.Any())
+                    {
+                        @foreach (var log in recentRestockLogs)
+                        {
+                            <tr class="hover:bg-gray-50/70 transition-colors">
+                                <td class="py-3 px-6 text-gray-500 font-mono whitespace-nowrap">@log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td class="py-3 px-6 font-mono text-[#2F39A9] font-semibold whitespace-nowrap">@log.LogCode</td>
+                                <td class="py-3 px-6 text-[#050315] font-medium">@log.Message</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3" class="py-6 text-center text-gray-400">
+                                ยังไม่มีประวัติการรับสินค้าเข้าคลังในรอบล่าสุด
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -230,13 +337,319 @@
             FriendHouse Staff Console · เข้าสู่ระบบเป็น ณัฐชา ใจดี (พนักงานสต็อก) · กะ 09:00–18:00
         </div>
         <div>
-            อัปเดตล่าสุด 09 ก.ย. 2569 · 14:22 น.
+            อัปเดตล่าสุด @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+        </div>
+    </div>
+</div>
+
+<!-- ==================== หน้าต่างรับสินค้าเข้าสต็อก (รวมโหมดสแกนและกรอกเอง) ==================== -->
+<div id="receiveStockModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8">
+        <!-- ส่วนหัวหน้าต่างรับสินค้า -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-[#050315]">รับสินค้าเข้าสต็อก</h2>
+                <p class="text-xs text-slate-500 mt-0.5">เลือกรับสินค้าโดยการสแกนบาร์โค้ด หรือเลือกกรอกรหัสสินค้าด้วยตนเอง</p>
+            </div>
+            <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- แถบเลือกโหมดภายในหน้าต่าง: สแกน หรือ กรอกเอง -->
+        <div class="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100 p-1">
+            <button type="button" id="tabBtnScanMode" onclick="switchReceiveMode('scan')"
+                    class="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold bg-white text-[#2F39A9] shadow-xs transition cursor-pointer">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+                <span>สแกนรหัสสินค้า</span>
+            </button>
+            <button type="button" id="tabBtnManualMode" onclick="switchReceiveMode('manual')"
+                    class="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-slate-500 hover:text-[#050315] transition cursor-pointer">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                </svg>
+                <span>กรอกรับเข้าด้วยตนเอง</span>
+            </button>
+        </div>
+
+        <!-- โหมดที่ 1: สแกนผ่านกล้องเว็บแคมหรือเครื่องยิงบาร์โค้ด -->
+        <div id="receivePanelScan" class="space-y-4">
+            <div class="rounded-2xl border-2 border-dashed border-[#92EEFF] bg-[#FBFBFE] p-4 text-center space-y-3">
+                <video id="barcodeCameraVideo" class="hidden w-full h-44 rounded-xl object-cover bg-slate-900" playsinline muted></video>
+                <div id="cameraPlaceholderBox" class="py-4 space-y-2">
+                    <div class="size-11 rounded-xl bg-[#2F39A9] text-white mx-auto flex items-center justify-center shadow-xs">
+                        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                            <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                            <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                            <line x1="7" y1="12" x2="17" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="text-xs font-bold text-[#050315]">พร้อมรับรหัสจากเครื่องยิงบาร์โค้ดหรือกล้องเว็บแคม</div>
+                    <p id="cameraStatusText" class="text-[11px] text-slate-500">ยิงบาร์โค้ดลงในช่องด้านล่าง หรือกดเปิดกล้องเพื่ออ่านรหัสบนกล่องสินค้าอัตโนมัติ</p>
+                </div>
+                <div class="flex items-center justify-center gap-2">
+                    <button type="button" id="btnStartCamera" onclick="startBarcodeCamera()"
+                            class="rounded-xl bg-[#2F39A9]/10 hover:bg-[#2F39A9]/20 text-[#2F39A9] px-3.5 py-2 text-xs font-bold transition cursor-pointer">
+                        เปิดกล้องสแกนบาร์โค้ด
+                    </button>
+                    <button type="button" id="btnStopCamera" onclick="stopBarcodeCamera()"
+                            class="hidden rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3.5 py-2 text-xs font-bold transition cursor-pointer">
+                        ปิดกล้อง
+                    </button>
+                </div>
+            </div>
+
+            <form asp-controller="Staff" asp-action="ScanReceive" class="space-y-4">
+                <input type="hidden" name="currentPage" value="@currentPage" />
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1.5">รหัสบาร์โค้ด หรือรหัสสินค้าที่สแกนได้</label>
+                    <input type="text" name="sku" id="scanModeSkuInput" required placeholder="สแกนบาร์โค้ดหรือพิมพ์รหัส เช่น FIG-NARUTO-001"
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+
+                <!-- ปุ่มเลือกสินค้ายอดนิยมจากฐานข้อมูลจริงเพื่อทดสอบหรือกรอกเร็ว -->
+                <div class="space-y-1.5">
+                    <div class="text-[11px] font-semibold text-slate-400">รหัสสินค้าในคลังด่วน:</div>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach (var qp in allModalProducts.Take(4))
+                        {
+                            <button type="button" onclick="fillScanSku('@qp.Sku')"
+                                    class="rounded-lg border border-slate-200 bg-slate-50 hover:border-[#2F39A9] hover:text-[#2F39A9] px-2.5 py-1 text-[11px] font-mono text-slate-600 transition cursor-pointer">
+                                @qp.Sku
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1.5">จำนวนที่รับเข้า</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="adjustModalQty('scanModeQtyInput', -1)"
+                                class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                            −
+                        </button>
+                        <input type="number" name="quantity" id="scanModeQtyInput" value="5" min="1" required
+                               class="flex-1 text-center py-2 rounded-xl border border-slate-200 font-bold text-base text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                        <button type="button" onclick="adjustModalQty('scanModeQtyInput', 1)"
+                                class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="rounded-xl bg-[#3027FF] hover:bg-[#261ECC] px-5 py-2.5 text-xs font-bold text-white shadow-xs cursor-pointer">
+                        ยืนยันรับสินค้าเข้าสต็อก
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- โหมดที่ 2: กรอกรับเข้าด้วยตนเองและเลือกจากรายชื่อสินค้าทั้งหมดในฐานข้อมูล -->
+        <div id="receivePanelManual" class="hidden space-y-4">
+            <form asp-controller="Staff" asp-action="ScanReceive" class="space-y-4">
+                <input type="hidden" name="currentPage" value="@currentPage" />
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1.5">เลือกรายการสินค้าจากฐานข้อมูล</label>
+                    <select id="manualProductPicker" onchange="syncPickerToManualSku(this.value)"
+                            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#050315] focus:border-[#2F39A9] focus:outline-none">
+                        <option value="">-- เลือกสินค้าที่ต้องการเติมสต็อก --</option>
+                        @foreach (var mp in allModalProducts)
+                        {
+                            var qoh = mp.Inventory?.QuantityOnHand ?? 0;
+                            <option value="@mp.Sku">@mp.Name (@mp.Sku) · คงเหลือ @qoh ชิ้น</option>
+                        }
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1.5">หรือกรอกรหัสสินค้าด้วยตนเอง</label>
+                    <input type="text" name="sku" id="manualModeSkuInput" required placeholder="ระบุรหัสสินค้าหรือบาร์โค้ด"
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-[#050315] block mb-1.5">จำนวนที่รับเข้า</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="adjustModalQty('manualModeQtyInput', -1)"
+                                class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                            −
+                        </button>
+                        <input type="number" name="quantity" id="manualModeQtyInput" value="10" min="1" required
+                               class="flex-1 text-center py-2 rounded-xl border border-slate-200 font-bold text-base text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                        <button type="button" onclick="adjustModalQty('manualModeQtyInput', 1)"
+                                class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2.5 text-xs font-bold text-white shadow-xs cursor-pointer">
+                        ยืนยันรับสินค้าเข้าสต็อก
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        let cameraStream = null;
+        let scanAnimationTimer = null;
+
+        // ฟังก์ชันเปิดหน้าต่างรับสินค้าเข้าสต็อกพร้อมเลือกโหมดเริ่มต้น
+        function openReceiveStockModal(mode) {
+            document.getElementById('receiveStockModal')?.classList.remove('hidden');
+            switchReceiveMode(mode || 'scan');
+        }
+
+        // ฟังก์ชันปิดหน้าต่างรับสินค้าเข้าสต็อกและหยุดการทำงานของกล้องหากเปิดอยู่
+        function closeReceiveStockModal() {
+            stopBarcodeCamera();
+            document.getElementById('receiveStockModal')?.classList.add('hidden');
+        }
+
+        // ฟังก์ชันสลับระหว่างแท็บสแกนและแท็บกรอกด้วยตนเอง
+        function switchReceiveMode(mode) {
+            const scanPanel = document.getElementById('receivePanelScan');
+            const manualPanel = document.getElementById('receivePanelManual');
+            const scanBtn = document.getElementById('tabBtnScanMode');
+            const manualBtn = document.getElementById('tabBtnManualMode');
+
+            const activeCls = 'flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold bg-white text-[#2F39A9] shadow-xs transition cursor-pointer';
+            const inactiveCls = 'flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-slate-500 hover:text-[#050315] transition cursor-pointer';
+
+            if (mode === 'manual') {
+                stopBarcodeCamera();
+                scanPanel?.classList.add('hidden');
+                manualPanel?.classList.remove('hidden');
+                if (scanBtn) scanBtn.className = inactiveCls;
+                if (manualBtn) manualBtn.className = activeCls;
+            } else {
+                manualPanel?.classList.add('hidden');
+                scanPanel?.classList.remove('hidden');
+                if (scanBtn) scanBtn.className = activeCls;
+                if (manualBtn) manualBtn.className = inactiveCls;
+                setTimeout(() => document.getElementById('scanModeSkuInput')?.focus(), 50);
+            }
+        }
+
+        // ฟังก์ชันเติมรหัสสินค้าจากการกดปุ่มด่วนในโหมดสแกน
+        function fillScanSku(sku) {
+            const input = document.getElementById('scanModeSkuInput');
+            if (input) {
+                input.value = sku;
+                input.focus();
+            }
+        }
+
+        // ฟังก์ชันเชื่อมต่อรายชื่อสินค้าจากดรอปดาวน์เข้ากับช่องกรอกรหัสในโหมดกรอกเอง
+        function syncPickerToManualSku(sku) {
+            const input = document.getElementById('manualModeSkuInput');
+            if (input && sku) {
+                input.value = sku;
+            }
+        }
+
+        // ฟังก์ชันเพิ่มหรือลดจำนวนสินค้าที่รับเข้าในหน้าต่างรับสินค้า
+        function adjustModalQty(inputId, delta) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const currentVal = parseInt(input.value, 10) || 1;
+            input.value = Math.max(1, currentVal + delta);
+        }
+
+        // ฟังก์ชันเปิดกล้องเว็บแคมและตรวจจับรหัสบาร์โค้ดหรือคิวอาร์โค้ดจริงผ่านเบราว์เซอร์
+        async function startBarcodeCamera() {
+            const video = document.getElementById('barcodeCameraVideo');
+            const placeholder = document.getElementById('cameraPlaceholderBox');
+            const statusText = document.getElementById('cameraStatusText');
+            const btnStart = document.getElementById('btnStartCamera');
+            const btnStop = document.getElementById('btnStopCamera');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if (statusText) statusText.innerText = 'เบราว์เซอร์หรืออุปกรณ์นี้ไม่รองรับการเปิดกล้อง สามารถยิงบาร์โค้ดเข้าช่องกรอกด้านล่างได้ทันที';
+                return;
+            }
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                if (video) {
+                    video.srcObject = cameraStream;
+                    await video.play();
+                    video.classList.remove('hidden');
+                }
+                placeholder?.classList.add('hidden');
+                btnStart?.classList.add('hidden');
+                btnStop?.classList.remove('hidden');
+
+                // ตรวจสอบความพร้อมของตัวถอดรหัสบาร์โค้ดมาตรฐานบนเบราว์เซอร์
+                if ('BarcodeDetector' in window) {
+                    const detector = new window.BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128', 'code_39'] });
+                    const detectFrame = async () => {
+                        if (!cameraStream || !video) return;
+                        try {
+                            const codes = await detector.detect(video);
+                            if (codes && codes.length > 0 && codes[0].rawValue) {
+                                fillScanSku(codes[0].rawValue);
+                                stopBarcodeCamera();
+                                return;
+                            }
+                        } catch (_) { }
+                        scanAnimationTimer = requestAnimationFrame(detectFrame);
+                    };
+                    scanAnimationTimer = requestAnimationFrame(detectFrame);
+                }
+            } catch (_) {
+                if (statusText) statusText.innerText = 'ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้องหรือยิงรหัสจากเครื่องสแกนบาร์โค้ดลงในช่องด้านล่าง';
+            }
+        }
+
+        // ฟังก์ชันหยุดการทำงานของกล้องเว็บแคมและคืนพื้นที่หน้าจอ
+        function stopBarcodeCamera() {
+            if (scanAnimationTimer) {
+                cancelAnimationFrame(scanAnimationTimer);
+                scanAnimationTimer = null;
+            }
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+            const video = document.getElementById('barcodeCameraVideo');
+            if (video) {
+                video.srcObject = null;
+                video.classList.add('hidden');
+            }
+            document.getElementById('cameraPlaceholderBox')?.classList.remove('hidden');
+            document.getElementById('btnStartCamera')?.classList.remove('hidden');
+            document.getElementById('btnStopCamera')?.classList.add('hidden');
+        }
+
+        // เปิดหน้าต่างรับสินค้าอัตโนมัติเมื่อถูกนำทางมาจากเส้นทางเดิม
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (shouldAutoOpenReceive)
+            {
+                <text>openReceiveStockModal('scan');</text>
+            }
+        });
+
         function filterStockStatus(status) {
             const rows = document.querySelectorAll('.stock-row');
             const buttons = document.querySelectorAll('.status-tab');

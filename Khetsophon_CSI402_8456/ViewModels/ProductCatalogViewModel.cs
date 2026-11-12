@@ -42,5 +42,17 @@ public class ProductCatalogViewModel
     };
 
     // จำนวนสินค้าทั้งหมดที่พบจากการค้นหาและกรอง
-    public int TotalItems => Products.Count;
+    public int TotalCount { get; set; }
+
+    // จำนวนสินค้าที่แสดงผลในหน้าปัจจุบัน
+    public int TotalItems => TotalCount > 0 ? TotalCount : Products.Count;
+
+    // หมายเลขหน้าปัจจุบันสำหรับระบบแบ่งหน้า (เริ่มต้นที่ 1)
+    public int CurrentPage { get; set; } = 1;
+
+    // จำนวนสินค้าต่อหน้า (กำหนดมาตรฐานหน้าละ 20 ชิ้น)
+    public int PageSize { get; set; } = 20;
+
+    // จำนวนหน้าทั้งหมดที่คำนวณจากจำนวนสินค้าทั้งหมดหารด้วยจำนวนต่อหน้า
+    public int TotalPages => Math.Max(1, (int)Math.Ceiling((double)TotalItems / PageSize));
 }

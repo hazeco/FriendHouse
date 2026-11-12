@@ -294,32 +294,82 @@
         }
     </div>
 
-    <!-- แถบแบ่งหน้า แสดงผลเป็นภาษาไทยล้วน ปราศจากภาษาอังกฤษ -->
-    <div class="flex items-center justify-center gap-2 pt-6 pb-2">
-        <button type="button"
-                class="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-            @pageConfig.PaginationPrev
-        </button>
-        <button type="button"
-                class="flex size-10 items-center justify-center rounded-xl bg-primary text-xs font-bold text-white shadow-xs cursor-pointer">
-            1
-        </button>
-        <button type="button"
-                class="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-            2
-        </button>
-        <button type="button"
-                class="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-            3
-        </button>
-        <span class="flex size-10 items-center justify-center text-xs font-bold text-slate-400">...</span>
-        <button type="button"
-                class="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
-            8
-        </button>
-        <button type="button"
-                class="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-            @pageConfig.PaginationNext
-        </button>
+    <!-- แถบแบ่งหน้า แสดงผลเป็นภาษาไทยล้วน ปราศจากภาษาอังกฤษ และเชื่อมโยงกับตัวกรองของระบบจริง -->
+    @{
+        // คำนวณลำดับรายการเริ่มต้นและสิ้นสุดที่แสดงอยู่ในหน้านี้
+        var startItem = Model.TotalItems == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
+        var endItem = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems);
+    }
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-2 border-t border-slate-100">
+        <!-- แสดงช่วงรายการสินค้าและจำนวนสินค้าทั้งหมด -->
+        <div class="text-xs font-medium text-slate-500">
+            แสดงรายการที่ <span class="font-bold text-text">@startItem–@endItem</span> จากทั้งหมด <span class="font-bold text-text">@Model.TotalItems</span> รายการ (หน้า @Model.CurrentPage / @Model.TotalPages)
+        </div>
+
+        <!-- ปุ่มควบคุมการเปลี่ยนหน้า (ก่อนหน้า / หมายเลขหน้า / ถัดไป) -->
+        <div class="flex items-center justify-center gap-2">
+            @if (Model.CurrentPage > 1)
+            {
+                <a asp-controller="Home" asp-action="Collection"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-category="@Model.SelectedCategory"
+                   asp-route-series="@Model.SelectedSeries"
+                   asp-route-status="@Model.SelectedStatus"
+                   asp-route-priceRange="@Model.SelectedPriceRange"
+                   asp-route-page="@(Model.CurrentPage - 1)"
+                   class="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                    @pageConfig.PaginationPrev
+                </a>
+            }
+            else
+            {
+                <span class="flex h-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                    @pageConfig.PaginationPrev
+                </span>
+            }
+
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                if (p == Model.CurrentPage)
+                {
+                    <span class="flex size-10 items-center justify-center rounded-xl bg-primary text-xs font-bold text-white shadow-xs">
+                        @p
+                    </span>
+                }
+                else
+                {
+                    <a asp-controller="Home" asp-action="Collection"
+                       asp-route-searchTerm="@Model.SearchTerm"
+                       asp-route-category="@Model.SelectedCategory"
+                       asp-route-series="@Model.SelectedSeries"
+                       asp-route-status="@Model.SelectedStatus"
+                       asp-route-priceRange="@Model.SelectedPriceRange"
+                       asp-route-page="@p"
+                       class="flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                        @p
+                    </a>
+                }
+            }
+
+            @if (Model.CurrentPage < Model.TotalPages)
+            {
+                <a asp-controller="Home" asp-action="Collection"
+                   asp-route-searchTerm="@Model.SearchTerm"
+                   asp-route-category="@Model.SelectedCategory"
+                   asp-route-series="@Model.SelectedSeries"
+                   asp-route-status="@Model.SelectedStatus"
+                   asp-route-priceRange="@Model.SelectedPriceRange"
+                   asp-route-page="@(Model.CurrentPage + 1)"
+                   class="flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                    @pageConfig.PaginationNext
+                </a>
+            }
+            else
+            {
+                <span class="flex h-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 px-4 text-xs font-semibold text-slate-300 cursor-not-allowed">
+                    @pageConfig.PaginationNext
+                </span>
+            }
+        </div>
     </div>
 </div>

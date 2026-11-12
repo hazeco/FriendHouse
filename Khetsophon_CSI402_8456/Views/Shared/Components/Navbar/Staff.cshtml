@@ -34,13 +34,10 @@
             </div>
         </a>
 
-        <!-- Center Nav Items (Figma Pill Design) -->
+        <!-- เมนูหลักฝั่งพนักงาน (รวมรับสินค้าเข้าสต็อกเป็นหน้าต่างจัดการในหน้าสต็อกสินค้าแล้ว) -->
         <nav class="hidden md:flex items-center gap-2">
             <a asp-controller="Staff" asp-action="Index" class="@NavClass("Index")">
                 <span>สต็อกสินค้า</span>
-            </a>
-            <a asp-controller="Staff" asp-action="ScanReceive" class="@NavClass("ScanReceive")">
-                <span>สแกนรับสินค้า</span>
             </a>
             <a asp-controller="Staff" asp-action="CounterPreorder" class="@NavClass("CounterPreorder")">
                 <span>เคาน์เตอร์พรีออเดอร์</span>
@@ -77,10 +74,9 @@
         </div>
     </div>
 
-    <!-- Mobile Sub-navigation Bar -->
+    <!-- แถบนำทางย่อยสำหรับหน้าจอมือถือ -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
         <a asp-controller="Staff" asp-action="Index" class="@NavClass("Index") text-xs py-1.5 px-3 shrink-0">สต็อกสินค้า</a>
-        <a asp-controller="Staff" asp-action="ScanReceive" class="@NavClass("ScanReceive") text-xs py-1.5 px-3 shrink-0">สแกนรับสินค้า</a>
         <a asp-controller="Staff" asp-action="CounterPreorder" class="@NavClass("CounterPreorder") text-xs py-1.5 px-3 shrink-0">เคาน์เตอร์พรีออเดอร์</a>
         @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
         <a asp-controller="Account" asp-action="Logout" asp-route-role="staff"

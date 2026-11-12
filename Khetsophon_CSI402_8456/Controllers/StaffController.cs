@@ -31,8 +31,8 @@ public class StaffController : Controller
         return role != null && (role.ToLower() == "staff" || role.ToLower() == "owner" || role.ToLower() == "itsupport");
     }
 
-    // Action แสดงรายการสต็อกสินค้าและค้นหาใบจองเบื้องต้นสำหรับพนักงาน (GET Method)
-    public IActionResult Index(CounterPreorderViewModel? data)
+    // Action แสดงรายการสต็อกสินค้าและค้นหาใบจองเบื้องต้นสำหรับพนักงาน พร้อมระบบแบ่งหน้า (GET Method)
+    public IActionResult Index(CounterPreorderViewModel? data, int page = 1, bool? openReceive = null)
     {
         // ตรวจสอบสิทธิ์ว่าผู้ใช้ล็อกอินเป็นพนักงานหรือไม่
         if (!IsAuthorizedStaff())
@@ -51,16 +51,47 @@ public class StaffController : Controller
         }
 
         // ดึงรายการสินค้าทั้งหมดจากตาราง Products พร้อมข้อมูลหมวดหมู่และสต็อกสินค้า
-        var products = _db.Products
+        var allProducts = _db.Products
             // รวมข้อมูลหมวดหมู่สินค้า Category
             .Include(p => p.Category)
             // รวมข้อมูลจำนวนสต็อกสินค้าในคลัง Inventory
             .Include(p => p.Inventory)
+            // เรียงลำดับจากสินค้าใหม่ไปเก่า
+            .OrderByDescending(p => p.ProductId)
             // แปลงผลลัพธ์เป็น List รายการสินค้า
             .ToList();
 
-        // ส่งข้อมูลรายการสินค้าทั้งหมดไปยังหน้า Index ของ Staff
-        return View(products);
+        // คำนวณยอดสรุปสต็อกสินค้าทั้งหมดในคลังเพื่อส่งไปยังการ์ดสรุปด้านบนของหน้าจอ
+        ViewBag.TotalProductCount = allProducts.Count;
+        ViewBag.NormalStockCount = allProducts.Count(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) > (p.Inventory?.SafetyStockLevel ?? 5));
+        ViewBag.LowStockCount = allProducts.Count(p => {
+            var avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
+            return avail > 0 && avail <= (p.Inventory?.SafetyStockLevel ?? 5);
+        });
+        ViewBag.OutOfStockCount = allProducts.Count(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= 0);
+
+        // ส่งรายชื่อสินค้าทั้งหมดและประวัติการรับเข้าคลังล่าสุดจากฐานข้อมูลจริงไปยังหน้าต่างรับสินค้า
+        ViewBag.AllProductsForModal = allProducts.OrderBy(p => p.Name).ToList();
+        ViewBag.RecentRestockLogs = _db.Systemlogs
+            .Where(l => l.Module == "Inventory")
+            .OrderByDescending(l => l.Timestamp)
+            .Take(6)
+            .ToList();
+        ViewBag.OpenReceiveModal = openReceive ?? false;
+
+        // คำนวณการแบ่งหน้าสำหรับตารางสต็อกสินค้า (หน้าละ 10 รายการ)
+        int pageSize = 10;
+        int totalPages = Math.Max(1, (int)Math.Ceiling((double)allProducts.Count / pageSize));
+        int currentPage = Math.Clamp(page, 1, totalPages);
+        var pagedProducts = allProducts.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+
+        // ส่งข้อมูลการแบ่งหน้าไปยัง View
+        ViewBag.CurrentPage = currentPage;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.PageSize = pageSize;
+
+        // ส่งข้อมูลรายการสินค้าของหน้าปัจจุบันไปยังหน้า Index ของ Staff
+        return View(pagedProducts);
     }
 
     // Action สำหรับเปิดหน้าเคาน์เตอร์พรีออเดอร์ (GET Method)
@@ -709,9 +740,8 @@ public class StaffController : Controller
         return RedirectToAction("CounterPreorder", new { query = redemption.RedemptionCode });
     }
 
-    // Action แสดงหน้ารายการสินค้าสำหรับสแกนรับเข้าคลัง (GET Method)
+    // Action เปลี่ยนเส้นทางจากเส้นทางเดิมไปยังหน้าสต็อกสินค้าพร้อมเปิดหน้าต่างรับสินค้าเข้าสต็อก
     [HttpGet]
-    // ฟังก์ชัน ScanReceive สำหรับเปิดหน้าสแกนรับสินค้า
     public IActionResult ScanReceive()
     {
         // ตรวจสอบสิทธิ์ว่าผู้ใช้งานล็อกอินเป็นพนักงานหรือไม่
@@ -723,23 +753,13 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ดึงรายการสินค้า 20 รายการแรกพร้อมข้อมูลสต็อกสินค้าคงคลัง
-        var products = _db.Products
-            // โหลดข้อมูล Inventory ของสินค้าแต่ละชิ้น
-            .Include(p => p.Inventory)
-            // จำกัดจำนวน 20 รายการ
-            .Take(20)
-            // แปลงเป็น List
-            .ToList();
-
-        // ส่งรายการสินค้าไปยัง View หน้า ScanReceive
-        return View(products);
+        // นำทางไปยังหน้าสต็อกสินค้าหลักและสั่งเปิดหน้าต่างรับสินค้าเข้าสต็อกโดยตรง
+        return RedirectToAction("Index", new { openReceive = true });
     }
 
-    // Action สำหรับบันทึกการรับสินค้าเข้าสต็อกจริงลงตาราง Inventories (POST Method)
+    // Action สำหรับบันทึกการรับสินค้าเข้าสต็อกจริงลงตาราง Inventories และ Systemlogs (POST Method)
     [HttpPost]
-    // ฟังก์ชัน ScanReceive รับรหัสสินค้า (sku) และจำนวนที่รับเข้า (quantity)
-    public IActionResult ScanReceive(string? sku, int? quantity)
+    public IActionResult ScanReceive(string? sku, int? quantity, int? currentPage)
     {
         // ตรวจสอบสิทธิ์ว่าผู้ใช้งานเป็นพนักงานหรือไม่
         if (!IsAuthorizedStaff())
@@ -750,32 +770,30 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ตัดช่องว่างหัวท้ายของรหัส SKU
+        // ตัดช่องว่างหัวท้ายของรหัสสินค้าหรือรหัสบาร์โค้ด
         string cleanSku = (sku ?? "").Trim();
         // กำหนดจำนวนสินค้าที่รับเข้า หากไม่ระบุให้เริ่มต้นที่ 1 ชิ้น
         int addQty = (quantity.HasValue && quantity.Value > 0) ? quantity.Value : 1;
 
-        // ตรวจสอบว่าผู้ใช้กรอกรหัส SKU หรือไม่ หากไม่กรอกให้ใช้รหัสตัวอย่าง
+        // ตรวจสอบว่าพนักงานได้ระบุรหัสสินค้าหรือบาร์โค้ดเข้ามาหรือไม่
         if (string.IsNullOrWhiteSpace(cleanSku))
         {
-            // กำหนดรหัส SKU สำรองตัวอย่าง
-            cleanSku = "FIG-NARUTO-001";
+            TempData["ErrorMessage"] = "กรุณาสแกนบาร์โค้ดหรือเลือกรหัสสินค้าที่ต้องการรับเข้าคลัง";
+            return RedirectToAction("Index", new { page = currentPage ?? 1, openReceive = true });
         }
 
-        // ค้นหาข้อมูลสินค้าในตาราง Products ด้วยรหัส SKU หรือบาร์โค้ด (รองรับการพิมพ์รหัสแบบไม่ใส่ขีด -)
+        // ค้นหาข้อมูลสินค้าในตาราง Products ด้วยรหัสสินค้าหรือบาร์โค้ด (รองรับการพิมพ์รหัสแบบไม่ใส่ขีดลบ)
         string normalizedSku = cleanSku.Replace("-", "").Replace("#", "").Replace(" ", "").ToLower();
         var product = _db.Products
-            // โหลดข้อมูลสต็อกคงคลัง Inventory ร่วมด้วย
             .Include(p => p.Inventory)
             .ToList()
-            // เปรียบเทียบรหัส SKU หรือ บาร์โค้ด ทั้งแบบมีขีดและไม่มีขีด
             .FirstOrDefault(p => p.Sku.Equals(cleanSku, StringComparison.OrdinalIgnoreCase)
-                              || p.Barcode == cleanSku
-                              || (!string.IsNullOrEmpty(normalizedSku) && p.Sku.Replace("-", "").ToLower().Contains(normalizedSku)))
-            // หากไม่พบ ให้เลือกสินค้าชิ้นแรกในระบบเป็นตัวอย่าง
-            ?? _db.Products.Include(p => p.Inventory).FirstOrDefault();
+                              || (p.Barcode != null && p.Barcode.Equals(cleanSku, StringComparison.OrdinalIgnoreCase))
+                              || (!string.IsNullOrEmpty(normalizedSku) && p.Sku.Replace("-", "").ToLower() == normalizedSku)
+                              || (!string.IsNullOrEmpty(normalizedSku) && p.Barcode != null && p.Barcode.Replace("-", "").ToLower() == normalizedSku)
+                              || (!string.IsNullOrEmpty(normalizedSku) && p.Sku.Replace("-", "").ToLower().Contains(normalizedSku)));
 
-        // ตรวจสอบว่าพบข้อมูลสินค้าหรือไม่
+        // ตรวจสอบว่าพบข้อมูลสินค้าตรงกับรหัสที่สแกนหรือกรอกหรือไม่
         if (product != null)
         {
             // ดึงข้อมูลสต็อกคงคลังของสินค้า
@@ -783,48 +801,34 @@ public class StaffController : Controller
             // กรณีสินค้านี้ยังไม่มีเรคคอร์ดในตาราง Inventories
             if (inv == null)
             {
-                // สร้างอ็อบเจกต์ Inventory ใหม่
                 inv = new Inventory
                 {
-                    // กำหนดรหัสสินค้า ProductId
                     ProductId = product.ProductId,
-                    // กำหนดจำนวนสินค้าคงคลังเท่ากับยอดที่รับเข้า
                     QuantityOnHand = addQty,
-                    // กำหนดยอดที่ถูกจองเป็น 0
                     ReservedQuantity = 0,
-                    // กำหนดระดับ Safety Stock ขั้นต่ำเป็น 5 ชิ้น
                     SafetyStockLevel = 5,
-                    // กำหนดตำแหน่งจัดเก็บในคลังสินค้า
-                    StorageLocation = "Aisle-A-01",
-                    // บันทึกวันและเวลาปัจจุบัน
+                    StorageLocation = "โซน A-01",
+                    LastRestockedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };
-                // เพิ่มเรคคอร์ดสต็อกใหม่ลงตาราง Inventories
                 _db.Inventories.Add(inv);
             }
             // กรณีมีข้อมูลสต็อกเดิมอยู่แล้วในระบบ
             else
             {
-                // บวกจำนวนสินค้าที่รับเข้าเพิ่มเข้าไปใน QuantityOnHand
                 inv.QuantityOnHand += addQty;
-                // อัปเดตวันและเวลาแก้ไขล่าสุด
+                inv.LastRestockedAt = DateTime.Now;
                 inv.UpdatedAt = DateTime.Now;
             }
 
             // บันทึกประวัติการรับสินค้าเข้าสต็อกลงในตาราง Systemlogs
             _db.Systemlogs.Add(new Systemlog
             {
-                // รหัสโค้ดบันทึกเริ่มต้นด้วย RESTOCK ตามด้วยวันเวลา
                 LogCode = "RESTOCK-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-                // ระดับความสำคัญของ Log
-                LogLevel = "Info",
-                // โมดูลสต็อกสินค้า
+                LogLevel = "INFO",
                 Module = "Inventory",
-                // ข้อความระบุชื่อสินค้า รหัส SKU จำนวนที่รับเข้า และยอดคงเหลือรวม
-                Message = $"รับสินค้า {product.Name} (SKU: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าสต็อก คงเหลือรวม {inv.QuantityOnHand} ชิ้น",
-                // รหัสผู้ใช้งานที่ทำรายการ
-                UserId = HttpContext.Session.GetInt32("UserId") ?? 2,
-                // วันเวลาที่บันทึก
+                Message = $"รับสินค้า {product.Name} (รหัส: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าสต็อก คงเหลือรวม {inv.QuantityOnHand} ชิ้น",
+                UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("UserId") ?? 2,
                 Timestamp = DateTime.Now
             });
 
@@ -832,16 +836,15 @@ public class StaffController : Controller
             _db.SaveChanges();
 
             // กำหนดข้อความแจ้งผลสำเร็จผ่าน TempData เพื่อแสดงผลให้พนักงานทราบ
-            TempData["SuccessMessage"] = $"รับสินค้า {product.Name} (SKU: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าคลังเรียบร้อยแล้ว (คงเหลือรวม: {inv.QuantityOnHand} ชิ้น)";
+            TempData["SuccessMessage"] = $"รับสินค้า {product.Name} ({product.Sku}) จำนวน +{addQty} ชิ้น เข้าคลังเรียบร้อยแล้ว (คงเหลือรวม: {inv.QuantityOnHand} ชิ้น)";
         }
-        // กรณีค้นหาไม่พบรหัสสินค้า SKU ในฐานข้อมูล
+        // กรณีค้นหาไม่พบรหัสสินค้าหรือบาร์โค้ดในฐานข้อมูลจริง
         else
         {
-            // กำหนดข้อความแจ้งเตือนข้อผิดพลาดว่าไม่พบรหัสสินค้า
-            TempData["ErrorMessage"] = $"ไม่พบรหัสสินค้า SKU: {cleanSku} ในระบบ";
+            TempData["ErrorMessage"] = $"ไม่พบรหัสสินค้าหรือบาร์โค้ด \"{cleanSku}\" ในระบบ กรุณาตรวจสอบความถูกต้อง";
         }
 
-        // โหลดกลับมาที่หน้าสแกนรับสินค้าเดิม (Pure Form Navigation ไม่ใช้ AJAX)
-        return RedirectToAction("ScanReceive");
+        // โหลดกลับมาที่หน้าสต็อกสินค้าหลักพร้อมคงเลขหน้าเดิมไว้ (ฟอร์ม MVC มาตรฐาน)
+        return RedirectToAction("Index", new { page = currentPage ?? 1 });
     }
 }

@@ -857,6 +857,191 @@ public static class DbInitializer
                 }
             }
             context.SaveChanges();
+
+            // =========================================================================
+            // ส่วนที่ 6: เตรียมข้อมูลสมาชิก ใบเสร็จรับเงิน สมุดบัญชี และประวัติกิจกรรมเพิ่มเติม
+            // WHY: เพื่อให้ตารางข้อมูลทุกหน้า (ขนาดหน้าละ 10-12 แถว) มีข้อมูลมากกว่า 20 รายการ
+            // สำหรับทดสอบระบบแบ่งหน้า (Pagination) และการค้นหาได้ครบทุกหน้าอย่างสมบูรณ์
+            // =========================================================================
+            if (context.Users.Count() < 24)
+            {
+                var extraUsers = new[]
+                {
+                    new { Code = "U20261101001", Email = "kittipong.s@friendhouse.com", Name = "คุณกิตติพงศ์ สุขสวัสดิ์", Phone = "081-311-1001", Role = "customer", Points = 1450 },
+                    new { Code = "U20261101002", Email = "pimchanok.w@friendhouse.com", Name = "คุณพิมพ์ชนก วงศ์สว่าง", Phone = "081-311-1002", Role = "customer", Points = 980 },
+                    new { Code = "U20261101003", Email = "thanawat.c@friendhouse.com", Name = "คุณธนวัฒน์ เจริญรุ่งเรือง", Phone = "081-311-1003", Role = "customer", Points = 2300 },
+                    new { Code = "U20261101004", Email = "chanakan.p@friendhouse.com", Name = "คุณชนากานต์ พิทักษ์ธรรม", Phone = "081-311-1004", Role = "customer", Points = 640 },
+                    new { Code = "U20261101005", Email = "supakorn.t@friendhouse.com", Name = "คุณศุภกร ทองดี", Phone = "081-311-1005", Role = "customer", Points = 1820 },
+                    new { Code = "U20261101006", Email = "nattapong.k@friendhouse.com", Name = "คุณณัฐพงศ์ เกียรติขจร", Phone = "081-311-1006", Role = "customer", Points = 750 },
+                    new { Code = "U20261101007", Email = "waranya.r@friendhouse.com", Name = "คุณวรัญญา รัตนโชติ", Phone = "081-311-1007", Role = "customer", Points = 3100 },
+                    new { Code = "U20261101008", Email = "pakorn.l@friendhouse.com", Name = "คุณปกรณ์ เลิศวิไล", Phone = "081-311-1008", Role = "customer", Points = 520 },
+                    new { Code = "U20261101009", Email = "siriporn.m@friendhouse.com", Name = "คุณศิริพร มั่งมีศรีสุข", Phone = "081-311-1009", Role = "customer", Points = 1290 },
+                    new { Code = "U20261101010", Email = "apichat.b@friendhouse.com", Name = "คุณอภิชาติ บุญประเสริฐ", Phone = "081-311-1010", Role = "customer", Points = 890 },
+                    new { Code = "U20261101011", Email = "kanokwan.d@friendhouse.com", Name = "คุณกนกวรรณ ดวงดี", Phone = "081-311-1011", Role = "customer", Points = 1650 },
+                    new { Code = "U20261101012", Email = "peerapat.s@friendhouse.com", Name = "คุณพีรพัฒน์ สายชล", Phone = "081-311-1012", Role = "customer", Points = 410 },
+                    new { Code = "U20261101013", Email = "jintana.n@friendhouse.com", Name = "คุณจินตนา นพเก้า", Phone = "081-311-1013", Role = "customer", Points = 2050 },
+                    new { Code = "U20261101014", Email = "sorawit.k@friendhouse.com", Name = "คุณสรวิชญ์ กัลยา", Phone = "081-311-1014", Role = "customer", Points = 1120 },
+                    new { Code = "U20261101015", Email = "anchalee.t@friendhouse.com", Name = "คุณอัญชลี ตั้งใจ", Phone = "081-311-1015", Role = "customer", Points = 940 },
+                    new { Code = "U20261101016", Email = "teerapong.w@friendhouse.com", Name = "คุณธีรพงศ์ วัฒนา", Phone = "081-311-1016", Role = "customer", Points = 1580 },
+                    new { Code = "U20261101017", Email = "nichapa.p@friendhouse.com", Name = "คุณณิชาภา พงษ์สวัสดิ์", Phone = "081-311-1017", Role = "customer", Points = 2740 },
+                    new { Code = "U20261101018", Email = "chatchai.s@friendhouse.com", Name = "คุณฉัตรชัย ศรีสุวรรณ", Phone = "081-311-1018", Role = "staff", Points = 0 },
+                    new { Code = "U20261101019", Email = "lalita.c@friendhouse.com", Name = "คุณลลิตา ชัยมงคล", Phone = "081-311-1019", Role = "customer", Points = 1350 },
+                    new { Code = "U20261101020", Email = "montri.k@friendhouse.com", Name = "คุณมนตรี คงคา", Phone = "081-311-1020", Role = "customer", Points = 820 }
+                };
+
+                int offsetIdx = 1;
+                foreach (var eu in extraUsers)
+                {
+                    if (!context.Users.Any(u => u.Email == eu.Email))
+                    {
+                        context.Users.Add(new User
+                        {
+                            UserCode = eu.Code,
+                            Email = eu.Email,
+                            PasswordHash = defaultPasswordHash,
+                            Phone = eu.Phone,
+                            FullName = eu.Name,
+                            RoleName = eu.Role,
+                            Points = eu.Points,
+                            IsActive = true,
+                            CreatedAt = DateTime.Now.AddDays(-offsetIdx)
+                        });
+                        offsetIdx++;
+                    }
+                }
+                context.SaveChanges();
+            }
+
+            // เตรียมข้อมูลใบเสร็จรับเงิน (Receipts) อย่างน้อย 24 รายการสำหรับทดสอบการแบ่งหน้า
+            if (context.Receipts.Count() < 24)
+            {
+                var firstCashier = context.Users.FirstOrDefault(u => u.RoleName.ToLower() == "staff") ?? context.Users.FirstOrDefault();
+                var customerList = context.Users.Where(u => u.RoleName.ToLower() == "customer").Take(15).ToList();
+                var productList = context.Products.Take(15).ToList();
+
+                if (firstCashier != null && productList.Any())
+                {
+                    for (int i = 1; i <= 20; i++)
+                    {
+                        string rcptNo = $"RCP20261101{i:D4}";
+                        if (!context.Receipts.Any(r => r.ReceiptNo == rcptNo))
+                        {
+                            var prod = productList[(i - 1) % productList.Count];
+                            var cust = customerList.Any() ? customerList[(i - 1) % customerList.Count] : null;
+                            decimal netAmt = prod.RetailPrice;
+                            decimal vatAmt = Math.Round(netAmt * 0.07m, 2);
+
+                            var newReceipt = new Receipt
+                            {
+                                ReceiptNo = rcptNo,
+                                CustomerId = cust?.UserId,
+                                CustomerPhone = cust?.Phone ?? $"081-311-10{i:D2}",
+                                CashierUserId = firstCashier.UserId,
+                                SubtotalAmount = netAmt,
+                                DiscountAmount = (i % 4 == 0) ? 100.00m : 0.00m,
+                                VatAmount = vatAmt,
+                                NetTotalAmount = (i % 4 == 0) ? Math.Max(100m, netAmt - 100.00m) : netAmt,
+                                BarcodeData = $"PO-2026-8{i:D3}",
+                                IssuedAt = DateTime.Now.AddHours(-i * 5)
+                            };
+                            context.Receipts.Add(newReceipt);
+                            context.SaveChanges();
+
+                            context.Receiptitems.Add(new Receiptitem
+                            {
+                                ReceiptId = newReceipt.ReceiptId,
+                                ProductId = prod.ProductId,
+                                ItemDescription = prod.Name,
+                                Quantity = 1,
+                                UnitPrice = prod.RetailPrice,
+                                LineTotal = prod.RetailPrice
+                            });
+                            context.SaveChanges();
+                        }
+                    }
+                }
+            }
+
+            // เตรียมข้อมูลสมุดบันทึกรายรับ-รายจ่าย (Financialledgers) อย่างน้อย 24 รายการสำหรับทดสอบการแบ่งหน้า
+            if (context.Financialledgers.Count() < 24)
+            {
+                var accountantUser = context.Users.FirstOrDefault(u => u.RoleName.ToLower() == "accountant") ?? context.Users.FirstOrDefault();
+                if (accountantUser != null)
+                {
+                    var ledgerSeeds = new[]
+                    {
+                        new { Type = "expense", Cat = "ค่าเช่าร้าน", Desc = "ค่าเช่าพื้นที่สาขาสยามสแควร์งวดต้นเดือน", Amt = 45000.00m, DaysAgo = 1 },
+                        new { Type = "expense", Cat = "ค่าน้ำค่าไฟ", Desc = "ค่าไฟฟ้าและระบบปรับอากาศโชว์รูมฟิกเกอร์", Amt = 8450.00m, DaysAgo = 2 },
+                        new { Type = "expense", Cat = "ค่าขนส่งสินค้าเข้า", Desc = "ค่าขนส่งตู้คอนเทนเนอร์ฟิกเกอร์นำเข้าจากญี่ปุ่น รอบที่ 1", Amt = 12800.00m, DaysAgo = 3 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายได้ค่าธรรมเนียมจัดแสดงตู้โชว์ฟิกเกอร์รุ่นพิเศษ", Amt = 15000.00m, DaysAgo = 4 },
+                        new { Type = "expense", Cat = "เงินเดือนพนักงาน", Desc = "เบิกจ่ายเบี้ยเลี้ยงกะพิเศษพนักงานหน้าร้าน", Amt = 9500.00m, DaysAgo = 5 },
+                        new { Type = "expense", Cat = "ค่าขนส่งสินค้าเข้า", Desc = "ค่าธรรมเนียมพิธีการศุลกากรนำเข้าสินค้าลิขสิทธิ์แท้", Amt = 16200.00m, DaysAgo = 6 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายรับจากการจำหน่ากล่องสุ่มกิจกรรมหน้าร้าน", Amt = 24500.00m, DaysAgo = 7 },
+                        new { Type = "expense", Cat = "อื่นๆ", Desc = "ค่าวัสดุกันกระแทกและกล่องบรรจุภัณฑ์พรีเมียม", Amt = 4300.00m, DaysAgo = 8 },
+                        new { Type = "expense", Cat = "ค่าน้ำค่าไฟ", Desc = "ค่าบริการอินเทอร์เน็ตไฟเบอร์ออปติกประจำสาขา", Amt = 1890.00m, DaysAgo = 9 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายได้สนับสนุนแคมเปญเปิดตัวฟิกเกอร์ใหม่จากตัวแทนจำหน่าย", Amt = 32000.00m, DaysAgo = 10 },
+                        new { Type = "expense", Cat = "ค่าขนส่งสินค้าเข้า", Desc = "ค่าขนส่งสินค้าด่วนทางอากาศสำหรับล็อตพรีออเดอร์", Amt = 11400.00m, DaysAgo = 11 },
+                        new { Type = "expense", Cat = "อื่นๆ", Desc = "ค่าทำความสะอาดและบำรุงรักษาตู้กระจกนิรภัยแสดงโมเดล", Amt = 3500.00m, DaysAgo = 12 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายได้จากการรับฝากขายของสะสมลิมิเต็ด", Amt = 18600.00m, DaysAgo = 13 },
+                        new { Type = "expense", Cat = "เงินเดือนพนักงาน", Desc = "ค่าคอมมิชชันยอดขายประจำสัปดาห์พนักงานขาย", Amt = 14200.00m, DaysAgo = 14 },
+                        new { Type = "expense", Cat = "อื่นๆ", Desc = "ค่าจัดพิมพ์ป้ายประชาสัมพันธ์โปรโมชั่นหน้าร้าน", Amt = 2950.00m, DaysAgo = 15 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายรับพิเศษจากงานประมูลฟิกเกอร์หายากประจำเดือน", Amt = 38500.00m, DaysAgo = 16 },
+                        new { Type = "expense", Cat = "ค่าขนส่งสินค้าเข้า", Desc = "ค่าประกันภัยการขนส่งสินค้ามูลค่าสูงระหว่างประเทศ", Amt = 7600.00m, DaysAgo = 17 },
+                        new { Type = "expense", Cat = "ค่าน้ำค่าไฟ", Desc = "ค่าน้ำประปาและค่าบริการส่วนกลางอาคาร", Amt = 3200.00m, DaysAgo = 18 },
+                        new { Type = "expense", Cat = "อื่นๆ", Desc = "ค่าอุปกรณ์สแกนบาร์โค้ดและกระดาษพิมพ์ใบเสร็จความร้อน", Amt = 2150.00m, DaysAgo = 19 },
+                        new { Type = "income", Cat = "รายได้อื่นๆ", Desc = "รายได้ค่าสมาชิกรายปีกลุ่มนักสะสมวีไอพี", Amt = 21000.00m, DaysAgo = 20 }
+                    };
+
+                    foreach (var ls in ledgerSeeds)
+                    {
+                        if (!context.Financialledgers.Any(f => f.Description == ls.Desc))
+                        {
+                            context.Financialledgers.Add(new Financialledger
+                            {
+                                EntryType = ls.Type,
+                                CategoryName = ls.Cat,
+                                Description = ls.Desc,
+                                Amount = ls.Amt,
+                                EntryDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-ls.DaysAgo)),
+                                RecordedByUserId = accountantUser.UserId,
+                                CreatedAt = DateTime.UtcNow.AddDays(-ls.DaysAgo)
+                            });
+                        }
+                    }
+                    context.SaveChanges();
+                }
+            }
+
+            // เตรียมข้อมูลประวัติบันทึกกิจกรรมระบบ (Systemlogs) อย่างน้อย 25 รายการสำหรับทดสอบการแบ่งหน้า
+            if (context.Systemlogs.Count() < 25)
+            {
+                var anyUser = context.Users.FirstOrDefault();
+                for (int i = 1; i <= 20; i++)
+                {
+                    string logCode = $"SEED-LOG-2026-{i:D3}";
+                    if (!context.Systemlogs.Any(l => l.LogCode == logCode))
+                    {
+                        string level = (i % 5 == 0) ? "WARNING" : "INFO";
+                        string module = (i % 3 == 0) ? "inventory.stock" : ((i % 2 == 0) ? "preorder.counter" : "auth.login");
+                        string msg = (i % 3 == 0)
+                            ? $"ตรวจสอบและอัปเดตยอดสต็อกสินค้าอัตโนมัติ รอบที่ {i} สำเร็จ"
+                            : ((i % 2 == 0)
+                                ? $"พนักงานเคาน์เตอร์ตรวจสอบสถานะใบสั่งจองพรีออเดอร์รายการที่ {i}"
+                                : $"ระบบยืนยันสิทธิ์การเข้าใช้งานของผู้ใช้ลำดับที่ {i} สำเร็จ");
+
+                        context.Systemlogs.Add(new Systemlog
+                        {
+                            LogCode = logCode,
+                            LogLevel = level,
+                            Module = module,
+                            Message = msg,
+                            UserId = anyUser?.UserId,
+                            Timestamp = DateTime.Now.AddHours(-i * 2)
+                        });
+                    }
+                }
+                context.SaveChanges();
+            }
         }
         catch (Exception)
         {

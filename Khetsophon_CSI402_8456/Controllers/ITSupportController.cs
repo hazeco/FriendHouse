@@ -64,8 +64,8 @@ public class ITSupportController : Controller
         return View();
     }
 
-    // READ: จัดการบัญชีผู้ใช้งานทั้งหมดพร้อมค้นหาและกรองข้อมูลผ่าน UserManagementViewModel
-    public IActionResult Users(string? searchQuery, string? statusFilter, string? roleFilter)
+    // READ: จัดการบัญชีผู้ใช้งานทั้งหมดพร้อมค้นหา กรองข้อมูล และแบ่งหน้าผ่าน UserManagementViewModel
+    public IActionResult Users(string? searchQuery, string? statusFilter, string? roleFilter, int page = 1)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
@@ -118,8 +118,13 @@ public class ITSupportController : Controller
             }
         }
 
-        // ดึงรายการผู้ใช้งานเรียงลำดับจากวันที่สมัครล่าสุด
-        var users = query.OrderByDescending(u => u.CreatedAt).ToList();
+        // ดึงรายการผู้ใช้งานทั้งหมดเรียงลำดับจากวันที่สมัครล่าสุด และคำนวณการแบ่งหน้า (หน้าละ 10 รายการ)
+        var allUsers = query.OrderByDescending(u => u.CreatedAt).ToList();
+        int pageSize = 10;
+        int totalCount = allUsers.Count;
+        int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / pageSize));
+        int currentPage = Math.Clamp(page, 1, totalPages);
+        var pagedUsers = allUsers.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
         // ดึงข้อมูลเวลาเข้าสู่ระบบล่าสุดของผู้ใช้งานแต่ละรายจากตารางบันทึกกิจกรรมระบบ
         var lastLogins = _db.Systemlogs
@@ -143,7 +148,10 @@ public class ITSupportController : Controller
             LastLogins = lastLogins,
             TempResetEmail = TempData["ResetEmail"] as string,
             TempResetPassword = TempData["TempPassword"] as string,
-            UserItems = users.Select(u => new UserAccountItemViewModel
+            TotalCount = totalCount,
+            CurrentPage = currentPage,
+            PageSize = pageSize,
+            UserItems = pagedUsers.Select(u => new UserAccountItemViewModel
             {
                 UserId = u.UserId,
                 UserCode = u.UserCode,
@@ -157,7 +165,7 @@ public class ITSupportController : Controller
                 LastLoginAt = lastLogins.ContainsKey(u.UserId) ? lastLogins[u.UserId] : null
             }).ToList()
         };
-        vm.AddRange(users);
+        vm.AddRange(pagedUsers);
 
         // ส่ง ViewModel ไปยังหน้าแสดงผลรายชื่อผู้ใช้งาน
         return View(vm);
@@ -423,8 +431,8 @@ public class ITSupportController : Controller
         return RedirectToAction("Users");
     }
 
-    // READ: บันทึกกิจกรรมและข้อผิดพลาดของระบบ
-    public IActionResult Logs(string? level, string? timeRange)
+    // READ: บันทึกกิจกรรมและข้อผิดพลาดของระบบพร้อมระบบแบ่งหน้า
+    public IActionResult Logs(string? level, string? timeRange, int page = 1)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
@@ -445,14 +453,23 @@ public class ITSupportController : Controller
             query = query.Where(l => l.LogLevel == level);
         }
 
-        // ดึงรายการบันทึกกิจกรรมล่าสุดสูงสุด 100 รายการเรียงจากเวลาล่าสุด
-        var logs = query.OrderByDescending(l => l.Timestamp).Take(100).ToList();
-        // ส่งค่าระดับที่เลือกไปยัง View
-        ViewBag.SelectedLevel = level ?? "all";
-        // ส่งค่าช่วงเวลาที่เลือกไปยัง View
-        ViewBag.SelectedTimeRange = timeRange ?? "24h";
+        // ดึงรายการบันทึกกิจกรรมเรียงจากเวลาล่าสุด และแบ่งหน้า (หน้าละ 10 รายการ)
+        var allLogs = query.OrderByDescending(l => l.Timestamp).ToList();
+        int pageSize = 10;
+        int totalCount = allLogs.Count;
+        int totalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / pageSize));
+        int currentPage = Math.Clamp(page, 1, totalPages);
+        var pagedLogs = allLogs.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
-        // ส่งรายการบันทึกกิจกรรมไปยังหน้าแสดงผล
-        return View(logs);
+        // ส่งค่าระดับและข้อมูลการแบ่งหน้าไปยัง View
+        ViewBag.SelectedLevel = level ?? "all";
+        ViewBag.SelectedTimeRange = timeRange ?? "24h";
+        ViewBag.TotalLogCount = totalCount;
+        ViewBag.CurrentPage = currentPage;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.PageSize = pageSize;
+
+        // ส่งรายการบันทึกกิจกรรมของหน้าปัจจุบันไปยังหน้าแสดงผล
+        return View(pagedLogs);
     }
 }

@@ -5,7 +5,7 @@
 
     var hasDbEntries = Model != null && Model.Any();
 
-    // Top-of-file Media & Content Configuration
+    // กำหนดค่าข้อความและส่วนหัวของหน้าสมุดบันทึกรายรับ-รายจ่าย
     var pageHeader = new {
         Title = "บันทึกรายรับ-รายจ่าย",
         Subtitle = "สำหรับค่าใช้จ่ายที่ต้องกรอกเอง เช่น ค่าเช่า ค่าน้ำค่าไฟ — ยอดขายหน้าร้านระบบบันทึกให้อัตโนมัติแล้ว ไม่ต้องกรอกซ้ำ",
@@ -20,7 +20,7 @@
 }
 
 <div class="space-y-6">
-    <!-- Header Row & Month Picker (frame_9_24.png) -->
+    @* แถวส่วนหัวหน้าเพจและตัวเลือกเดือน *@
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
@@ -39,18 +39,18 @@
         </div>
     </div>
 
-    <!-- 3 Stat Cards in a row (frame_9_24.png) -->
+    @* การ์ดสรุปยอดรายรับ รายจ่าย และคงเหลือสุทธิ 3 การ์ด *@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <!-- Income -->
+        @* การ์ดรายรับ *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 flex items-center justify-between">
             <div class="space-y-1">
-                <span class="text-xs text-gray-400 font-medium">รายรับ (บันทึกเอง) เดือนนี้</span>
+                <span class="text-xs text-gray-400 font-medium">รายรับบันทึกเองเดือนนี้</span>
                 <div class="text-3xl font-extrabold text-[#16A34A]">@ledgerStats.Income</div>
             </div>
             <span class="size-9 rounded-xl bg-green-50 text-[#16A34A] text-sm font-bold flex items-center justify-center">▲</span>
         </div>
 
-        <!-- Expense -->
+        @* การ์ดรายจ่าย *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 flex items-center justify-between">
             <div class="space-y-1">
                 <span class="text-xs text-gray-400 font-medium">รายจ่ายรวมเดือนนี้</span>
@@ -59,16 +59,17 @@
             <span class="size-9 rounded-xl bg-red-50 text-[#DC2626] text-sm font-bold flex items-center justify-center">▼</span>
         </div>
 
-        <!-- Net Balance -->
+        @* การ์ดคงเหลือสุทธิ *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 flex items-center justify-between">
             <div class="space-y-1">
-                <span class="text-xs text-gray-400 font-medium">คงเหลือสุทธิ (รายการที่บันทึกเอง)</span>
+                <span class="text-xs text-gray-400 font-medium">คงเหลือสุทธิรายการที่บันทึกเอง</span>
                 <div class="text-3xl font-extrabold text-[#050315]">@ledgerStats.Net</div>
             </div>
             <span class="size-9 rounded-xl bg-gray-100 text-gray-600 text-sm font-bold flex items-center justify-center">=</span>
         </div>
     </div>
 
+    @* แสดงข้อความแจ้งเตือนผลสำเร็จและข้อผิดพลาดจาก TempData *@
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
@@ -79,10 +80,22 @@
         </div>
     }
 
-    <!-- 2 Columns: Add Form & Monthly Records Table (frame_9_24.png) -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-xs text-rose-800 shadow-xs">
+            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    @* แบ่งหน้าจอเป็น 2 คอลัมน์: ฟอร์มบันทึกรายการใหม่ และตารางรายการบันทึกบัญชี *@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Left 1 Col: + บันทึกรายการใหม่ -->
+        @* คอลัมน์ซ้าย: ฟอร์มบันทึกรายการรายรับ-รายจ่ายใหม่ ส่งไปยัง AccountantController แอ็กชัน AddLedgerEntry *@
         <form asp-controller="Accountant" asp-action="AddLedgerEntry" class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4 flex flex-col justify-between">
             <div class="space-y-4">
                 <h2 class="text-sm font-bold text-[#050315] flex items-center gap-2">
@@ -90,7 +103,7 @@
                     <span>บันทึกรายการใหม่</span>
                 </h2>
 
-                <!-- Entry Type Buttons -->
+                @* ปุ่มเลือกประเภทรายการ รายรับ หรือ รายจ่าย *@
                 <div>
                     <label class="text-xs font-bold text-gray-700 block mb-1.5">ประเภทรายการ</label>
                     <div class="grid grid-cols-2 gap-2">
@@ -106,7 +119,7 @@
                     <input type="hidden" name="EntryType" id="entryTypeInput" value="expense" />
                 </div>
 
-                <!-- Category Dropdown -->
+                @* เมนูดรอปดาวน์เลือกหมวดหมู่ *@
                 <div>
                     <label class="text-xs font-bold text-gray-700 block mb-1.5">หมวดหมู่</label>
                     <div class="relative">
@@ -124,7 +137,7 @@
                     </div>
                 </div>
 
-                <!-- Amount & Date Grid -->
+                @* ช่องกรอกจำนวนเงินและวันที่ *@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-xs font-bold text-gray-700 block mb-1.5">จำนวนเงิน (บาท)</label>
@@ -138,7 +151,7 @@
                     </div>
                 </div>
 
-                <!-- Note -->
+                @* ช่องกรอกหมายเหตุ *@
                 <div>
                     <label class="text-xs font-bold text-gray-700 block mb-1.5">หมายเหตุ</label>
                     <textarea name="Note" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..."
@@ -146,7 +159,7 @@
                 </div>
             </div>
 
-            <!-- Submit & Reset Buttons -->
+            @* ปุ่มบันทึกและปุ่มล้างข้อมูล *@
             <div class="flex items-center gap-2 pt-4">
                 <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs transition cursor-pointer">
                     บันทึกรายการ
@@ -157,12 +170,21 @@
             </div>
         </form>
 
-        <!-- Right 2 Cols: รายการเดือนกันยายน 2569 -->
+        @* คอลัมน์ขวา: ตารางรายการบันทึกบัญชีทั้งหมด *@
+        @{
+            // ดึงค่าสถิติและการแบ่งหน้าจาก ViewBag ที่ส่งมาจาก AccountantController.Ledger
+            int totalEntries = ViewBag.TotalEntryCount ?? (hasDbEntries ? Model!.Count() : 0);
+            int currentPage = ViewBag.CurrentPage ?? 1;
+            int totalPages = ViewBag.TotalPages ?? 1;
+            int pageSize = ViewBag.PageSize ?? 10;
+            int startRow = totalEntries == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+            int endRow = Math.Min(currentPage * pageSize, totalEntries);
+        }
         <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden flex flex-col justify-between">
             <div>
                 <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                     <h2 class="text-sm font-bold text-[#050315]">รายการบันทึกบัญชีทั้งหมด</h2>
-                    <span class="text-xs text-gray-400">@(hasDbEntries ? Model!.Count() : 6) รายการ</span>
+                    <span class="text-xs text-gray-400">@totalEntries รายการ</span>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -192,6 +214,7 @@
                                         <td class="py-3.5 px-5 text-right font-bold @amountClass">@amountPrefix@entry.Amount.ToString("N2")</td>
                                         <td class="py-3.5 px-5 text-center">
                                             <div class="inline-flex items-center gap-1">
+                                                @* ปุ่มเปิดหน้าต่างแก้ไขรายการบัญชี *@
                                                 <button type="button" onclick="openEditLedgerModal(@entry.EntryId, '@entry.CategoryName', '@entry.Amount', '@entry.EntryType', '@entry.Description')"
                                                         class="size-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-[#2F39A9] flex items-center justify-center cursor-pointer" title="แก้ไขรายการ">
                                                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -199,6 +222,7 @@
                                                         <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
                                                     </svg>
                                                 </button>
+                                                @* ปุ่มเปิดหน้าต่างยืนยันการลบรายการบัญชี *@
                                                 <button type="button" onclick="openDeleteLedgerModal(@entry.EntryId, '@entry.CategoryName')"
                                                         class="size-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-[#DC2626] flex items-center justify-center cursor-pointer" title="ลบรายการ">
                                                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -224,26 +248,79 @@
                 </div>
             </div>
 
-            <!-- Total Net Balance Row (frame_9_24.png) -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-[#FBFBFE] flex items-center justify-between">
-                <span class="text-xs font-bold text-[#050315]">ยอดรวมสุทธิ (บันทึกเอง เดือนนี้)</span>
-                <span class="text-base font-extrabold text-[#050315]">@ledgerStats.Net</span>
+            <div>
+                @* แถบแบ่งหน้ารายการบัญชีรายรับ-รายจ่าย เชื่อมโยงกับ AccountantController.Ledger *@
+                <div class="px-6 py-3.5 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-gray-500">
+                    <span>แสดง @startRow–@endRow จากทั้งหมด @totalEntries รายการ</span>
+                    <div class="flex items-center gap-1.5">
+                        @if (currentPage > 1)
+                        {
+                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage - 1)"
+                               class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
+                                ก่อนหน้า
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
+                                ก่อนหน้า
+                            </span>
+                        }
+
+                        @for (int p = 1; p <= totalPages; p++)
+                        {
+                            if (p == currentPage)
+                            {
+                                <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
+                                    @p
+                                </span>
+                            }
+                            else
+                            {
+                                <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@p"
+                                   class="size-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">
+                                    @p
+                                </a>
+                            }
+                        }
+
+                        @if (currentPage < totalPages)
+                        {
+                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage + 1)"
+                               class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
+                                ถัดไป
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
+                                ถัดไป
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                @* แถบแสดงยอดรวมสุทธิที่ด้านล่างตาราง *@
+                <div class="px-6 py-4 border-t border-gray-100 bg-[#FBFBFE] flex items-center justify-between">
+                    <span class="text-xs font-bold text-[#050315]">ยอดรวมสุทธิบันทึกเองเดือนนี้</span>
+                    <span class="text-base font-extrabold text-[#050315]">@ledgerStats.Net</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ==================== MODALS [64:2938] ==================== -->
+@* ==================== หน้าต่างป๊อปอัปแก้ไขและลบรายการบัญชี ==================== *@
 
-<!-- 1. Edit Entry Modal -->
+@* 1. หน้าต่างแก้ไขรายการบันทึกบัญชี ส่งข้อมูลด้วยฟอร์มมาตรฐานไปยัง AccountantController แอ็กชัน EditLedgerEntry *@
 <div id="editLedgerModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 animate-scale-up">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
         <h3 class="text-base font-bold text-[#050315]">แก้ไขรายการบันทึก</h3>
-        <input type="hidden" id="editLedgerIdInput" />
-        <div class="space-y-3">
+        <form asp-controller="Accountant" asp-action="EditLedgerEntry" class="space-y-3">
+            <input type="hidden" name="ledgerId" id="editLedgerIdInput" />
             <div>
                 <label class="text-xs font-bold text-gray-700 block mb-1">หมวดหมู่</label>
-                <select id="editCategoryInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
+                <select name="categoryName" id="editCategoryInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
                     <option value="ค่าเช่าร้าน">ค่าเช่าร้าน</option>
                     <option value="ค่าน้ำค่าไฟ">ค่าน้ำค่าไฟ</option>
                     <option value="ค่าขนส่งสินค้าเข้า">ค่าขนส่งสินค้าเข้า</option>
@@ -254,34 +331,34 @@
             </div>
             <div>
                 <label class="text-xs font-bold text-gray-700 block mb-1">ประเภทรายการ</label>
-                <select id="editEntryTypeInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
+                <select name="entryType" id="editEntryTypeInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
                     <option value="expense">รายจ่าย</option>
                     <option value="income">รายรับ</option>
                 </select>
             </div>
             <div>
                 <label class="text-xs font-bold text-gray-700 block mb-1">จำนวนเงิน (บาท)</label>
-                <input type="number" step="0.01" min="1" id="editAmountInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none" />
+                <input type="number" step="0.01" min="1" name="amount" id="editAmountInput" required class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-bold focus:outline-none" />
             </div>
             <div>
                 <label class="text-xs font-bold text-gray-700 block mb-1">หมายเหตุ</label>
-                <textarea id="editNoteInput" rows="2" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"></textarea>
+                <textarea name="note" id="editNoteInput" rows="2" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"></textarea>
             </div>
-        </div>
-        <div class="flex items-center gap-2 pt-2">
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                ยกเลิก
-            </button>
-            <button type="button" onclick="confirmEditLedger()" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                บันทึกการแก้ไข
-            </button>
-        </div>
+            <div class="flex items-center gap-2 pt-2">
+                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
+                    บันทึกการแก้ไข
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- 2. Delete Entry Modal -->
+@* 2. หน้าต่างยืนยันการลบรายการบัญชี ส่งข้อมูลด้วยฟอร์มมาตรฐานไปยัง AccountantController แอ็กชัน DeleteLedgerEntry *@
 <div id="deleteLedgerModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 animate-scale-up">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4">
         <div class="size-12 rounded-full bg-red-100 text-[#DC2626] mx-auto flex items-center justify-center">
             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -292,37 +369,21 @@
             <h3 class="text-base font-bold text-[#050315]">คุณแน่ใจว่าจะลบรายการนี้?</h3>
             <p class="text-xs text-gray-500 mt-1" id="deleteEntryDesc"></p>
         </div>
-        <div class="flex items-center gap-2 pt-2">
+        <form asp-controller="Accountant" asp-action="DeleteLedgerEntry" class="flex items-center gap-2 pt-2">
+            <input type="hidden" name="ledgerId" id="deleteLedgerIdInput" />
             <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
                 ยกเลิก
             </button>
-            <button type="button" onclick="confirmDeleteLedger()" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
+            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
                 ยืนยันลบ
             </button>
-        </div>
-    </div>
-</div>
-
-<!-- 3. Success Modal -->
-<div id="ledgerSuccessModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center shadow-xl space-y-4 animate-scale-up">
-        <div class="size-14 rounded-full bg-[#DCFCE7] text-[#16A34A] mx-auto flex items-center justify-center">
-            <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        </div>
-        <div>
-            <h3 class="text-base font-bold text-[#050315]" id="ledgerSuccessTitle">สำเร็จ</h3>
-            <p class="text-xs text-gray-500 mt-1" id="ledgerSuccessDesc"></p>
-        </div>
-        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs cursor-pointer">
-            ตกลง
-        </button>
+        </form>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        // ฟังก์ชันสลับปุ่มเลือกประเภทรายการ รายรับ หรือ รายจ่าย ในฟอร์มบันทึกใหม่
         function selectEntryType(type) {
             document.getElementById('entryTypeInput').value = type;
             const btnIncome = document.getElementById('btnIncome');
@@ -337,11 +398,8 @@
             }
         }
 
-        let currentEditLedgerId = 0;
-        let currentDeleteLedgerId = 0;
-
+        // ฟังก์ชันเปิดหน้าต่างแก้ไขรายการบันทึกบัญชีพร้อมเติมข้อมูลเดิมลงในฟอร์ม
         function openEditLedgerModal(id, cat, amount, type, note) {
-            currentEditLedgerId = id;
             document.getElementById('editLedgerIdInput').value = id;
             document.getElementById('editCategoryInput').value = cat || '';
             document.getElementById('editAmountInput').value = amount || '';
@@ -350,76 +408,14 @@
             document.getElementById('editLedgerModal')?.classList.remove('hidden');
         }
 
-        async function confirmEditLedger() {
-            const id = currentEditLedgerId;
-            const cat = document.getElementById('editCategoryInput').value;
-            const amount = document.getElementById('editAmountInput').value;
-            const type = document.getElementById('editEntryTypeInput').value;
-            const note = document.getElementById('editNoteInput').value;
-
-            closeAllModals();
-
-            if (id > 0) {
-                const formData = new FormData();
-                formData.append('ledgerId', id);
-                formData.append('categoryName', cat);
-                formData.append('entryType', type);
-                formData.append('amount', amount);
-                formData.append('note', note);
-
-                try {
-                    const res = await fetch('/Accountant/EditLedgerEntry', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        showLedgerSuccess('แก้ไขสำเร็จ', data.message || 'แก้ไขรายการบันทึกรายรับ/รายจ่ายสำเร็จ');
-                        setTimeout(() => window.location.reload(), 1200);
-                    } else {
-                        alert(data.message || 'เกิดข้อผิดพลาด');
-                    }
-                } catch (e) {
-                    window.location.reload();
-                }
-            } else {
-                showLedgerSuccess('แก้ไขสำเร็จ', 'แก้ไขรายการบันทึกรายรับ/รายจ่ายสำเร็จ');
-            }
-        }
-
+        // ฟังก์ชันเปิดหน้าต่างยืนยันการลบรายการบัญชี
         function openDeleteLedgerModal(id, cat) {
-            currentDeleteLedgerId = id;
+            document.getElementById('deleteLedgerIdInput').value = id;
             document.getElementById('deleteEntryDesc').innerText = `รายการ "${cat}" จะถูกลบออกจากสมุดรายวัน`;
             document.getElementById('deleteLedgerModal')?.classList.remove('hidden');
         }
 
-        async function confirmDeleteLedger() {
-            const id = currentDeleteLedgerId;
-            closeAllModals();
-
-            if (id > 0) {
-                const formData = new FormData();
-                formData.append('ledgerId', id);
-                try {
-                    const res = await fetch('/Accountant/DeleteLedgerEntry', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        showLedgerSuccess('ลบสำเร็จ', data.message || 'ลบรายการบันทึกรายรับ/รายจ่ายสำเร็จ');
-                        setTimeout(() => window.location.reload(), 1200);
-                    } else {
-                        alert(data.message || 'เกิดข้อผิดพลาด');
-                    }
-                } catch (e) {
-                    window.location.reload();
-                }
-            } else {
-                showLedgerSuccess('ลบสำเร็จ', 'ลบรายการบันทึกรายรับ/รายจ่ายสำเร็จ');
-            }
-        }
-
-        function showLedgerSuccess(title, desc) {
-            document.getElementById('ledgerSuccessTitle').innerText = title;
-            document.getElementById('ledgerSuccessDesc').innerText = desc;
-            document.getElementById('ledgerSuccessModal')?.classList.remove('hidden');
-        }
-
+        // ฟังก์ชันปิดหน้าต่างป๊อปอัปทั้งหมด
         function closeAllModals() {
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
         }

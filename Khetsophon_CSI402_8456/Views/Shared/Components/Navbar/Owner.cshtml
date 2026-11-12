@@ -31,6 +31,9 @@
 
         <!-- Center Nav Items (Figma frame_9_7.png) -->
         <nav class="hidden md:flex items-center gap-2">
+            <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog")">
+                <span>สินค้าและของรางวัล</span>
+            </a>
             <a asp-controller="Owner" asp-action="Promotions" class="@NavClass("Promotions")">
                 <span>โปรโมชั่น</span>
             </a>
@@ -58,6 +61,7 @@
 
     <!-- Mobile Sub-navigation Bar -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog") text-xs py-1.5 px-3 shrink-0">สินค้าและของรางวัล</a>
         <a asp-controller="Owner" asp-action="Promotions" class="@NavClass("Promotions") text-xs py-1.5 px-3 shrink-0">โปรโมชั่น</a>
         <a asp-controller="Owner" asp-action="MonthlyReport" class="@NavClass("MonthlyReport") text-xs py-1.5 px-3 shrink-0">รายงาน</a>
         @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
