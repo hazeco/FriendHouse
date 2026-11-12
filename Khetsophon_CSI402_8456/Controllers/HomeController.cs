@@ -1644,6 +1644,7 @@ public class HomeController : Controller
             return RedirectToAction("ProductDetail", new { id = product.ProductId });
         }
     }
+    
 
     // READ: แสดงหน้ารายละเอียดสินค้าฟิกเกอร์จากฐานข้อมูลผ่าน ProductDetailViewModel (GET Method)
     // WHY: ดึงข้อมูลสินค้า หมวดหมู่ และคลังสินค้า แปลงเป็น ProductDetailViewModel ตามมาตรฐาน MVC
