@@ -1,4 +1,4 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.Cartitem>?
+@model Khetsophon_CSI402_8456.ViewModels.CartViewModel
 @{
     ViewData["Title"] = "ตะกร้าสินค้าพรีออเดอร์ — FriendHouse";
 
@@ -7,37 +7,14 @@
         EmptyCartSvg = "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
     };
 
-    // ตรวจสอบข้อมูลจริงจาก Database
-    var displayItems = new List<dynamic>();
-    if (Model != null && Model.Any())
-    {
-        foreach (var c in Model)
-        {
-            displayItems.Add(new {
-                Id = c.ProductId,
-                CartItemId = c.CartItemId,
-                Title = c.Product?.Name ?? "สินค้าไม่มีชื่อ",
-                Schedule = "กำหนดเข้าร้าน: สินค้าพร้อมส่งมอบตามรอบพรีออเดอร์",
-                PricePerUnit = $"฿{(c.Product?.RetailPrice ?? 0):N0}",
-                RawPrice = c.Product?.RetailPrice ?? 0m,
-                Quantity = c.Quantity,
-                Total = $"฿{((c.Product?.RetailPrice ?? 0) * c.Quantity):N0}",
-                ImageUrl = !string.IsNullOrEmpty(c.Product?.ImageUrl) ? c.Product.ImageUrl : "~/media/images/naruto_hero_fig.png"
-            });
-        }
-    }
-
-    int totalItemCount = displayItems.Sum(i => (int)i.Quantity);
-    decimal subtotalAmount = displayItems.Sum(i => (decimal)i.RawPrice * (int)i.Quantity);
-
-    var summary = new {
-        Subtotal = $"฿{subtotalAmount:N0}",
-        TotalItems = totalItemCount,
-        PlatformFee = "ฟรี (฿0)",
-        EstimatedTotal = $"฿{subtotalAmount:N0}",
-        StoreNoticeTitle = "รับและชำระเงินที่หน้าร้านเท่านั้น",
-        StoreNoticeDesc = "การสั่งจองพรีออเดอร์ไม่ต้องชำระเงินออนไลน์ ชำระยอดเต็มหรือมัดจำเมื่อมารับสินค้าที่สาขา FriendHouse HQ"
-    };
+    var cartItems = Model?.Items ?? new List<Khetsophon_CSI402_8456.ViewModels.CartItemViewModel>();
+    int totalItemCount = Model?.TotalItemCount ?? 0;
+    string subtotalFormatted = Model?.SubtotalFormatted ?? "฿0";
+    string platformFeeFormatted = Model?.PlatformFeeFormatted ?? "ฟรี (฿0)";
+    string grandTotalFormatted = Model?.GrandTotalFormatted ?? "฿0";
+    string userPhone = Model?.UserPhone ?? ((string?)ViewBag.UserPhone ?? "");
+    string storeNoticeTitle = Model?.StoreNoticeTitle ?? "รับและชำระเงินที่หน้าร้านเท่านั้น";
+    string storeNoticeDesc = Model?.StoreNoticeDesc ?? "การสั่งจองพรีออเดอร์ไม่ต้องชำระเงินออนไลน์ ชำระยอดเต็มหรือมัดจำเมื่อมารับสินค้าที่สาขา FriendHouse HQ";
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
@@ -78,7 +55,7 @@
             <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
                 <label class="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-text">
                     <input type="checkbox" checked class="size-4.5 rounded-md border-slate-300 text-primary focus:ring-primary" />
-                    <span>เลือกทั้งหมด (@displayItems.Count รายการ / @summary.TotalItems ชิ้น)</span>
+                    <span>เลือกทั้งหมด (@cartItems.Count รายการ / @totalItemCount ชิ้น)</span>
                 </label>
                 @* ฟอร์มส่งข้อมูลล้างสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ClearCart *@
                 <form asp-controller="Home" asp-action="ClearCart" class="inline">
@@ -91,7 +68,7 @@
 
             <!-- Cart Items Loop -->
             <div class="space-y-4">
-                @if (displayItems.Count == 0)
+                @if (cartItems.Count == 0)
                 {
                     <div class="rounded-2xl border border-dashed border-slate-300 p-12 text-center bg-slate-50/50">
                         <svg class="size-12 mx-auto text-slate-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -106,7 +83,7 @@
                 }
                 else
                 {
-                    @foreach (var item in displayItems)
+                    @foreach (var item in cartItems)
                     {
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs transition-all hover:border-primary/30" id="cart-item-row-@item.CartItemId">
                             <!-- Checkbox -->
@@ -114,19 +91,19 @@
 
                             <!-- Thumbnail with Real Image -->
                             <div class="size-20 sm:size-24 shrink-0 rounded-2xl border border-slate-200/80 overflow-hidden bg-slate-100 shadow-xs">
-                                <img src="@Url.Content(item.ImageUrl)" alt="@item.Title" class="size-full object-cover" loading="lazy" />
+                                <img src="@Url.Content(item.ImageUrl)" alt="@item.ProductName" class="size-full object-cover" loading="lazy" />
                             </div>
 
                             <!-- Item Details -->
                             <div class="flex-1 min-w-0 space-y-1">
                                 <h3 class="text-sm sm:text-base font-bold text-text leading-snug truncate">
-                                    @item.Title
+                                    @item.ProductName
                                 </h3>
                                 <span class="inline-block text-[11px] font-semibold text-primary bg-primary/10 rounded-md px-2 py-0.5">
-                                    @item.Schedule
+                                    @item.ScheduleNotice
                                 </span>
                                 <div class="text-xs text-slate-500">
-                                    ราคาต่อชิ้น: <span class="font-medium text-text">@item.PricePerUnit</span>
+                                    ราคาต่อชิ้น: <span class="font-medium text-text">@item.UnitPriceFormatted</span>
                                 </div>
                             </div>
 
@@ -162,7 +139,7 @@
 
                                 <!-- Total -->
                                 <div class="text-right">
-                                    <span class="text-base sm:text-lg font-extrabold text-primary">@item.Total</span>
+                                    <span class="text-base sm:text-lg font-extrabold text-primary">@item.LineTotalFormatted</span>
                                 </div>
 
                                 @* ฟอร์มส่งคำขอลบรายการสินค้าชิ้นนี้ออกจากตะกร้า ไปยัง HomeController แอ็กชัน RemoveFromCart *@
@@ -203,16 +180,16 @@
                 <!-- Subtotals -->
                 <div class="space-y-3 text-sm">
                     <div class="flex items-center justify-between text-slate-500">
-                        <span>ยอดรวมสินค้า (@summary.TotalItems ชิ้น)</span>
-                        <span class="font-bold text-text">@summary.Subtotal</span>
+                        <span>ยอดรวมสินค้า (@totalItemCount ชิ้น)</span>
+                        <span class="font-bold text-text">@subtotalFormatted</span>
                     </div>
                     <div class="flex items-center justify-between text-slate-500">
                         <span>ค่าธรรมเนียมบริการ</span>
-                        <span class="font-bold text-emerald-600">@summary.PlatformFee</span>
+                        <span class="font-bold text-emerald-600">@platformFeeFormatted</span>
                     </div>
                     <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
                         <span class="text-base font-bold text-text">ยอดรวมที่ต้องชำระหน้าร้าน</span>
-                        <span class="text-2xl font-extrabold text-primary">@summary.EstimatedTotal</span>
+                        <span class="text-2xl font-extrabold text-primary">@grandTotalFormatted</span>
                     </div>
                 </div>
 
@@ -223,13 +200,13 @@
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
                     <div>
-                        <span class="font-bold text-text block text-xs">@summary.StoreNoticeTitle</span>
-                        <span class="leading-relaxed mt-0.5 block">@summary.StoreNoticeDesc</span>
+                        <span class="font-bold text-text block text-xs">@storeNoticeTitle</span>
+                        <span class="leading-relaxed mt-0.5 block">@storeNoticeDesc</span>
                     </div>
                 </div>
 
                 <!-- Confirm Order Action (No method attribute as per rule) -->
-                @if (displayItems.Count > 0)
+                @if (cartItems.Count > 0)
                 {
                     @* ฟอร์มส่งข้อมูลยืนยันการจองสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ConfirmPreorder *@
                     <form asp-controller="Home" asp-action="ConfirmPreorder" class="space-y-3">
@@ -239,7 +216,7 @@
                             @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์ *@
                             <label class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS / สะสมแต้ม</label>
                             @* ช่องกรอกหมายเลขโทรศัพท์สำหรับรับ SMS และบันทึกคำสั่งจอง *@
-                            <input type="tel" name="contactPhone" value="@ViewBag.UserPhone" placeholder="08x-xxx-xxxx" required
+                            <input type="tel" name="contactPhone" value="@userPhone" placeholder="08x-xxx-xxxx" required
                                    class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
                         </div>
                         @* ปุ่มกดยืนยันการสั่งจองสินค้าทั้งหมดในตะกร้า *@

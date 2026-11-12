@@ -1,90 +1,192 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.Promotion>
+@model Khetsophon_CSI402_8456.ViewModels.PromotionCatalogViewModel
 @{
-    ViewData["Title"] = "โปรโมชั่นทั้งหมด — FriendHouse";
+    // กำหนดชื่อหน้าเว็บสำหรับแสดงผลบนแถบเบราว์เซอร์เป็นภาษาไทยล้วน
+    ViewData["Title"] = "โปรโมชั่นและสิทธิพิเศษ — ร้านบ้านเพื่อน";
 
-    // Top-of-file Media & Content Configuration
+    // READ: การตั้งค่าข้อมูลเนื้อหา ข้อความ ตัวเลือกการค้นหา และไอคอน SVG ที่ส่วนบนสุดของไฟล์ (Top-of-file Configuration)
+    // WHY: เพื่อให้แก้ไขข้อความและไอคอนได้จากจุดเดียวตามกฎการพัฒนาของโปรเจกต์
     var pageHeader = new {
-        Title = "โปรโมชั่นและสิทธิพิเศษ",
-        Subtitle = "โปรโมชั่น 5 รูปแบบสุดคุ้มสำหรับสมาชิกร้าน FriendHouse",
-        Badge = "ข้อเสนอพิเศษ"
+        Title = "โปรโมชั่นและสิทธิพิเศษสำหรับสมาชิก",
+        Subtitle = "รวบรวมแคมเปญส่วนลดและสิทธิประโยชน์สุดคุ้มสำหรับลูกค้าสมาชิกเพื่อใช้ลดราคาสินค้าและรับแต้มสะสมเพิ่ม",
+        Badge = "ข้อเสนอพิเศษประจำเดือน",
+        SearchPlaceholder = "ค้นหาชื่อแคมเปญ หรือรหัสคูปองส่วนลด...",
+        SearchBtnText = "ค้นหาโปรโมชั่น",
+        ResetBtnText = "ล้างตัวกรอง",
+        EmptyTitle = "ไม่พบรายการโปรโมชั่นที่ค้นหา",
+        EmptySubtitle = "กรุณาลองเปลี่ยนคำค้นหาหรือเลือกดูโปรโมชั่นทุกประเภท"
     };
 
-    var promoList = (Model != null && Model.Any())
-        ? Model.Select(p => new {
-            Id = p.PromotionId,
-            Tag = p.PromoType ?? "โปรโมชั่น",
-            Title = p.Name,
-            Description = $"โปรโมชั่นสำหรับ {p.ApplicableScope} (จำกัด {p.UsageLimit ?? 0} สิทธิ์)",
-            Period = $"{p.StartDate:dd/MM/yyyy} - {p.EndDate:dd/MM/yyyy}",
-            Condition = $"โค้ด: {p.VoucherCode} • ส่วนลด ฿{p.DiscountValue:N0} • ยอดขั้นต่ำ ฿{p.MinimumSpend:N0}",
-            BgClass = "bg-white border-slate-200/80 shadow-xs",
-            BadgeClass = "bg-primary/15 text-primary",
-            IconClass = "text-primary bg-primary/10",
-            SvgIcon = "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-        }).ToArray()
-        : Array.Empty<dynamic>();
+    // ตัวเลือกประเภทโปรโมชั่นสำหรับการกรองข้อมูลด้วยภาษาไทยล้วน
+    var promoTypes = new[] {
+        new { Value = "all", Label = "ทุกประเภทโปรโมชั่น" },
+        new { Value = "percent", Label = "ส่วนลดเปอร์เซ็นต์" },
+        new { Value = "fixed", Label = "ส่วนลดท้ายบิล" },
+        new { Value = "bogo", Label = "ซื้อ 1 แถม 1" },
+        new { Value = "bundle", Label = "จัดเซ็ตสุดคุ้ม" },
+        new { Value = "double_points", Label = "แต้มสะสมคูณสอง" }
+    };
+
+    // ไอคอน SVG มาตรฐานที่ใช้ในหน้าโปรโมชั่น
+    var svgIcons = new {
+        Tag = "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z",
+        Search = "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
+        ChevronRight = "M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z",
+        Ticket = "M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+    };
+
+    // ดึงรายการโปรโมชั่นจาก ViewModel ที่ผ่านการแปลงข้อความเป็นภาษาไทยจาก Controller แล้ว
+    var promoCards = Model?.PromotionCards ?? new List<Khetsophon_CSI402_8456.ViewModels.PromotionCardItemViewModel>();
+    var currentSearch = Model?.SearchTerm ?? string.Empty;
+    var currentType = Model?.SelectedType ?? "all";
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
-    <!-- Breadcrumb -->
+    <!-- แถบนำทางบอกตำแหน่งหน้าปัจจุบัน -->
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
         <span>/</span>
-        <span class="text-text font-semibold">โปรโมชั่น</span>
+        <span class="text-text font-semibold">โปรโมชั่นและสิทธิพิเศษ</span>
     </nav>
 
-    <!-- Header -->
-    <div class="space-y-2">
-        <div class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3.5 py-1 text-xs font-bold text-accent">
-            <span class="size-2 rounded-full bg-accent"></span>
-            <span>@pageHeader.Badge</span>
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@pageHeader.Title</h1>
-        <p class="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">@pageHeader.Subtitle</p>
-    </div>
-
-    <!-- Promotions Cards List -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        @foreach (var promo in promoList)
-        {
-            <div class="flex flex-col justify-between rounded-3xl border @promo.BgClass p-6 shadow-xs transition-all hover:-translate-y-1 hover:shadow-md">
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <span class="rounded-xl @promo.BadgeClass px-3 py-1 text-xs font-bold">
-                            @promo.Tag
-                        </span>
-                        <div class="flex size-10 items-center justify-center rounded-xl @promo.IconClass shadow-xs">
-                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="@promo.SvgIcon"></path>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h2 class="text-base sm:text-lg font-bold text-text leading-snug">@promo.Title</h2>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">@promo.Description</p>
-                    </div>
-
-                    <div class="space-y-1.5 pt-2 border-t border-slate-200/50 text-xs">
-                        <div class="text-slate-500">
-                            <strong class="text-text">ระยะเวลา:</strong> @promo.Period
-                        </div>
-                        <div class="text-slate-400">
-                            * @promo.Condition
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-3">
-                    <a asp-controller="Home" asp-action="Collection"
-                       class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline">
-                        <span>ดูสินค้าที่ร่วมรายการ</span>
-                        <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    </a>
-                </div>
+    <!-- ส่วนหัวของหน้าโปรโมชั่น -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 rounded-full bg-accent/10 px-3.5 py-1 text-xs font-bold text-accent">
+                <span class="size-2 rounded-full bg-accent"></span>
+                <span>@pageHeader.Badge</span>
             </div>
-        }
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@pageHeader.Title</h1>
+            <p class="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">@pageHeader.Subtitle</p>
+        </div>
+        <div class="inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 self-start md:self-auto">
+            <svg class="size-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="@svgIcons.Ticket" />
+            </svg>
+            <span>แคมเปญที่เปิดใช้งาน: <strong class="text-primary">@promoCards.Count รายการ</strong></span>
+        </div>
     </div>
+
+    <!-- READ: ฟอร์มค้นหาและกรองประเภทโปรโมชั่นตามมาตรฐาน MVC (ไม่มีแอตทริบิวต์ method) -->
+    <form asp-controller="Home" asp-action="Promotion" class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5 shadow-2xs">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+            <!-- ช่องกรอกคำค้นหาชื่อโปรโมชั่นหรือรหัสคูปอง -->
+            <div class="sm:col-span-6 relative">
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="@svgIcons.Search" />
+                    </svg>
+                </span>
+                <input type="text"
+                       name="searchTerm"
+                       value="@currentSearch"
+                       placeholder="@pageHeader.SearchPlaceholder"
+                       class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs sm:text-sm text-text placeholder:text-slate-400 focus:border-primary focus:outline-hidden" />
+            </div>
+
+            <!-- ตัวเลือกกรองประเภทโปรโมชั่น -->
+            <div class="sm:col-span-4">
+                <select name="promoType" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:outline-hidden">
+                    @foreach (var item in promoTypes)
+                    {
+                        if (string.Equals(currentType, item.Value, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <option value="@item.Value" selected>@item.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@item.Value">@item.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- ปุ่มกดค้นหาและล้างค่า -->
+            <div class="sm:col-span-2 flex items-center gap-2">
+                <button type="submit" class="w-full rounded-xl bg-primary px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-accent transition-colors cursor-pointer">
+                    @pageHeader.SearchBtnText
+                </button>
+                @if (!string.IsNullOrWhiteSpace(currentSearch) || (!string.IsNullOrWhiteSpace(currentType) && currentType != "all"))
+                {
+                    <a asp-controller="Home" asp-action="Promotion" class="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                        @pageHeader.ResetBtnText
+                    </a>
+                }
+            </div>
+        </div>
+    </form>
+
+    <!-- แสดงรายการการ์ดโปรโมชั่น -->
+    @if (promoCards.Any())
+    {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var promo in promoCards)
+            {
+                <div class="flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs transition-all hover:-translate-y-1 hover:shadow-md">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="rounded-xl bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
+                                @promo.Tag
+                            </span>
+                            <div class="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="@svgIcons.Tag"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h2 class="text-base sm:text-lg font-bold text-text leading-snug">@promo.Title</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">@promo.Description</p>
+                        </div>
+
+                        <!-- กล่องแสดงรหัสคูปองและระยะเวลา -->
+                        <div class="space-y-2 pt-3 border-t border-slate-200/60 text-xs">
+                            <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 border border-dashed border-primary/30">
+                                <span class="text-slate-500 font-medium">รหัสคูปองส่วนลด:</span>
+                                <span class="font-mono font-extrabold text-primary tracking-wider">@promo.VoucherCode</span>
+                            </div>
+                            <div class="text-slate-500">
+                                <strong class="text-text">ระยะเวลาจัดรายการ:</strong> @promo.Period
+                            </div>
+                            <div class="text-slate-500 font-medium">
+                                @promo.Condition
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-3 flex items-center justify-between border-t border-slate-100">
+                        <a asp-controller="Home" asp-action="Collection"
+                           class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline">
+                            <span>เลือกชมสินค้าที่ร่วมรายการ</span>
+                            <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="@svgIcons.ChevronRight" clip-rule="evenodd"></path>
+                            </svg>
+                        </a>
+                        <a asp-controller="Home" asp-action="Cart"
+                           class="rounded-lg bg-secondary/30 px-2.5 py-1 text-[11px] font-bold text-primary hover:bg-secondary/50 transition-colors">
+                            ไปยังตะกร้าสินค้า
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- กรณีไม่พบโปรโมชั่นที่ตรงกับคำค้นหา -->
+        <div class="rounded-3xl border border-slate-200/80 bg-slate-50/50 py-14 px-6 text-center space-y-3">
+            <div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@svgIcons.Search" />
+                </svg>
+            </div>
+            <h3 class="text-base font-bold text-text">@pageHeader.EmptyTitle</h3>
+            <p class="text-xs sm:text-sm text-slate-500">@pageHeader.EmptySubtitle</p>
+            <div class="pt-2">
+                <a asp-controller="Home" asp-action="Promotion" class="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-accent transition-colors">
+                    แสดงโปรโมชั่นทั้งหมด
+                </a>
+            </div>
+        </div>
+    }
 </div>

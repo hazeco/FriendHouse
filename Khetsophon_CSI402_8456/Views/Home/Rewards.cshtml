@@ -1,36 +1,24 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.Reward>
+@model Khetsophon_CSI402_8456.ViewModels.RewardsCatalogViewModel
 @{
     ViewData["Title"] = "แคตตาล็อกแลกแต้มสะสม — FriendHouse";
 
     // Top-of-file Media & Content Configuration
-    var userPoints = (int)(ViewBag.UserPoints ?? 0);
-    var redemptionsList = ViewBag.UserRedemptions as IEnumerable<Khetsophon_CSI402_8456.Models.Rewardredemption> 
-                          ?? Enumerable.Empty<Khetsophon_CSI402_8456.Models.Rewardredemption>();
+    int userPoints = Model?.UserPoints ?? (int)(ViewBag.UserPoints ?? 0);
+    string userPointsFormatted = Model?.UserPointsFormatted ?? $"{userPoints:N0}";
+    var redemptionsList = Model?.UserRedemptions ?? new List<Khetsophon_CSI402_8456.ViewModels.RewardRedemptionViewModel>();
+    var rewardsList = Model?.Rewards ?? new List<Khetsophon_CSI402_8456.ViewModels.RewardItemViewModel>();
 
+    // หมวดหมู่ของรางวัลภาษาไทยล้วน ไม่มีภาษาอังกฤษในวงเล็บ
     var rewardCategories = new[] {
         new { Label = "ทั้งหมด", IsActive = true },
-        new { Label = "ฟิกเกอร์ (Figures)", IsActive = false },
-        new { Label = "พรีเมียมกิ๊ฟ (Merchandise)", IsActive = false },
+        new { Label = "ฟิกเกอร์สะสม", IsActive = false },
+        new { Label = "ของสะสมพรีเมียม", IsActive = false },
         new { Label = "แลกได้ทันที", IsActive = false }
     };
 
-    var rewards = (Model != null && Model.Any())
-        ? Model.Select(r => new {
-            Id = r.RewardId,
-            Title = r.Title,
-            Brand = r.Brand ?? "FriendHouse Exclusive",
-            Points = r.PointsRequired,
-            PointsText = $"{r.PointsRequired:N0} แต้ม",
-            Tag = !string.IsNullOrEmpty(r.CategoryTag) ? r.CategoryTag : "พิเศษ",
-            Available = (r.IsAvailable ?? true) && r.StockQuantity > 0,
-            Stock = r.StockQuantity,
-            ImageUrl = !string.IsNullOrEmpty(r.ImageUrl) ? r.ImageUrl : "~/media/images/naruto_hero_fig.png"
-        }).ToArray()
-        : Array.Empty<dynamic>();
-
     var sessionRole = Context.Session.GetString("Role");
     var customerUserId = Context.Session.GetInt32("CustomerUserId") ?? Context.Session.GetInt32("UserId");
-    bool isCustomer = (ViewBag.IsLoggedIn == true) || customerUserId.HasValue ||
+    bool isCustomer = (Model?.IsLoggedIn == true) || (ViewBag.IsLoggedIn == true) || customerUserId.HasValue ||
                       string.Equals(sessionRole, "customer", StringComparison.OrdinalIgnoreCase);
 }
 
@@ -102,8 +90,8 @@
                         <span>คะแนนสะสมของคุณ</span>
                     </div>
                     <div class="flex items-baseline gap-2">
-                        <span id="currentPointsDisplay" class="text-4xl sm:text-5xl font-extrabold text-primary">@userPoints.ToString("N0")</span>
-                        <span class="text-sm sm:text-base font-bold text-primary/70 uppercase">Points</span>
+                        <span id="currentPointsDisplay" class="text-4xl sm:text-5xl font-extrabold text-primary">@userPointsFormatted</span>
+                        <span class="text-sm sm:text-base font-bold text-primary/70">แต้มสะสม</span>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-600">คุณสามารถใช้แต้มเพื่อแลกรับสินค้าสุดพิเศษและของพรีเมียมได้ที่นี่ โดยไม่มีค่าใช้จ่าย</p>
                 </div>
@@ -115,7 +103,7 @@
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
-                        <span>ประวัติการแลกแต้ม (@redemptionsList.Count() รายการ)</span>
+                        <span>ประวัติการแลกแต้ม (@redemptionsList.Count รายการ)</span>
                     </button>
                 </div>
             </div>
@@ -132,23 +120,23 @@
                 }
             </div>
             <div class="text-xs text-slate-500">
-                แสดงของรางวัลจริงจากฐานข้อมูลทั้งหมด @rewards.Length รายการ
+                แสดงของรางวัลจริงจากฐานข้อมูลทั้งหมด @rewardsList.Count รายการ
             </div>
         </div>
 
         <!-- Rewards Grid (Real Database Rows) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            @foreach (var item in rewards)
+            @foreach (var item in rewardsList)
             {
                 <div class="group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg">
                     <div>
                         <!-- Thumbnail with Tag -->
                         <div class="relative block aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
                             <span class="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1 text-[10px] font-bold text-white shadow-xs backdrop-blur-xs">
-                                @item.Tag
+                                @item.CategoryTag
                             </span>
-                            <span class="absolute top-3 right-3 z-10 rounded-md @(item.Available ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800") px-2 py-0.5 text-[10px] font-bold shadow-xs">
-                                @(item.Available ? $"คงเหลือ {item.Stock} ชิ้น" : "หมดชั่วคราว")
+                            <span class="absolute top-3 right-3 z-10 rounded-md @(item.IsAvailable ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800") px-2 py-0.5 text-[10px] font-bold shadow-xs">
+                                @(item.IsAvailable ? $"คงเหลือ {item.StockQuantity} ชิ้น" : "หมดชั่วคราว")
                             </span>
 
                             <img src="@Url.Content(item.ImageUrl)" alt="@item.Title"
@@ -173,15 +161,14 @@
                         </div>
 
                         <div class="w-full">
-                            @if (item.Available)
+                            @if (item.IsAvailable)
                             {
-                                bool canAfford = userPoints >= item.Points;
-                                if (canAfford)
+                                if (item.CanAfford)
                                 {
                                     @* ฟอร์มส่งข้อมูลแลกของรางวัลด้วยแต้มสะสม ไปยัง HomeController แอ็กชัน RedeemReward *@
                                     <form asp-controller="Home" asp-action="RedeemReward" class="w-full">
                                         @* ตัวแปรซ่อนเก็บรหัสของรางวัล rewardId *@
-                                        <input type="hidden" name="rewardId" value="@item.Id" />
+                                        <input type="hidden" name="rewardId" value="@item.RewardId" />
                                         @* ปุ่มกดยืนยันการแลกของรางวัลด้วยแต้มสะสม *@
                                         <button type="submit"
                                            class="w-full flex items-center justify-center rounded-xl bg-accent text-white hover:opacity-90 shadow-accent/20 py-2.5 px-3 text-xs font-bold shadow-xs transition-all cursor-pointer">
@@ -235,15 +222,14 @@
             {
                 foreach (var red in redemptionsList)
                 {
-                    bool isDone = red.Status == "Completed";
                     <div class="flex items-center justify-between p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60">
                         <div class="space-y-0.5">
                             <span class="text-xs font-mono font-bold text-primary">@red.RedemptionCode</span>
-                            <h4 class="text-sm font-bold text-text">@(red.Reward?.Title ?? "ของรางวัลพรีเมียม")</h4>
-                            <div class="text-[11px] text-slate-400">แลกเมื่อ: @red.RedeemedAt.ToString("dd MMM yyyy HH:mm น.") · ใช้ @red.PointsSpent แต้ม</div>
+                            <h4 class="text-sm font-bold text-text">@red.RewardTitle</h4>
+                            <div class="text-[11px] text-slate-400">แลกเมื่อ: @red.RedeemedAtFormatted · ใช้ @red.PointsSpentFormatted</div>
                         </div>
                         <div>
-                            @if (isDone)
+                            @if (red.IsCompleted)
                             {
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                                     รับของแล้ว

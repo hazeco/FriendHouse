@@ -15,7 +15,7 @@
     // การกำหนดค่าสถิติสถานะของระบบ
     var serverStats = new {
         ServerStatus = "ออนไลน์",
-        ServerLatency = "ตอบสนองปกติ (HTTP 200)",
+        ServerLatency = "สถานะระบบทำงานปกติ",
         DbStatus = "MySQL ปกติ",
         DbBackup = ViewBag.TotalProducts != null ? $"สินค้าในระบบ {ViewBag.TotalProducts} รายการ" : "เชื่อมต่อฐานข้อมูลสมบูรณ์",
         TotalUsers = ViewBag.TotalUsers != null ? $"{ViewBag.TotalUsers} บัญชี" : "0 บัญชี",
@@ -63,7 +63,7 @@
             <div class="text-xs text-gray-400">@serverStats.DbBackup</div>
         </div>
 
-        <!-- Card 3: ผู้ใช้งานทั้งหมด (Total Users) -->
+        <!-- Card 3: ผู้ใช้งานทั้งหมด -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-400 font-medium">ผู้ใช้งานทั้งหมด</span>
@@ -73,7 +73,7 @@
             <div class="text-xs text-gray-400">@serverStats.UsersSubtext</div>
         </div>
 
-        <!-- Card 4: บันทึกกิจกรรมระบบ (System Logs) -->
+        <!-- Card 4: บันทึกกิจกรรมระบบ -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-400 font-medium">บันทึกกิจกรรมระบบ</span>

@@ -1,25 +1,64 @@
 ﻿@model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "เกิดข้อผิดพลาดในการประมวลผล — FriendHouse";
+
+    // Top-of-file Media & Content Configuration
+    var pageConfig = new {
+        Title = "เกิดข้อผิดพลาดในการประมวลผล",
+        Subtitle = "ขออภัยในความไม่สะดวก ระบบไม่สามารถดำเนินการตามคำขอของคุณได้ในขณะนี้",
+        BackHome = "กลับสู่หน้าแรก",
+        RequestIdLabel = "รหัสอ้างอิงคำขอ:",
+        DevModeTitle = "คำแนะนำสำหรับผู้พัฒนาระบบ",
+        DevModeDesc1 = "การสลับไปยังสภาพแวดล้อมสำหรับการพัฒนาจะแสดงข้อมูลรายละเอียดเกี่ยวกับข้อผิดพลาดที่เกิดขึ้นอย่างละเอียด",
+        DevModeDesc2 = "ไม่ควรเปิดใช้งานสภาพแวดล้อมสำหรับการพัฒนาบนเซิร์ฟเวอร์จริงที่ให้บริการแก่ผู้ใช้งานทั่วไป เพื่อความปลอดภัยของข้อมูลระบบ"
+    };
 }
 
-<h1 class="text-3xl font-bold text-red-600">Error.</h1>
-<h2 class="mt-2 text-xl font-semibold text-red-600">An error occurred while processing your request.</h2>
+<div class="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-white">
+    <div class="max-w-lg w-full text-center space-y-6">
+        <div class="mx-auto flex size-20 items-center justify-center rounded-3xl bg-rose-50 text-rose-500 border border-rose-100 shadow-sm">
+            <svg class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
 
-@if (Model.ShowRequestId)
-{
-    <p class="mt-4 text-gray-700">
-        <strong>Request ID:</strong> <code class="rounded bg-gray-100 px-1.5 py-0.5 text-sm">@Model.RequestId</code>
-    </p>
-}
+        <div class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#050315]">@pageConfig.Title</h1>
+            <p class="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
+                @pageConfig.Subtitle
+            </p>
+        </div>
 
-<h3 class="mt-6 text-lg font-semibold text-gray-900">Development Mode</h3>
-<p class="mt-2 text-gray-600">
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p class="mt-2 text-gray-600">
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+        @if (Model.ShowRequestId)
+        {
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-mono">
+                <span class="font-bold text-slate-700">@pageConfig.RequestIdLabel</span>
+                <span>@Model.RequestId</span>
+            </div>
+        }
+
+        <div class="pt-2">
+            <a asp-controller="Home" asp-action="Index"
+               class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>@pageConfig.BackHome</span>
+            </a>
+        </div>
+
+        <!-- กล่องข้อมูลทางเทคนิคสำหรับนักพัฒนา -->
+        <div class="mt-8 pt-6 border-t border-slate-100 text-left rounded-2xl bg-slate-50/70 p-5 border border-slate-200/80 space-y-2">
+            <h3 class="text-xs font-bold text-slate-700">@pageConfig.DevModeTitle</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">
+                @pageConfig.DevModeDesc1
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+                @pageConfig.DevModeDesc2
+            </p>
+        </div>
+    </div>
+</div>

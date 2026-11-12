@@ -1,41 +1,41 @@
-@model Khetsophon_CSI402_8456.Models.Product?
+@model Khetsophon_CSI402_8456.ViewModels.ProductDetailViewModel?
 @{
     ViewData["Title"] = "รายละเอียดสินค้า — FriendHouse";
 
     // Top-of-file Media & Content Configuration
     var catalog = new[] {
         new {
-            Id = 201,
-            Name = "Naruto Uzumaki - Vibration Stars (Special Ver.)",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,200",
-            RawPrice = 1200,
+            Id = 1,
+            Name = "นารูโตะ อุซึมากิ โหมดคิวบิเซจ อัลติเมตสตอร์ม",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿4,290",
+            RawPrice = 4290,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_vibration_stars.png",
+            ImageUrl = "~/media/images/naruto_hero_fig.png",
             Series = "Naruto Shippuden",
-            Description = "งานปั้นรายละเอียดสูงจากซีรีส์นารูโตะ ท่าแอคชั่นปล่อยพลังอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด เหมาะสำหรับสะสมและตั้งโชว์",
+            Description = "งานปั้นนารูโตะ อุซึมากิ โหมดคิวบิเซจ อัลติเมตสตอร์ม รายละเอียดคมชัดระดับมาสเตอร์พีซ ท่วงท่าร่ายวิชานินจาอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
                 new { Label = "ผู้ผลิต", Value = "Banpresto" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 18 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS เกรดพรีเมียม" },
+                new { Label = "สเกล", Value = "1/6 Scale (ประมาณ 32 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + Resin" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 202,
-            Name = "Tanjiro Kamado - Hinokami Kagura Dance",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
+            Id = 2,
+            Name = "ทันจิโร่ คามาโดะ ระบำเทพสุริยัน ฮิโนะคามิ",
+            Category = "ฟิกเกอร์สเกล",
             Price = "฿2,450",
             RawPrice = 2450,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
             ImageUrl = "~/media/images/tanjiro_kamado.png",
             Series = "Demon Slayer",
-            Description = "ทันจิโร่ คามาโดะ ในท่วงท่าร่ายรำระบำเทพสุริยัน Hinokami Kagura เอฟเฟกต์เพลิงไฟสีส้มโปร่งแสงสุดอลังการ รายละเอียดคมชัดทุกองศา ลิขสิทธิ์แท้จาก Aniplex & Good Smile Company",
+            Description = "ทันจิโร่ คามาโดะ ในท่วงท่าร่ายรำระบำเทพสุริยัน ฮิโนะคามิ คางุระ เอฟเฟกต์เพลิงสุริยันโปร่งแสงสุดอลังการ รายละเอียดคมชัดทุกองศา ลิขสิทธิ์แท้",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer: Kimetsu no Yaiba" },
+                new { Label = "ซีรีส์", Value = "Demon Slayer" },
                 new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
                 new { Label = "สเกล", Value = "Non-scale (ประมาณ 21 ซม.)" },
                 new { Label = "วัสดุ", Value = "PVC + Clear Parts" },
@@ -43,28 +43,28 @@
             }
         },
         new {
-            Id = 203,
-            Name = "Hatsune Miku - Magical Mirai 2024 Ver.",
-            Category = "สเกลฟิกเกอร์ลิมิเต็ด",
+            Id = 3,
+            Name = "ฮัตสึเนะ มิกุ เมจิคัลมิไร 2024 สเปเชียล",
+            Category = "ฟิกเกอร์สเกล",
             Price = "฿4,200",
             RawPrice = 4200,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            Status = "เปิดรับสั่งจองล่วงหน้า",
+            EstimatedArrival = "ไตรมาส 4 ปี 2569 (พรีออเดอร์)",
             ImageUrl = "~/media/images/hatsune_miku_magical.png",
             Series = "Vocaloid",
-            Description = "ฟิกเกอร์ฮัตสึเนะ มิกุ ในชุด Magical Mirai 2024 ดีไซน์ชุดสดใสพร้อมไมโครโฟนและเอฟเฟกต์เวทีดนตรีระยิบระยับ ชิ้นส่วนสีเมทัลลิกและเคลือบเงาสวยงามสมบูรณ์แบบ",
+            Description = "ฟิกเกอร์ฮัตสึเนะ มิกุ ในชุด เมจิคัลมิไร 2024 ดีไซน์ชุดสดใสพร้อมไมโครโฟนและเอฟเฟกต์เวทีดนตรีระยิบระยับ ชิ้นส่วนสีเมทัลลิกและเคลือบเงาสวยงามสมบูรณ์แบบ",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Character Vocal Series 01: Hatsune Miku" },
+                new { Label = "ซีรีส์", Value = "Vocaloid" },
                 new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
                 new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 24 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC, ABS, Acrylic Base" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+                new { Label = "วัสดุ", Value = "PVC + ABS" },
+                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
             }
         },
         new {
-            Id = 204,
-            Name = "Monkey D. Luffy - Gear 5 King of Artist",
-            Category = "แอคชั่นฟิกเกอร์ & ของสะสม",
+            Id = 4,
+            Name = "มังกี้ ดี ลูฟี่ เกียร์ 5 คิงออฟอาร์ติสต์",
+            Category = "แอคชั่นฟิกเกอร์",
             Price = "฿950",
             RawPrice = 950,
             Status = "มีสินค้า",
@@ -81,9 +81,47 @@
             }
         },
         new {
-            Id = 205,
-            Name = "Gojo Satoru - Shibuya Incident Ver.",
-            Category = "สเกลฟิกเกอร์ & ของสะสม",
+            Id = 5,
+            Name = "อาเนีย ฟอร์เจอร์ และ บอนด์ ชุดไปเที่ยววันหยุด",
+            Category = "ของสะสมและตุ๊กตา",
+            Price = "฿1,850",
+            RawPrice = 1850,
+            Status = "เปิดรับสั่งจองล่วงหน้า",
+            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
+            ImageUrl = "~/media/images/anya_forger.png",
+            Series = "Spy x Family",
+            Description = "อาเนีย ฟอร์เจอร์ กับเจ้าหมาบอนด์ในชุดออกไปเที่ยวสุดน่ารัก ถ่ายทอดความอบอุ่นและรอยยิ้มแสนสดใส งานปั้นเก็บรายละเอียดชุดและขนสุนัขได้อย่างนุ่มนวล",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Spy x Family" },
+                new { Label = "ผู้ผลิต", Value = "Megahouse" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 15 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS" },
+                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
+            }
+        },
+        new {
+            Id = 6,
+            Name = "นารูโตะ อุซึมากิ ไวเบรชันสตาร์ส สเปเชียล",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿1,200",
+            RawPrice = 1200,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/naruto_vibration_stars.png",
+            Series = "Naruto Shippuden",
+            Description = "งานปั้นรายละเอียดสูงจากซีรีส์นารูโตะ ไวเบรชันสตาร์ส ท่าแอคชั่นปล่อยพลังอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
+                new { Label = "ผู้ผลิต", Value = "Banpresto" },
+                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 18 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 7,
+            Name = "โกโจ ซาโตรุ อุบัติการณ์ชิบูย่า เนตรริคุกัน",
+            Category = "ฟิกเกอร์สเกล",
             Price = "฿3,800",
             RawPrice = 3800,
             Status = "มีสินค้า",
@@ -100,85 +138,28 @@
             }
         },
         new {
-            Id = 206,
-            Name = "Cloud Bear ตุ๊กตาหมีเมฆ (สีฟ้าพาสเทล)",
-            Category = "หมวดตุ๊กตา & ของสะสม",
-            Price = "฿590",
-            RawPrice = 590,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/cloud_bear_plush.png",
-            Series = "FriendHouse Studio",
-            Description = "ตุ๊กตาหมีเนื้อผ้ากำมะหยี่นุ่มพิเศษ สีพาสเทลฟ้า ขนาดสูง 28 ซม. ออกแบบลิมิเต็ดสำหรับคอลเลกชันฤดูหนาวนี้โดยเฉพาะ ผลิตจากวัสดุคุณภาพสูง สัมผัสนุ่มละมุน",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Original Winter Collection" },
-                new { Label = "วัสดุ", Value = "กำมะหยี่ผสมใยสังเคราะห์ นุ่มพิเศษ" },
-                new { Label = "ขนาด", Value = "สูงประมาณ 28 ซม." },
-                new { Label = "สี", Value = "ฟ้าพาสเทล (มีให้เลือก 1 สี)" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 207,
-            Name = "Raiden Shogun - Plane of Euthymia Ver.",
-            Category = "สเกลฟิกเกอร์ & ของสะสม",
+            Id = 8,
+            Name = "โชกุน ไรเดน อาณาจักรแห่งความสงบสุขนิรันดร์",
+            Category = "ฟิกเกอร์สเกล",
             Price = "฿5,690",
             RawPrice = 5690,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
             ImageUrl = "~/media/images/raiden_shogun.png",
             Series = "Genshin Impact",
-            Description = "โชกุน ไรเดน เทพแห่งสายฟ้าแห่งอินาสึมะ ยืนตระหง่านพร้อมดาบสายฟ้า Musou Isshin ชิ้นส่วนเอฟเฟกต์มิติและสายฟ้าสีม่วงสุดอลังการ งานลงสีระดับไฮเอนด์",
+            Description = "โชกุน ไรเดน เทพแห่งสายฟ้าแห่งอินาสึมะ ยืนตระหง่านพร้อมดาบสายฟ้า ชิ้นส่วนเอฟเฟกต์มิติและสายฟ้าสีม่วงสุดอลังการ งานลงสีระดับไฮเอนด์",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company / miHoYo" },
+                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
                 new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 26 ซม.)" },
                 new { Label = "วัสดุ", Value = "PVC + ABS + LED Base" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 208,
-            Name = "Anya Forger & Bond - Going Out Ver.",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,850",
-            RawPrice = 1850,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/anya_forger.png",
-            Series = "Spy x Family",
-            Description = "อาเนีย ฟอร์เจอร์ กับเจ้าหมาบอนด์ในชุดออกไปเที่ยวสุดน่ารัก ถ่ายทอดความอบอุ่นและรอยยิ้มแสนสดใส งานปั้นเก็บรายละเอียดชุดและขนสุนัขได้อย่างนุ่มนวล",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Spy x Family" },
-                new { Label = "ผู้ผลิต", Value = "Megahouse" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 15 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 209,
-            Name = "Naruto Uzumaki - Rasengan Hero Collection",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,490",
-            RawPrice = 1490,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_hero_fig.png",
-            Series = "Naruto Shippuden",
-            Description = "นารูโตะ อุซึมากิ พร้อมบอลกระสุนวงจักร Rasengan เอฟเฟกต์หมุนวนสีฟ้าใสสวยงาม โพสท่ากระโดดโจมตีเปี่ยมด้วยพลังและจิตวิญญาณแห่งนินจาโคโนฮะ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
-                new { Label = "ผู้ผลิต", Value = "Banpresto" },
-                new { Label = "ความสูง", Value = "ประมาณ 20 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 12,
-            Name = "Cloud Bear ตุ๊กตาหมีเมฆ (สีฟ้าพาสเทล)",
-            Category = "หมวดตุ๊กตา & ของสะสม",
+            Id = 9,
+            Name = "ตุ๊กตาหมีเมฆ คลาวด์แบร์ สีฟ้าพาสเทล",
+            Category = "ของสะสมและตุ๊กตา",
             Price = "฿590",
             RawPrice = 590,
             Status = "มีสินค้า",
@@ -187,207 +168,321 @@
             Series = "FriendHouse Studio",
             Description = "ตุ๊กตาหมีเนื้อผ้ากำมะหยี่นุ่มพิเศษ สีพาสเทลฟ้า ขนาดสูง 28 ซม. ออกแบบลิมิเต็ดสำหรับคอลเลกชันฤดูหนาวนี้โดยเฉพาะ ผลิตจากวัสดุคุณภาพสูง สัมผัสนุ่มละมุน",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Original Winter Collection" },
-                new { Label = "วัสดุ", Value = "กำมะหยี่ผสมใยสังเคราะห์ นุ่มพิเศษ" },
+                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
+                new { Label = "ผู้ผลิต", Value = "FriendHouse Original" },
                 new { Label = "ขนาด", Value = "สูงประมาณ 28 ซม." },
-                new { Label = "สี", Value = "ฟ้าพาสเทล (มีให้เลือก 1 สี)" },
+                new { Label = "วัสดุ", Value = "กำมะหยี่ขนนุ่มพิเศษ" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 101,
-            Name = "Naruto Uzumaki - Vibration Stars (Special Ver.)",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,200",
-            RawPrice = 1200,
+            Id = 10,
+            Name = "โรโรโนอา โซโร ท่าดาบเพลิงยมโลก เก้าดาบสังหาร",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿2,790",
+            RawPrice = 2790,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_vibration_stars.png",
-            Series = "Naruto Shippuden",
-            Description = "งานปั้นรายละเอียดสูงจากซีรีส์นารูโตะ ท่าแอคชั่นปล่อยพลังอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด",
+            ImageUrl = "~/media/images/roronoa_zoro.png",
+            Series = "One Piece",
+            Description = "โรโรโนอา โซโร ในท่วงท่าไม้ตายเก้าดาบตัดมิติเพลิงยมโลก ออร่าฮาคิราชันย์ห่อหุ้มคมดาบสามเล่ม งานปั้นกล้ามเนื้อและรอยแผลเป็นคมชัด",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
-                new { Label = "ผู้ผลิต", Value = "Banpresto" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 18 ซม.)" },
+                new { Label = "ซีรีส์", Value = "One Piece" },
+                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 20 ซม.)" },
                 new { Label = "วัสดุ", Value = "PVC + ABS" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 102,
-            Name = "Tanjiro Kamado - Hinokami Kagura Dance",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿2,450",
-            RawPrice = 2450,
+            Id = 11,
+            Name = "คามาโดะ เนซึโกะ ร่างอสูรขั้นสมบูรณ์ระเบิดโลหิต",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿3,450",
+            RawPrice = 3450,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/tanjiro_kamado.png",
+            ImageUrl = "~/media/images/nezuko_kamado.png",
             Series = "Demon Slayer",
-            Description = "ทันจิโร่ คามาโดะ ในท่วงท่าร่ายรำระบำเทพสุริยัน Hinokami Kagura เอฟเฟกต์เพลิงไฟสีส้มโปร่งแสงสุดอลังการ รายละเอียดคมชัดทุกองศา",
+            Description = "คามาโดะ เนซึโกะ ปลดปล่อยพลังอสูรขั้นสมบูรณ์พร้อมลวดลายเถาวัลย์บนผิวกายและเขาสีขาว เอฟเฟกต์มนต์อสูรโลหิตเพลิงชมพูระยิบระยับ",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "Non-scale" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
+                new { Label = "ผู้ผลิต", Value = "Aniplex" },
+                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 22 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + Clear Effects" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 103,
-            Name = "Hatsune Miku - Magical Mirai 2024 Ver.",
-            Category = "สเกลฟิกเกอร์ลิมิเต็ด",
-            Price = "฿4,200",
-            RawPrice = 4200,
+            Id = 12,
+            Name = "ฟุชิกุโระ เมกุมิ คาถาเงามือแปดหางมังกร",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿3,190",
+            RawPrice = 3190,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/hatsune_miku_magical.png",
-            Series = "Vocaloid",
-            Description = "ฟิกเกอร์ฮัตสึเนะ มิกุ ในชุด Magical Mirai 2024 ดีไซน์ชุดสดใสพร้อมไมโครโฟนและเอฟเฟกต์เวทีดนตรีระยิบระยับ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Vocaloid" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 104,
-            Name = "Monkey D. Luffy - Gear 5 King of Artist",
-            Category = "แอคชั่นฟิกเกอร์ & ของสะสม",
-            Price = "฿950",
-            RawPrice = 950,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/luffy_gear5.png",
-            Series = "One Piece",
-            Description = "ลูฟี่ เกียร์ 5 ร่างเทพพระอาทิตย์ นิกะ งานปั้นสุดทรงพลังจากซีรีส์ King of Artist ผมและกลุ่มควันสีขาวทรงกลม",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "ความสูง", Value = "ประมาณ 16 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 210,
-            Name = "Tanjiro Kamado - Water Breathing Form",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,950",
-            RawPrice = 1950,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/tanjiro_kamado.png",
-            Series = "Demon Slayer",
-            Description = "ทันจิโร่ คามาโดะ ท่วงท่าปราณวารีอันงดงาม ละอองคลื่นน้ำสีครามโปร่งแสง ท่วงท่าการเคลื่อนไหวสมจริง",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer: Kimetsu no Yaiba" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 19 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Clear Water Parts" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 211,
-            Name = "Luffy Gear 5 - Giant Lightning Attack",
-            Category = "แอคชั่นฟิกเกอร์ & ของสะสม",
-            Price = "฿2,890",
-            RawPrice = 2890,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/luffy_gear5.png",
-            Series = "One Piece",
-            Description = "ลูฟี่ เกียร์ 5 ร่างยักษ์จับสายฟ้าแห่งท้องนภา รายละเอียดเอฟเฟกต์สายฟ้าสีทองและก้อนเมฆรอบกายทรงพลัง",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "ความสูง", Value = "ประมาณ 22 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 212,
-            Name = "Hatsune Miku - Concert Spotlight Deluxe",
-            Category = "สเกลฟิกเกอร์ลิมิเต็ด",
-            Price = "฿3,650",
-            RawPrice = 3650,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/hatsune_miku_magical.png",
-            Series = "Vocaloid",
-            Description = "ฮัตสึเนะ มิกุ ภายใต้แสงสปอตไลท์คอนเสิร์ตใหญ่ มาพร้อมฐานเวทีมีลวดลายและไฟส่องประกายระยิบระยับ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Vocaloid" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 23 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 213,
-            Name = "Gojo Satoru - Domain Expansion Infinite Void",
-            Category = "สเกลฟิกเกอร์ & ของสะสม",
-            Price = "฿4,500",
-            RawPrice = 4500,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/gojo_satoru.png",
+            ImageUrl = "~/media/images/megumi_fushiguro.png",
             Series = "Jujutsu Kaisen",
-            Description = "โกโจ ซาโตรุ ในจังหวะกางอาณาเขต พื้นที่ไร้มาตร เอฟเฟกต์พลังดวงตาและออร่ามืดประกายแสงแห่งความว่างเปล่า",
+            Description = "ฟุชิกุโระ เมกุมิ ผสานอินคาถาเงามือสิบประการ อัญเชิญหมาป่าศักดิ์สิทธิ์และเงาอสูรโอบล้อมกายด้วยพลังไสยเวทสีคราม",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
-                new { Label = "ผู้ผลิต", Value = "Megahouse" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 24 ซม.)" },
+                new { Label = "ผู้ผลิต", Value = "Kotobukiya" },
+                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 19 ซม.)" },
                 new { Label = "วัสดุ", Value = "PVC + ABS" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 214,
-            Name = "Raiden Shogun - Musou no Hitotachi Strike",
-            Category = "สเกลฟิกเกอร์ & ของสะสม",
+            Id = 13,
+            Name = "จงหลี่ ราชาแห่งหินผาและพันธสัญญาโบราณ",
+            Category = "ของสะสมลิมิเต็ด",
             Price = "฿6,200",
             RawPrice = 6200,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/raiden_shogun.png",
+            ImageUrl = "~/media/images/zhongli_morax.png",
             Series = "Genshin Impact",
-            Description = "โชกุน ไรเดน ฟันดาบตัดมิติ Musou no Hitotachi เอฟเฟกต์สายฟ้าสีม่วงเข้มข้นอลังการสูงสุดพร้อมฐานตั้งพิเศษ",
+            Description = "จงหลี่ เทพแห่งหินโมแรกซ์ในชุดประจำตำแหน่งสง่างาม เสาหินเสาค้ำสวรรค์พร้อมอัญมณีธาตุหินและฐานเรืองแสง LED ลิมิเต็ด",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company / miHoYo" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 26 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + LED Base" },
+                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 28 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + Polystone + LED Base" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
-            Id = 215,
-            Name = "Anya Forger - Stella Star Academy Uniform",
-            Category = "ฟิกเกอร์สเกล & ของสะสม",
-            Price = "฿1,250",
-            RawPrice = 1250,
+            Id = 14,
+            Name = "อุจิวะ ซาสึเกะ เนตรวงแหวนกระจกเงาหมื่นบุปผาและพันปักษา",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿2,590",
+            RawPrice = 2590,
             Status = "มีสินค้า",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/anya_forger.png",
+            ImageUrl = "~/media/images/sasuke_uchiha.png",
+            Series = "Naruto Shippuden",
+            Description = "อุจิวะ ซาสึเกะ ปลดปล่อยพันปักษาชิโดริสายฟ้าสีฟ้าใสคราม พร้อมดวงตาเนตรวงแหวนกระจกเงาหมื่นบุปผาและเนตรสังสาระ",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
+                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 17 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Chidori Clear Parts" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 15,
+            Name = "เร็นโกคุ เคียวจูโร่ เพลิงผลาญอสูรภาคบันทึกรถไฟนิรันดร์",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿4,600",
+            RawPrice = 4600,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/rengoku_kyojuro.png",
+            Series = "Demon Slayer",
+            Description = "เร็นโกคุ เคียวจูโร่ เสาหลักเพลิงแห่งหน่วยพิฆาตอสูร ดาบเพลิงระอุพร้อมเอฟเฟกต์ไฟคลั่งล้อมรอบฐานจำลองโบกี้รถไฟนิรันดร์",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Demon Slayer" },
+                new { Label = "ผู้ผลิต", Value = "Aniplex" },
+                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 25 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + Flame Resin" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 16,
+            Name = "ยอร์ ฟอร์เจอร์ เจ้าหญิงหนามแห่งองค์กรการ์เดน",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿3,250",
+            RawPrice = 3250,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/yor_forger.png",
             Series = "Spy x Family",
-            Description = "อาเนีย ฟอร์เจอร์ ในชุดเครื่องแบบโรงเรียนอีเดนพร้อมเข็มกลัดดาวสเตลล่า อวดความภูมิใจด้วยรอยยิ้มสุดน่ารัก",
+            Description = "ยอร์ ฟอร์เจอร์ ในฉายาเจ้าหญิงหนามแห่งองค์กรการ์เดน ชุดเดรสสีดำหรูหราพร้อมอาวุธเข็มเหล็กสีทองคู่ใจ ท่วงท่านักฆ่าที่เปี่ยมด้วยความงดงาม",
             Specs = new[] {
                 new { Label = "ซีรีส์", Value = "Spy x Family" },
+                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 25 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Metal Stilettos" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 17,
+            Name = "ฮัตสึเนะ มิกุ ซากุระสปริงบลอสซัม ลิมิเต็ด",
+            Category = "ของสะสมลิมิเต็ด",
+            Price = "฿2,890",
+            RawPrice = 2890,
+            Status = "เปิดรับสั่งจองล่วงหน้า",
+            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
+            ImageUrl = "~/media/images/hatsune_miku_sakura.png",
+            Series = "Vocaloid",
+            Description = "ฮัตสึเนะ มิกุ ในชุดซากุระสีชมพูอ่อน ประดับดอกซากุระบานสะพรั่ง ผมทวินเทลไล่เฉดสีชมพูขาวพร้อมฐานกลีบซากุระโปร่งแสงสุดประณีต",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Vocaloid" },
+                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 22 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Sakura Petal Base" },
+                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
+            }
+        },
+        new {
+            Id = 18,
+            Name = "โปร์ตกัส ดี เอส หมัดอัคคีเพลิงบรรลัยกัลป์",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿1,890",
+            RawPrice = 1890,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/portgas_d_ace.png",
+            Series = "One Piece",
+            Description = "โปร์ตกัส ดี เอส หมัดอัคคีแห่งกลุ่มโจรสลัดหนวดขาว ปล่อยพลังหมัดเพลิงระเบิดเปลวไฟสีส้มใสสว่างโชน ท่าโพสอันทรงพลัง",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "One Piece" },
+                new { Label = "ผู้ผลิต", Value = "MegaHouse" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 19 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Fire Clear Parts" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 19,
+            Name = "อิตาโดริ ยูจิ หมัดประกายทมิฬโคเซ็น",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿1,450",
+            RawPrice = 1450,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/itadori_yuji.png",
+            Series = "Jujutsu Kaisen",
+            Description = "อิตาโดริ ยูจิ ปลดปล่อยหมัดประกายทมิฬโคคุเซ็น เอฟเฟกต์สายฟ้าสีดำประกายแดงฉานรอบกำปั้น สะท้อนพลังหมัดอันดุดัน",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
                 new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "ความสูง", Value = "ประมาณ 14 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 16 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Black Flash Effect" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 20,
+            Name = "กานอวี่ ปักษาหิมะกลีบเมฆาแห่งศาลาเยว่ไห่",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿5,400",
+            RawPrice = 5400,
+            Status = "เปิดรับสั่งจองล่วงหน้า",
+            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
+            ImageUrl = "~/media/images/ganyu_plenilune.png",
+            Series = "Genshin Impact",
+            Description = "กานอวี่ เลขานุการแห่งศาลาเยว่ไห่ เลือดผสมกิเลน ในชุดทางการสง่างามพร้อมธนูล่าวิญญาณและดอกบัวน้ำแข็งกลีบเมฆาเรืองประกายเย็นเยือก",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Genshin Impact" },
+                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 27 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Ice Lotus Base" },
+                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
+            }
+        },
+        new {
+            Id = 21,
+            Name = "ตุ๊กตาแมวนำโชค คิตตี้การ์เดียน ขนนุ่มพรีเมียม",
+            Category = "ของสะสมและตุ๊กตา",
+            Price = "฿490",
+            RawPrice = 490,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/lucky_cat_plush.png",
+            Series = "FriendHouse Studio",
+            Description = "ตุ๊กตาแมวนำโชค คิตตี้การ์เดียน ขนนุ่มระดับพรีเมียม ปลอกคอสีแดงผูกกระดิ่งทองนำโชคลาภ ออกแบบพิเศษเฉพาะ FriendHouse",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
+                new { Label = "ผู้ผลิต", Value = "FriendHouse Original" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 25 ซม.)" },
+                new { Label = "วัสดุ", Value = "ผ้าขนนุ่มเกรดญี่ปุ่น + กระดิ่งโลหะทอง" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 22,
+            Name = "โทนี่ โทนี่ ช็อปเปอร์ หมวกซากุระรุ่นพิเศษ",
+            Category = "ของสะสมและตุ๊กตา",
+            Price = "฿650",
+            RawPrice = 650,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/chopper_plush.png",
+            Series = "One Piece",
+            Description = "โทนี่ โทนี่ ช็อปเปอร์ ในหมวกซากุระรุ่นพิเศษ ขนนุ่มละมุนน่ากอด ขนาดกะทัดรัด รายละเอียดหมวกและเขากวางสมบูรณ์แบบ",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "One Piece" },
+                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 22 ซม.)" },
+                new { Label = "วัสดุ", Value = "กำมะหยี่ขนละเอียด นุ่มพิเศษ" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 23,
+            Name = "คุกิซากิ โนบาระ คาถาหุ่นฟางตะปูอาถรรพ์",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿1,350",
+            RawPrice = 1350,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/nobara_kugisaki.png",
+            Series = "Jujutsu Kaisen",
+            Description = "คุกิซากิ โนบาระ นักเรียนไสยเวทปีหนึ่ง กำค้อนและตะปูลงอาคมในท่วงท่าปล่อยคาถาหุ่นฟางสะท้อนวิญญาณ เอฟเฟกต์ประกายเวทสีครามสดใส",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
+                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 15 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Nails Effects" },
+                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
+            }
+        },
+        new {
+            Id = 24,
+            Name = "ฮูเต๋า ผีเสื้อนำทางวิญญาณแห่งโถงหวังเซิง",
+            Category = "ฟิกเกอร์สเกล",
+            Price = "฿5,200",
+            RawPrice = 5200,
+            Status = "เปิดรับสั่งจองล่วงหน้า",
+            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
+            ImageUrl = "~/media/images/hu_tao_ghost.png",
+            Series = "Genshin Impact",
+            Description = "ฮูเต๋า ผู้ดูแลโถงหวังเซิงรุ่นที่ 77 ร่าเริงสดใสพร้อมเจ้าผีวิญญาณสีขาวเพื่อนซี้ ฐานดอกบ๊วยและผีเสื้อวิญญาณเปล่งประกายสีแดงชาด",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Genshin Impact" },
+                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
+                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 27 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Spirit Base" },
+                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
+            }
+        },
+        new {
+            Id = 25,
+            Name = "ลอยด์ ฟอร์เจอร์ สนธยา เจ้าหน้าที่สายลับเวสทาลิส",
+            Category = "แอคชั่นฟิกเกอร์",
+            Price = "฿2,390",
+            RawPrice = 2390,
+            Status = "มีสินค้า",
+            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
+            ImageUrl = "~/media/images/loid_forger.png",
+            Series = "Spy x Family",
+            Description = "ลอยด์ ฟอร์เจอร์ ในโค้ดเนมสนธยา สุดยอดสายลับมือหนึ่งแห่งเวสทาลิส ชุดสูทสีเขียวเข้มเนี้ยบกริบพร้อมปืนพกเก็บเสียงและชิ้นส่วนใบหน้าสับเปลี่ยนได้",
+            Specs = new[] {
+                new { Label = "ซีรีส์", Value = "Spy x Family" },
+                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
+                new { Label = "สเกล", Value = "Non-scale (ประมาณ 17 ซม.)" },
+                new { Label = "วัสดุ", Value = "PVC + ABS + Pistol Parts" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
             }
         },
         new {
             Id = 301,
-            Name = "พวงกุญแจอะคริลิก ดาบพิฆาตอสูร Special Ver.",
-            Category = "พรีเมียมกิ๊ฟ & ของสะสมแต้ม",
+            Name = "พวงกุญแจอะคริลิก ดาบพิฆาตอสูร รุ่นพิเศษ",
+            Category = "ของสะสมแต้มสะสม",
             Price = "350 แต้ม",
             RawPrice = 350,
             Status = "มีสินค้าพร้อมแลก",
@@ -396,16 +491,16 @@
             Series = "Demon Slayer",
             Description = "พวงกุญแจอะคริลิกใสพิมพ์ลายสองด้าน คมชัดระดับพรีเมียม ลิขสิทธิ์แท้พร้อมห่วงคล้องโลหะแข็งแรง ทันจิโร่ คามาโดะ ท่วงท่าเพลิงสุริยันสุดเท่ เหมาะสำหรับคล้องกระเป๋าและกุญแจ",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer: Kimetsu no Yaiba" },
+                new { Label = "ซีรีส์", Value = "Demon Slayer" },
                 new { Label = "ขนาด", Value = "สูงประมาณ 7 ซม." },
-                new { Label = "วัสดุ", Value = "High Quality Acrylic + Metal Ring" },
+                new { Label = "วัสดุ", Value = "อะคริลิกคุณภาพสูงพร้อมห่วงโลหะ" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
             }
         },
         new {
             Id = 302,
             Name = "โปสเตอร์ผ้าวันพีซ ฟิล์มเรด ลิขสิทธิ์แท้",
-            Category = "พรีเมียมกิ๊ฟ & ของสะสมแต้ม",
+            Category = "ของสะสมแต้มสะสม",
             Price = "600 แต้ม",
             RawPrice = 600,
             Status = "มีสินค้าพร้อมแลก",
@@ -422,35 +517,35 @@
         },
         new {
             Id = 303,
-            Name = "แก้วมัคเซรามิก FriendHouse Original 2026",
-            Category = "พรีเมียมกิ๊ฟ & ของสะสมแต้ม",
+            Name = "แก้วมัคเซรามิก FriendHouse รุ่นลิมิเต็ด 2026",
+            Category = "ของสะสมแต้มสะสม",
             Price = "850 แต้ม",
             RawPrice = 850,
             Status = "มีสินค้าพร้อมแลก",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
             ImageUrl = "~/media/images/cloud_bear_plush.png",
-            Series = "FriendHouse Winter Special",
-            Description = "แก้วมัคเซรามิกผิวสัมผัสด้าน งานออกแบบพิเศษลายตุ๊กตาหมีเมฆ Cloud Bear คอลเลกชันฤดูหนาว 2026 ปลอดภัยทนความร้อน เข้าไมโครเวฟและเครื่องล้างจานได้",
+            Series = "FriendHouse Studio",
+            Description = "แก้วมัคเซรามิกผิวสัมผัสด้าน งานออกแบบพิเศษลายตุ๊กตาหมีเมฆ คลาวด์แบร์ คอลเลกชันฤดูหนาว 2026 ปลอดภัยทนความร้อน เข้าไมโครเวฟและเครื่องล้างจานได้",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Winter Special 2026" },
+                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
                 new { Label = "ความจุ", Value = "380 มล. (ประมาณ 13 ออนซ์)" },
-                new { Label = "วัสดุ", Value = "Ceramic Food-grade หนาพิเศษ" },
+                new { Label = "วัสดุ", Value = "เซรามิกหนาพิเศษเกรดอาหาร" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
             }
         },
         new {
             Id = 304,
             Name = "มินิฟิกเกอร์ เนซึโกะ กล่องไม้ ลิมิเต็ด",
-            Category = "ฟิกเกอร์สเกล & ของสะสมแต้ม",
+            Category = "ของสะสมแต้มสะสม",
             Price = "1,800 แต้ม",
             RawPrice = 1800,
             Status = "มีสินค้าพร้อมแลก",
             EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_hero_fig.png",
+            ImageUrl = "~/media/images/nezuko_kamado.png",
             Series = "Demon Slayer",
             Description = "มินิฟิกเกอร์ เนซึโกะ คามาโดะ โผล่ออกมาจากกล่องไม้สะพายหลัง งานปั้นน่ารักลงสีประณีต ขนาดกะทัดรัดเหมาะสำหรับตั้งโชว์บนโต๊ะทำงานหรือตู้สะสม",
             Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer: Kimetsu no Yaiba" },
+                new { Label = "ซีรีส์", Value = "Demon Slayer" },
                 new { Label = "ขนาด", Value = "สูงประมาณ 9 ซม." },
                 new { Label = "วัสดุ", Value = "PVC + ABS" },
                 new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
@@ -463,43 +558,48 @@
     var queryId = Context.Request.Query["id"].ToString();
     var rawId = !string.IsNullOrEmpty(routeId) ? routeId : queryId;
 
-    int currentId = 201;
+    int currentId = 1;
     if (int.TryParse(rawId, out int parsedId))
     {
         currentId = parsedId;
     }
 
     var fallbackCatalogProduct = catalog.FirstOrDefault(p => p.Id == currentId)
-                  ?? (currentId == 1 ? catalog.FirstOrDefault(p => p.Id == 206) : null)
-                  ?? (currentId == 2 ? catalog.FirstOrDefault(p => p.Id == 201) : null)
-                  ?? (currentId == 3 ? catalog.FirstOrDefault(p => p.Id == 202) : null)
-                  ?? (currentId == 4 ? catalog.FirstOrDefault(p => p.Id == 203) : null)
+                  ?? (currentId == 201 ? catalog.FirstOrDefault(p => p.Id == 6) : null)
+                  ?? (currentId == 202 ? catalog.FirstOrDefault(p => p.Id == 2) : null)
+                  ?? (currentId == 203 ? catalog.FirstOrDefault(p => p.Id == 3) : null)
+                  ?? (currentId == 204 ? catalog.FirstOrDefault(p => p.Id == 4) : null)
+                  ?? (currentId == 205 ? catalog.FirstOrDefault(p => p.Id == 7) : null)
+                  ?? (currentId == 206 ? catalog.FirstOrDefault(p => p.Id == 9) : null)
+                  ?? (currentId == 207 ? catalog.FirstOrDefault(p => p.Id == 8) : null)
+                  ?? (currentId == 208 ? catalog.FirstOrDefault(p => p.Id == 5) : null)
+                  ?? (currentId == 209 ? catalog.FirstOrDefault(p => p.Id == 1) : null)
                   ?? catalog[0];
 
     var product = Model != null ? new {
         Id = Model.ProductId,
         Name = Model.Name,
-        Category = Model.Category?.CategoryName ?? "ฟิกเกอร์สเกล & ของสะสม",
-        Price = $"฿{Model.RetailPrice:N0}",
+        Category = Model.CategoryName ?? "ฟิกเกอร์สเกล",
+        Price = Model.PriceFormatted,
         RawPrice = (int)Model.RetailPrice,
-        Status = (Model.Inventory?.QuantityOnHand ?? 0) > 0 ? "มีสินค้า" : "เปิดสั่งจองล่วงหน้า",
+        Status = Model.InStock ? "มีสินค้า" : "เปิดสั่งจองล่วงหน้า",
         EstimatedArrival = !string.IsNullOrEmpty(Model.ExpectedArrival) ? Model.ExpectedArrival : "มีสินค้าพร้อมส่งมอบ",
         ImageUrl = !string.IsNullOrEmpty(Model.ImageUrl) ? Model.ImageUrl : fallbackCatalogProduct.ImageUrl,
-        Series = !string.IsNullOrEmpty(Model.SeriesName) ? Model.SeriesName : (Model.Category?.CategoryName ?? "FriendHouse Collection"),
-        Description = $"{Model.Name} ผลิตโดย {Model.BrandName ?? "แบรนด์ลิขสิทธิ์แท้"} ซีรีส์ {Model.SeriesName ?? "ลิขสิทธิ์แท้"} สเกล {Model.Scale ?? "มาตรฐาน"} วัสดุ {Model.Material ?? "PVC/ABS คุณภาพสูง"} สินค้าลิขสิทธิ์แท้ รับสินค้าและชำระเงินที่หน้าร้าน FriendHouse สยามสแควร์",
+        Series = !string.IsNullOrEmpty(Model.SeriesName) ? Model.SeriesName : (Model.CategoryName ?? "คอลเลกชัน FriendHouse"),
+        Description = !string.IsNullOrEmpty(Model.Description) ? Model.Description : fallbackCatalogProduct.Description,
         Specs = new[] {
-            new { Label = "หมวดหมู่", Value = Model.Category?.CategoryName ?? "ฟิกเกอร์สเกล" },
-            new { Label = "ซีรีส์", Value = Model.SeriesName ?? "FriendHouse Official" },
-            new { Label = "ผู้ผลิต", Value = Model.BrandName ?? "Official Brand" },
+            new { Label = "หมวดหมู่", Value = Model.CategoryName ?? "ฟิกเกอร์สเกล" },
+            new { Label = "ซีรีส์", Value = Model.SeriesName ?? "FriendHouse ลิขสิทธิ์แท้" },
+            new { Label = "ผู้ผลิต", Value = Model.BrandName ?? "ผู้ผลิตลิขสิทธิ์แท้" },
             new { Label = "สเกล", Value = Model.Scale ?? "มาตรฐาน" },
             new { Label = "วัสดุ", Value = Model.Material ?? "PVC + ABS เกรดพรีเมียม" },
-            new { Label = "สถานะ", Value = (Model.Inventory?.QuantityOnHand ?? 0) > 0 ? "มีสินค้าพร้อมส่งมอบหน้าร้าน" : "เปิดรับสั่งจองพรีออเดอร์" }
+            new { Label = "สถานะ", Value = Model.InStock ? "มีสินค้าพร้อมส่งมอบหน้าร้าน" : "เปิดรับสั่งจองพรีออเดอร์" }
         }
     } : fallbackCatalogProduct;
 
     bool isRewardItem = (product.Id >= 301 && product.Id <= 304) || product.Price.Contains("แต้ม");
     int availableStock = Model != null 
-        ? ((Model.Inventory?.QuantityOnHand ?? 0) - (Model.Inventory?.ReservedQuantity ?? 0))
+        ? Model.AvailableStock
         : 10;
     bool isOutOfStock = !isRewardItem && availableStock <= 0;
 
@@ -592,7 +692,7 @@
                 }
             </div>
 
-            <!-- Action Buttons: พรีออเดอร์สินค้านี้ หรือ แลกของรางวัลนี้ (Responsive stacked/inline) -->
+            <!-- ปุ่มดำเนินการ: พรีออเดอร์สินค้านี้ หรือ แลกของรางวัลนี้ -->
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2">
                 @if (isOutOfStock)
                 {

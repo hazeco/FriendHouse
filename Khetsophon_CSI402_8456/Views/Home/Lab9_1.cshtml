@@ -1,6 +1,6 @@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Labstudent>
 @{
-    ViewData["Title"] = "รายชื่อนักศึกษา (Lab 9.1 & Lab 10.1)";
+    ViewData["Title"] = "รายชื่อนักศึกษา ปฏิบัติการที่ 9.1 และ 10.1";
 
     var rawStatus = (string?)ViewBag.Status;
     if (string.IsNullOrEmpty(rawStatus))
@@ -10,7 +10,7 @@
 
     var pageConfig = new {
         Title = "รายชื่อนักศึกษาในระบบ",
-        Subtitle = "ระบบจัดการและแสดงรายการข้อมูลนักศึกษา (Lab 9.1 - Read / Lab 10.1 - Delete)",
+        Subtitle = "ระบบจัดการและแสดงรายการข้อมูลนักศึกษา ปฏิบัติการที่ 9.1 แสดงข้อมูล และ 10.1 ลบข้อมูล",
         AddUrl = Url.Action("Lab9", "Home"),
         Icons = new {
             Add = "M12 4v16m8-8H4",
@@ -55,7 +55,7 @@
                     <div class="flex items-center gap-2.5">
                         <h1 class="text-xl sm:text-2xl font-bold text-text">@pageConfig.Title</h1>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/30 text-primary border border-secondary">
-                            Lab 9.1 & 10.1
+                            ปฏิบัติการที่ 9.1 และ 10.1
                         </span>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">@pageConfig.Subtitle</p>
@@ -75,7 +75,7 @@
             </div>
         </div>
 
-        <!-- กล่องแจ้งเตือนสถานะการทำงาน (Update / Delete) -->
+        <!-- กล่องแจ้งเตือนสถานะการทำงาน -->
         @if (!string.IsNullOrEmpty(rawStatus))
         {
             <div class="rounded-2xl p-4 flex items-center gap-3 text-sm @(isSuccess ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-rose-50 border border-rose-200 text-rose-800") shadow-sm">

@@ -107,7 +107,7 @@
         </div>
     }
 
-    <!-- 1. กรณีพบรายการแลกของรางวัลในระบบ (Reward Redemption Card) -->
+    <!-- 1. กรณีพบรายการแลกของรางวัลในระบบ -->
     @if (redemptionResult != null)
     {
         <div class="bg-white rounded-2xl border-2 border-primary/25 shadow-xs p-6 space-y-5">
@@ -178,7 +178,7 @@
         </div>
     }
 
-    <!-- 2. การแสดงรายการพรีออเดอร์ (Preorder Card) -->
+    <!-- 2. การแสดงรายการพรีออเดอร์ -->
     @if (preorderResult != null)
     {
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
@@ -282,7 +282,7 @@
                             </svg>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-emerald-950">รายการนี้ส่งมอบและชำระเงินเสร็จสิ้นแล้ว (Completed)</h4>
+                            <h4 class="text-sm font-extrabold text-emerald-950">รายการนี้ส่งมอบและชำระเงินเสร็จสิ้นแล้ว</h4>
                             <p class="text-xs text-emerald-700 mt-0.5">
                                 @(preorderResult.CompletedAt.HasValue ? $"บันทึกส่งมอบเมื่อ: {preorderResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : "ออเดอร์นี้ถูกปิดยอดเรียบร้อยแล้ว ไม่สามารถดำเนินการซ้ำได้เพื่อป้องกันการปั๊มแต้ม")
                             </p>
@@ -308,7 +308,7 @@
                             </svg>
                         </div>
                         <div>
-                            <h4 class="text-sm font-extrabold text-rose-950">รายการนี้ถูกยกเลิกแล้ว (Cancelled)</h4>
+                            <h4 class="text-sm font-extrabold text-rose-950">รายการนี้ถูกยกเลิกแล้ว</h4>
                             <p class="text-xs text-rose-700 mt-0.5">ลูกค้าไม่รับสินค้าหรือไม่ได้มารับสินค้าตามกำหนด และระบบได้คืนสต็อกเรียบร้อยแล้ว</p>
                         </div>
                     </div>
@@ -327,10 +327,10 @@
                         <div>
                             @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์สมาชิกสำหรับสะสมแต้ม *@
                             <label class="text-xs font-bold text-gray-700 block mb-1">
-                                หมายเลขโทรศัพท์สมาชิก (Member Phone Number) สำหรับสะสมแต้ม:
+                                หมายเลขโทรศัพท์สมาชิก สำหรับสะสมแต้ม:
                             </label>
                             @* ช่องกรอกหมายเลขโทรศัพท์สมาชิกเพื่อใช้สะสมแต้ม 10% ของยอดซื้อ *@
-                            <input type="text" name="memberPhone" value="@currentContactPhone" placeholder="08X-XXX-XXXX (เว้นว่างได้หากไม่ต้องการสะสมแต้ม)"
+                            <input type="text" name="memberPhone" value="@currentContactPhone" placeholder="08X-XXX-XXXX เว้นว่างได้หากไม่ต้องการสะสมแต้ม"
                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]" />
                             @* ข้อความชี้แจงยอดเงินที่จะนำไปคำนวณแต้มสะสม *@
                             <p class="text-[11px] text-gray-500 mt-1">ระบบจะนำยอดชำระ ฿@preorderResult.TotalFinalPrice.ToString("N0") ไปคำนวณแต้มสะสมเข้าบัญชีสมาชิกทันที</p>

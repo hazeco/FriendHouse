@@ -1,23 +1,49 @@
-@model Khetsophon_CSI402_8456.ViewModels.RegisterViewModel;
+@model Khetsophon_CSI402_8456.ViewModels.RegisterViewModel
 @{
-    ViewData["Title"] = "สมัครสมาชิก";
+    // กำหนดชื่อหน้าเว็บและโครงร่างหน้าเข้าสู่ระบบ/สมัครสมาชิก
+    ViewData["Title"] = "สมัครสมาชิกใหม่";
     Layout = "_AccountLayout";
+
+    // CREATE: การตั้งค่าข้อมูลเนื้อหา ข้อความ และไอคอน SVG ที่ส่วนบนสุดของไฟล์
+    // WHY: รวมศูนย์ข้อความภาษาไทยทั้งหมดไว้ด้านบนสุดตามกฎของโปรเจกต์
+    var pageConfig = new {
+        Title = "สมัครสมาชิกใหม่",
+        Subtitle = "สมัครสมาชิกเพื่อสั่งจองสินค้าพรีออเดอร์และรับแต้มสะสมต้อนรับ 100 แต้มทันที",
+        FullNameLabel = "ชื่อ-นามสกุล",
+        FullNamePlaceholder = "ระบุชื่อและนามสกุลของคุณ",
+        EmailLabel = "อีเมลสำหรับเข้าสู่ระบบ",
+        EmailPlaceholder = "you@friendhouse.com",
+        PhoneLabel = "เบอร์โทรศัพท์ติดต่อ",
+        PhonePlaceholder = "0812345678",
+        PasswordLabel = "รหัสผ่าน",
+        PasswordPlaceholder = "อย่างน้อย 6 ตัวอักษร",
+        ConfirmPasswordLabel = "ยืนยันรหัสผ่านอีกครั้ง",
+        ConfirmPasswordPlaceholder = "พิมพ์รหัสผ่านเดิมอีกครั้ง",
+        SubmitButton = "ยืนยันการสมัครสมาชิก",
+        HaveAccountText = "มีบัญชีสมาชิกอยู่แล้วใช่หรือไม่",
+        LoginLinkText = "เข้าสู่ระบบที่นี่",
+        FooterNoteLine1 = "บัญชีสมาชิกใช้สำหรับสั่งจองพรีออเดอร์และสะสมแต้มแลกของรางวัลเท่านั้น",
+        FooterNoteLine2 = "การชำระเงินและการรับสินค้าดำเนินการที่หน้าร้านบ้านเพื่อนเสมอ"
+    };
 }
 
 <div class="min-h-dvh flex-1 flex items-center justify-center px-4 py-8 sm:py-12 bg-white">
-        <div class="w-full max-w-sm">
-          <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+    <div class="w-full max-w-sm">
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
             <div class="flex flex-col items-center text-center mb-6">
-              <div class="w-14 h-14 rounded-2xl bg-secondary/30 flex items-center justify-center mb-3">
-                <svg class="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
-              </div>
-              <h1 class="text-xl font-bold text-slate">สมัครสมาชิก</h1>
-              <p class="text-sm text-slate-500 mt-1">สมัครเพื่อพรีออเดอร์และสะสมแต้ม</p>
+                <div class="w-14 h-14 rounded-2xl bg-secondary/30 flex items-center justify-center mb-3">
+                    <svg class="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="17" y1="11" x2="23" y2="11"></line>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-slate">@pageConfig.Title</h1>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">@pageConfig.Subtitle</p>
             </div>
 
-            @* Form Parameters expected by Controller:
-               [Email: string, Phone: string, Password: string]
-            *@
+            <!-- แสดงข้อความแจ้งเตือนกรณีอีเมลซ้ำหรือข้อมูลไม่ถูกต้อง -->
             @if (ViewBag.Status != null)
             {
                 <div class="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-600 font-medium text-center">
@@ -25,55 +51,73 @@
                 </div>
             }
 
+            <!-- CREATE: ฟอร์มสมัครสมาชิกใหม่ ส่งข้อมูลไปยัง AccountController แอ็กชัน Register โดยไม่มีแอตทริบิวต์ method -->
             <form class="space-y-3.5" asp-controller="Account" asp-action="Register">
-              <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">อีเมล</label>
-                <div class="relative">
-                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"></path></svg>
-                  <input asp-for="Email" type="email" placeholder="you@example.com" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">@pageConfig.FullNameLabel</label>
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <input asp-for="FullName" type="text" placeholder="@pageConfig.FullNamePlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    </div>
                 </div>
-                <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">เบอร์โทรศัพท์</label>
-                <div class="relative">
-                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path></svg>
-                  <input type="tel" asp-for="Phone" placeholder="08X-XXX-XXXX" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">@pageConfig.EmailLabel</label>
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"></path>
+                        </svg>
+                        <input asp-for="Email" type="email" placeholder="@pageConfig.EmailPlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
-                <span asp-validation-for="Phone" class="text-xs text-rose-500 mt-1 block"></span>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">รหัสผ่าน</label>
-                <div class="relative">
-                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                  <input asp-for="Password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">@pageConfig.PhoneLabel</label>
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.339 1.85.573 2.81.7A2 2 0 0122 16.92z"></path>
+                        </svg>
+                        <input type="tel" asp-for="Phone" placeholder="@pageConfig.PhonePlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    </div>
+                    <span asp-validation-for="Phone" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
-                <span asp-validation-for="Password" class="text-xs text-rose-500 mt-1 block"></span>
-              </div>
-              <div>
-                <label class="block text-xs font-medium text-slate-500 mb-1.5">ยืนยันรหัสผ่าน</label>
-                <div class="relative">
-                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                  <input asp-for="ConfirmPassword" type="password" placeholder="พิมพ์รหัสผ่านอีกครั้ง" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">@pageConfig.PasswordLabel</label>
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                            <path d="M7 11V7a5 5 0 0110 0v4"></path>
+                        </svg>
+                        <input asp-for="Password" type="password" placeholder="@pageConfig.PasswordPlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
-                  <span asp-validation-for="ConfirmPassword" class="text-red-500 text-sm"></span>
-              </div>
-              <button type="submit"class="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:opacity-90 transition mt-1">สมัครสมาชิก</button>
-              <div class="flex items-center gap-3 my-5">
-                <div class="h-px flex-1 bg-slate-300/10"></div>
-                <span class="text-[11px] text-slate-500">หรือ</span>
-                <div class="h-px flex-1 bg-slate-300/10"></div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5">@pageConfig.ConfirmPasswordLabel</label>
+                    <div class="relative">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                            <path d="M7 11V7a5 5 0 0110 0v4"></path>
+                        </svg>
+                        <input asp-for="ConfirmPassword" type="password" placeholder="@pageConfig.ConfirmPasswordPlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-xs text-rose-500 mt-1 block"></span>
                 </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:opacity-90 transition mt-2 cursor-pointer">
+                    @pageConfig.SubmitButton
+                </button>
             </form>
 
-            <p class="text-center text-[14px] text-slate-500 mt-5">
-              มีบัญชีอยู่แล้ว?
-              <a asp-controller="Account" asp-action="Login" class="text-primary font-semibold hover:underline">เข้าสู่ระบบ</a>
+            <p class="text-center text-xs sm:text-sm text-slate-500 mt-5">
+                @pageConfig.HaveAccountText
+                <a asp-controller="Account" asp-action="Login" class="text-primary font-semibold hover:underline">@pageConfig.LoginLinkText</a>
             </p>
-          </div>
-          <p class="text-center text-[11px] text-slate-500 mt-5 leading-relaxed">
-            บัญชีสมาชิกใช้สำหรับพรีออเดอร์และสะสมแต้มเท่านั้น<br>
-            การชำระเงินและรับสินค้าทำที่หน้าร้านเสมอ
-          </p>
         </div>
-      </div>
+        <p class="text-center text-[11px] text-slate-500 mt-5 leading-relaxed">
+            @pageConfig.FooterNoteLine1<br />
+            @pageConfig.FooterNoteLine2
+        </p>
+    </div>
+</div>

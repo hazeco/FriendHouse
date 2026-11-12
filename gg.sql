@@ -69,7 +69,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (1,'สเกลฟิกเกอร์ (Scale Figures)','scale-figures',1);
+INSERT INTO `categories` VALUES (1,'สเกลฟิกเกอร์','scale-figures',1);
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 

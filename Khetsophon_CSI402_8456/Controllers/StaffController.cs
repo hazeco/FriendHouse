@@ -38,7 +38,7 @@ public class StaffController : Controller
         if (!IsAuthorizedStaff())
         {
             // กำหนดข้อความแจ้งเตือนข้อผิดพลาดผ่าน TempData
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงานประจำสาขา";
             // เปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบใน AccountController
             return RedirectToAction("Login", "Account");
         }
@@ -72,7 +72,7 @@ public class StaffController : Controller
         if (!IsAuthorizedStaff())
         {
             // กำหนดข้อความแจ้งเตือนข้อผิดพลาดผ่าน TempData ไปแสดงผลที่หน้า Login
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงานประจำสาขา";
             // สั่งเปลี่ยนเส้นทาง (Redirect) ไปยังหน้าเข้าสู่ระบบใน AccountController
             return RedirectToAction("Login", "Account");
         }
@@ -185,7 +185,7 @@ public class StaffController : Controller
         if (!IsAuthorizedStaff())
         {
             // กำหนดข้อความแจ้งเตือนข้อผิดพลาดผ่าน TempData
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงานประจำสาขา";
             // เปลี่ยนเส้นทางกลับไปยังหน้าล็อกอิน
             return RedirectToAction("Login", "Account");
         }
@@ -675,7 +675,7 @@ public class StaffController : Controller
         if (!IsAuthorizedStaff())
         {
             // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงานประจำสาขา";
             // เปลี่ยนเส้นทางกลับหน้าล็อกอิน
             return RedirectToAction("Login", "Account");
         }
@@ -702,7 +702,7 @@ public class StaffController : Controller
         if (!IsAuthorizedStaff())
         {
             // กำหนดข้อความแจ้งเตือนผ่าน TempData
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน (Staff)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีพนักงานประจำสาขา";
             // เปลี่ยนเส้นทางกลับหน้าล็อกอิน
             return RedirectToAction("Login", "Account");
         }

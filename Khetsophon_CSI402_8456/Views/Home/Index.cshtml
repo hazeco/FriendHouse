@@ -1,27 +1,32 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.Product>?
+@model Khetsophon_CSI402_8456.ViewModels.HomeIndexViewModel
 @{
     ViewData["Title"] = "หน้าแรก — FriendHouse";
 
+    var hero = Model?.HeroProduct;
+    var heroProductId = hero?.ProductId ?? 1;
+
     // Top-of-file Media and Content Configuration
     var pageMedia = new {
-        NarutoModelUrl = (string?)ViewBag.HeroModel3D ?? "~/media/models/naruto_kyubi_sage.glb",
-        NarutoFallbackImg = "~/media/images/naruto_hero_fallback.png"
+        NarutoModelUrl = !string.IsNullOrEmpty(hero?.Model3DPath) ? hero.Model3DPath : ((string?)ViewBag.HeroModel3D ?? "~/media/models/naruto_kyubi_sage.glb"),
+        NarutoFallbackImg = !string.IsNullOrEmpty(hero?.FallbackImageUrl) ? hero.FallbackImageUrl : "~/media/images/naruto_hero_fallback.png"
     };
 
     var heroContent = new {
-        Badge = "ฟิกเกอร์คอลเลกชัน · มีสินค้า",
-        TitlePrefix = (string?)ViewBag.HeroName ?? "นารูโตะ อุซึมากิ",
-        TitleHighlight = ViewBag.HeroName != null ? "" : "โหมดคิวบิเซจ — Ultimate Ninja Storm",
-        Description = "งานปั้นรายละเอียดสูง จับจังหวะท่าโจมตีจากฉากไคลแมกซ์ในซีรีส์ หล่อจากเรซิ่นคุณภาพสูง ทาสีมือทุกชิ้น — หมุนดูโมเดล 3 มิติได้รอบตัวก่อนตัดสินใจสั่งจอง",
+        Badge = hero?.BadgeText ?? "ฟิกเกอร์คอลเลกชัน · มีสินค้า",
+        TitlePrefix = hero?.Name ?? ((string?)ViewBag.HeroName ?? "นารูโตะ อุซึมากิ"),
+        TitleHighlight = hero != null ? "" : (ViewBag.HeroName != null ? "" : "โหมดคิวบิเซจ — Ultimate Ninja Storm"),
+        Description = hero?.Description ?? "งานปั้นรายละเอียดสูง จับจังหวะท่าโจมตีจากฉากไคลแมกซ์ในซีรีส์ หล่อจากเรซิ่นคุณภาพสูง ทาสีมือทุกชิ้น — หมุนดูโมเดล 3 มิติได้รอบตัวก่อนตัดสินใจสั่งจอง",
         PriceLabel = "ราคาฟิกเกอร์",
-        Price = (string?)ViewBag.HeroPrice ?? "฿4,290",
-        Notice = "มีสินค้าพร้อมส่งมอบ — มารับและชำระเงินที่หน้าร้านได้ทันที",
-        Specs = new[] {
-            new { Label = "น้ำหนัก", Value = "1.2 กก." },
-            new { Label = "วัสดุ", Value = "PVC + เรซิ่น" },
-            new { Label = "ความสูง", Value = "32 ซม." },
-            new { Label = "สเกล", Value = "1/6" }
-        }
+        Price = hero?.PriceFormatted ?? ((string?)ViewBag.HeroPrice ?? "฿4,290"),
+        Notice = hero?.NoticeText ?? "มีสินค้าพร้อมส่งมอบ — มารับและชำระเงินที่หน้าร้านได้ทันที",
+        Specs = (hero?.Specs != null && hero.Specs.Any())
+            ? hero.Specs.Select(s => new { Label = s.Key, Value = s.Value }).ToArray()
+            : new[] {
+                new { Label = "น้ำหนัก", Value = "1.2 กก." },
+                new { Label = "วัสดุ", Value = "PVC + เรซิ่น" },
+                new { Label = "ความสูง", Value = "32 ซม." },
+                new { Label = "สเกล", Value = "1/6" }
+            }
     };
 
     var trustItems = new[] {
@@ -91,19 +96,16 @@
         }
     };
 
-    var featuredProducts = (Model != null && Model.Any())
-        ? Model.Take(4).Select(p => {
-            int available = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
-            return new {
-                Id = p.ProductId,
-                Title = p.Name,
-                Series = p.Category?.CategoryName ?? (p.SeriesName ?? "ฟิกเกอร์สเกล"),
-                Price = $"฿{p.RetailPrice:N0}",
-                Badge = available > 0 ? "มีสินค้า" : "เปิดสั่งจอง",
-                BadgeClass = available > 0 ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
-                HasDetail = true,
-                ImageUrl = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png"
-            };
+    var featuredProducts = (Model?.FeaturedProducts != null && Model.FeaturedProducts.Any())
+        ? Model.FeaturedProducts.Take(8).Select(p => new {
+            Id = p.ProductId,
+            Title = p.Name,
+            Series = !string.IsNullOrEmpty(p.SeriesName) ? p.SeriesName : (!string.IsNullOrEmpty(p.CategoryName) ? p.CategoryName : "ฟิกเกอร์สะสม"),
+            Price = p.PriceFormatted,
+            Badge = p.InStock ? "มีสินค้า" : "เปิดสั่งจอง",
+            BadgeClass = p.InStock ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
+            HasDetail = true,
+            ImageUrl = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png"
         }).ToArray()
         : Array.Empty<dynamic>();
 }
@@ -153,18 +155,23 @@
 
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                             <!-- Button 1 (Left): ใส่ตะกร้า -->
-                            <button type="button" onclick="addToCart(1)"
-                               class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-white px-5 py-3.5 text-sm font-bold text-primary shadow-xs transition-all hover:bg-primary/5 cursor-pointer w-full sm:w-auto">
-                                <svg class="size-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="9" cy="21" r="1"></circle>
-                                    <circle cx="20" cy="21" r="1"></circle>
-                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                                <span>ใส่ตะกร้า</span>
-                            </button>
+                            @* ฟอร์มส่งข้อมูลเพิ่มสินค้าไฮไลท์ลงในตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                            <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
+                                <input type="hidden" name="productId" value="@heroProductId" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button type="submit"
+                                   class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-white px-5 py-3.5 text-sm font-bold text-primary shadow-xs transition-all hover:bg-primary/5 cursor-pointer w-full sm:w-auto">
+                                    <svg class="size-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                    <span>ใส่ตะกร้า</span>
+                                </button>
+                            </form>
 
-                            <!-- Button 2 (Right): พรีออเดอร์สินค้านี้ -->
-                            <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="1"
+                            <!-- Button 2 (Right): สั่งจองสินค้านี้ -->
+                            <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@heroProductId"
                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto">
                                 <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
@@ -358,17 +365,22 @@
 
                         <div class="grid grid-cols-2 gap-2">
                             <!-- Button 1: ตะกร้า -->
-                            <button type="button" onclick="addToCart(@prod.Id)"
-                               class="flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="9" cy="21" r="1"></circle>
-                                    <circle cx="20" cy="21" r="1"></circle>
-                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                                <span>ตะกร้า</span>
-                            </button>
+                            @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                            <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                                <input type="hidden" name="productId" value="@prod.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button type="submit"
+                                   class="w-full flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                    <span>ตะกร้า</span>
+                                </button>
+                            </form>
 
-                            <!-- Button 2: พรีออเดอร์สินค้านี้ -->
+                            <!-- Button 2: สั่งจองสินค้านี้ -->
                             <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id"
                                class="flex items-center justify-center rounded-xl bg-accent py-2.5 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-90 cursor-pointer">
                                 สั่งจองสินค้านี้
@@ -383,34 +395,6 @@
 
 @section Scripts {
 <script>
-    function addToCart(productId) {
-        var formData = new URLSearchParams();
-        formData.append('productId', productId);
-        formData.append('quantity', 1);
-
-        fetch('/Home/AddToCart', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData.toString()
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.requireLogin) {
-                alert(data.message || 'กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า');
-                window.location.href = data.redirectUrl || '/Account/Login';
-                return;
-            }
-            if (data.success) {
-                window.location.href = '/Home/Cart';
-            } else {
-                alert(data.message || 'เกิดข้อผิดพลาด');
-            }
-        })
-        .catch(() => {
-            window.location.href = '/Home/Cart';
-        });
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
         // Smooth slide scroll handler for any anchor linking to on-page hash
         document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {

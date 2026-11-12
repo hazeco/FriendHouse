@@ -1,103 +1,116 @@
 using Microsoft.AspNetCore.Mvc;
 using Khetsophon_CSI402_8456.Models;
+using Khetsophon_CSI402_8456.ViewModels;
 
 namespace Khetsophon_CSI402_8456.Controllers;
 
-// คอนโทรลเลอร์สำหรับฝ่ายไอทีซัพพอร์ต (IT Support)
+// คอนโทรลเลอร์สำหรับฝ่ายผู้ดูแลระบบไอที
 public class ITSupportController : Controller
 {
-    // ประกาศตัวแปรเก็บ Database Context
+    // ประกาศตัวแปรเก็บบริบทฐานข้อมูลสำหรับเชื่อมต่อตารางใน MySQL
     private readonly Csi402dbContext _db;
 
-    // คอนสตรัคเตอร์รับ DbContext ผ่าน Dependency Injection
+    // คอนสตรัคเตอร์รับบริบทฐานข้อมูลผ่านระบบฉีดพึ่งพา
     public ITSupportController(Csi402dbContext db)
     {
-        // กำหนดค่า DbContext ให้กับตัวแปรภายในคลาส
+        // กำหนดค่าบริบทฐานข้อมูลให้กับตัวแปรภายในคลาส
         _db = db;
     }
 
-    // ฟังก์ชันตรวจสอบสิทธิ์การเข้าถึงเฉพาะบทบาท IT Support หรือ Owner
+    // ฟังก์ชันตรวจสอบสิทธิ์การเข้าถึงเฉพาะบทบาทผู้ดูแลระบบไอทีหรือเจ้าของร้าน
     private bool IsAuthorizedIT()
     {
-        // อ่านค่าบทบาทปัจจุบันจาก Session
+        // อ่านค่าบทบาทปัจจุบันจากเซสชัน
         var role = HttpContext.Session.GetString("Role");
-        // อ่านค่ารหัสผู้ใช้งาน IT Support จาก Session
+        // อ่านค่ารหัสผู้ใช้งานฝ่ายไอทีจากเซสชัน
         var itId = HttpContext.Session.GetInt32("ITSupportUserId");
-        // ตรวจสอบว่ามี Session เฉพาะของ ITSupport หรือไม่
+        // ตรวจสอบว่ามีเซสชันเฉพาะของฝ่ายไอทีหรือไม่
         if (itId.HasValue) return true;
-        // ตรวจสอบว่ามีบทบาทตรงกับ itsupport หรือ owner หรือไม่
+        // ตรวจสอบว่ามีบทบาทตรงกับผู้ดูแลระบบไอทีหรือเจ้าของร้านหรือไม่
         return role != null && (role.ToLower() == "itsupport" || role.ToLower() == "owner");
     }
 
-    // แอ็กชันหน้าหลักของไอที นำทางไปยัง Dashboard
+    // แอ็กชันหน้าหลักของฝ่ายไอที นำทางไปยังหน้าภาพรวมสถานะระบบ
     public IActionResult Index()
     {
-        // เปลี่ยนเส้นทางไปยังหน้า Dashboard
+        // เปลี่ยนเส้นทางไปยังหน้าภาพรวมสถานะระบบ
         return RedirectToAction("Dashboard");
     }
 
-    // READ: ภาพรวมสถานะระบบ (Dashboard)
+    // READ: ภาพรวมสถานะระบบของฝ่ายผู้ดูแลระบบไอที
     public IActionResult Dashboard()
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
-            // บันทึกข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชี IT Support";
+            // บันทึกข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
-        // นับจำนวนผู้ใช้งานทั้งหมดในระบบจากตาราง Users
+        // นับจำนวนผู้ใช้งานทั้งหมดในระบบจากตารางผู้ใช้งาน
         ViewBag.TotalUsers = _db.Users.Count();
-        // นับจำนวนบันทึกกิจกรรมและข้อผิดพลาดทั้งหมดจากตาราง Systemlogs
+        // นับจำนวนบันทึกกิจกรรมและข้อผิดพลาดทั้งหมดจากตารางบันทึกกิจกรรมระบบ
         ViewBag.TotalLogs = _db.Systemlogs.Count();
-        // นับจำนวนข้อผิดพลาดระดับ ERROR จากตาราง Systemlogs
+        // นับจำนวนข้อผิดพลาดระดับร้ายแรงจากตารางบันทึกกิจกรรมระบบ
         ViewBag.ErrorLogs = _db.Systemlogs.Count(l => l.LogLevel == "ERROR");
-        // นับจำนวนสินค้าทั้งหมดในระบบจากตาราง Products
+        // นับจำนวนสินค้าทั้งหมดในระบบจากตารางสินค้า
         ViewBag.TotalProducts = _db.Products.Count();
         // ดึงรายการบันทึกประวัติการทำงานล่าสุด 5 รายการจากฐานข้อมูลจริง
         ViewBag.RecentLogs = _db.Systemlogs.OrderByDescending(l => l.Timestamp).Take(5).ToList();
 
-        // ส่งการทำงานไปแสดงผลที่หน้า Dashboard View
+        // ส่งการทำงานไปแสดงผลที่หน้าภาพรวมสถานะระบบ
         return View();
     }
 
-    // READ: จัดการบัญชีผู้ใช้งาน (Users)
-    public IActionResult Users(string? searchQuery, string? statusFilter)
+    // READ: จัดการบัญชีผู้ใช้งานทั้งหมดพร้อมค้นหาและกรองข้อมูลผ่าน UserManagementViewModel
+    public IActionResult Users(string? searchQuery, string? statusFilter, string? roleFilter)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
-            // บันทึกข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชี IT Support";
+            // บันทึกข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
-        // สร้าง Query พื้นฐานสำหรับดึงข้อมูลผู้ใช้งานจากตาราง Users
+        // สร้างคำสั่งคิวรีพื้นฐานสำหรับดึงข้อมูลผู้ใช้งานจากตารางผู้ใช้งาน
         var query = _db.Users.AsQueryable();
 
         // ตรวจสอบว่ามีการกรอกคำค้นหาหรือไม่
-        if (!string.IsNullOrEmpty(searchQuery))
+        if (!string.IsNullOrWhiteSpace(searchQuery))
         {
-            // กรองผู้ใช้งานด้วยอีเมล เบอร์โทร หรือชื่อ-นามสกุล
-            query = query.Where(u => u.Email.Contains(searchQuery) || u.Phone.Contains(searchQuery) || (u.FullName != null && u.FullName.Contains(searchQuery)));
+            var cleanKeyword = searchQuery.Trim();
+            // กรองผู้ใช้งานด้วยอีเมล เบอร์โทรศัพท์ รหัสผู้ใช้ หรือชื่อ-นามสกุล
+            query = query.Where(u =>
+                u.Email.Contains(cleanKeyword) ||
+                u.Phone.Contains(cleanKeyword) ||
+                u.UserCode.Contains(cleanKeyword) ||
+                (u.FullName != null && u.FullName.Contains(cleanKeyword)));
+        }
+
+        // ตรวจสอบว่ามีการกรองตามบทบาทผู้ใช้งานหรือไม่
+        if (!string.IsNullOrWhiteSpace(roleFilter) && roleFilter != "all")
+        {
+            var normalizedRole = roleFilter.Trim().ToLowerInvariant();
+            query = query.Where(u => u.RoleName != null && u.RoleName.ToLower() == normalizedRole);
         }
 
         // ตรวจสอบว่ามีการกรองตามสถานะบัญชีหรือไม่
-        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "all")
+        if (!string.IsNullOrWhiteSpace(statusFilter) && statusFilter != "all")
         {
             // ตรวจสอบเงื่อนไขสถานะปกติ
             if (statusFilter == "ปกติ")
             {
-                // กรองเฉพาะบัญชีที่เปิดใช้งาน (IsActive เป็น true)
+                // กรองเฉพาะบัญชีที่เปิดใช้งานปกติ
                 query = query.Where(u => u.IsActive == true);
             }
             // ตรวจสอบเงื่อนไขสถานะถูกล็อก
             else if (statusFilter == "ถูกล็อก")
             {
-                // กรองเฉพาะบัญชีที่ถูกระงับ (IsActive เป็น false)
+                // กรองเฉพาะบัญชีที่ถูกระงับการใช้งาน
                 query = query.Where(u => u.IsActive == false);
             }
         }
@@ -105,25 +118,49 @@ public class ITSupportController : Controller
         // ดึงรายการผู้ใช้งานเรียงลำดับจากวันที่สมัครล่าสุด
         var users = query.OrderByDescending(u => u.CreatedAt).ToList();
 
-        // ดึงข้อมูลเวลาเข้าสู่ระบบล่าสุดของผู้ใช้งานแต่ละรายจากตาราง Systemlogs
+        // ดึงข้อมูลเวลาเข้าสู่ระบบล่าสุดของผู้ใช้งานแต่ละรายจากตารางบันทึกกิจกรรมระบบ
         var lastLogins = _db.Systemlogs
             .Where(l => l.UserId != null && l.Module == "auth.login")
             .GroupBy(l => l.UserId!.Value)
             .Select(g => new { UserId = g.Key, LastLogin = g.Max(l => l.Timestamp) })
             .ToDictionary(x => x.UserId, x => x.LastLogin);
 
-        // ส่ง Dictionary เวลาเข้าสู่ระบบล่าสุดไปยัง View
+        // ส่งพจนานุกรมเวลาเข้าสู่ระบบล่าสุดและค่าการค้นหาไปยัง ViewBag เพื่อความเข้ากันได้
         ViewBag.LastLogins = lastLogins;
-        // ส่งคำค้นหากลับไปแสดงผลในช่องค้นหา
         ViewBag.SearchQuery = searchQuery;
-        // ส่งค่าตัวกรองสถานะกลับไปแสดงผลในดรอปดาวน์
         ViewBag.StatusFilter = statusFilter;
+        ViewBag.RoleFilter = roleFilter;
 
-        // ส่งรายการผู้ใช้งานไปยังหน้า View
-        return View(users);
+        // ประกอบข้อมูลลงใน UserManagementViewModel ตามมาตรฐานสถาปัตยกรรม MVC
+        var vm = new UserManagementViewModel
+        {
+            SearchQuery = searchQuery,
+            StatusFilter = statusFilter ?? "all",
+            RoleFilter = roleFilter ?? "all",
+            LastLogins = lastLogins,
+            TempResetEmail = TempData["ResetEmail"] as string,
+            TempResetPassword = TempData["TempPassword"] as string,
+            UserItems = users.Select(u => new UserAccountItemViewModel
+            {
+                UserId = u.UserId,
+                UserCode = u.UserCode,
+                FullName = u.FullName,
+                Email = u.Email,
+                Phone = u.Phone,
+                RoleName = u.RoleName ?? "customer",
+                Points = u.Points,
+                IsActive = u.IsActive ?? true,
+                CreatedAt = u.CreatedAt,
+                LastLoginAt = lastLogins.ContainsKey(u.UserId) ? lastLogins[u.UserId] : null
+            }).ToList()
+        };
+        vm.AddRange(users);
+
+        // ส่ง ViewModel ไปยังหน้าแสดงผลรายชื่อผู้ใช้งาน
+        return View(vm);
     }
 
-    // CREATE: เพิ่มผู้ใช้งานใหม่ (Create User)
+    // CREATE: เพิ่มผู้ใช้งานใหม่เข้าสู่ระบบฐานข้อมูล
     [HttpPost]
     public IActionResult CreateUser(string role, string? fullName, string email, string phone, string password)
     {
@@ -131,7 +168,7 @@ public class ITSupportController : Controller
         if (!IsAuthorizedIT())
         {
             // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชี IT Support";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
@@ -156,48 +193,48 @@ public class ITSupportController : Controller
             return RedirectToAction("Users");
         }
 
-        // สร้างอ็อบเจกต์ผู้ใช้งานใหม่พร้อมเข้ารหัสผ่านด้วย BCrypt
+        // สร้างอ็อบเจกต์ผู้ใช้งานใหม่พร้อมเข้ารหัสผ่านด้วยอัลกอริทึมความปลอดภัย
         var newUser = new User
         {
-            // กำหนดรหัสโค้ดผู้ใช้งานขึ้นต้นด้วย U ตามด้วยวันเวลา
+            // กำหนดรหัสโค้ดผู้ใช้งานขึ้นต้นด้วยตัวอักษร U ตามด้วยวันเวลา
             UserCode = "U" + DateTime.Now.ToString("yyyyMMddHHmmss"),
             // กำหนดบทบาทสิทธิ์การใช้งาน
             RoleName = string.IsNullOrEmpty(role) ? "customer" : role.ToLower(),
             // กำหนดชื่อ-นามสกุลของผู้ใช้งาน
-            FullName = fullName,
+            FullName = string.IsNullOrWhiteSpace(fullName) ? "สมาชิกใหม่" : fullName.Trim(),
             // กำหนดอีเมลของผู้ใช้งาน
-            Email = email,
+            Email = email.Trim(),
             // กำหนดเบอร์โทรศัพท์ของผู้ใช้งาน
-            Phone = phone,
-            // เข้ารหัสผ่านด้วยแฮช BCrypt ปลอดภัย
+            Phone = phone.Trim(),
+            // เข้ารหัสผ่านด้วยแฮชความปลอดภัย
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            // กำหนดแต้มสะสมเริ่มต้นเป็น 0 แต้ม
-            Points = 0,
+            // กำหนดแต้มสะสมเริ่มต้นสำหรับลูกค้าใหม่เป็น 100 แต้ม
+            Points = string.Equals(role, "Customer", StringComparison.OrdinalIgnoreCase) ? 100 : 0,
             // กำหนดสถานะบัญชีเริ่มต้นเป็นเปิดใช้งาน
             IsActive = true,
             // บันทึกวันและเวลาที่สร้างบัญชี
             CreatedAt = DateTime.UtcNow
         };
 
-        // เพิ่มข้อมูลผู้ใช้งานใหม่ลงใน DbSet
+        // เพิ่มข้อมูลผู้ใช้งานใหม่ลงในชุดข้อมูลผู้ใช้งาน
         _db.Users.Add(newUser);
 
-        // บันทึก Log การสร้างบัญชีลงตาราง Systemlogs
+        // บันทึกประวัติการสร้างบัญชีลงตารางบันทึกกิจกรรมระบบ
         _db.Systemlogs.Add(new Systemlog
         {
-            // กำหนดรหัส Log
+            // กำหนดรหัสบันทึกกิจกรรม
             LogCode = "LOG-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // กำหนดระดับความสำคัญ
+            // กำหนดระดับความสำคัญของข้อมูล
             LogLevel = "INFO",
             // กำหนดโมดูลที่เกี่ยวข้อง
             Module = "auth.users",
             // ข้อความรายละเอียดการสร้างบัญชี
-            Message = "IT Support สร้างผู้ใช้งานใหม่: " + email + " (สิทธิ์: " + newUser.RoleName + ")",
+            Message = $"ผู้ดูแลระบบไอทีสร้างผู้ใช้งานใหม่: {email} สิทธิ์การใช้งาน: {newUser.RoleName}",
             // วันเวลาที่ทำการบันทึก
             Timestamp = DateTime.UtcNow
         });
 
-        // บันทึกการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล MySQL
+        // บันทึกการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล
         _db.SaveChanges();
 
         // กำหนดข้อความแจ้งเตือนผลสำเร็จผ่าน TempData
@@ -206,15 +243,15 @@ public class ITSupportController : Controller
         return RedirectToAction("Users");
     }
 
-    // UPDATE: แก้ไขข้อมูลผู้ใช้งาน (Edit User)
+    // UPDATE: แก้ไขข้อมูลผู้ใช้งานและสถานะบัญชีตามรูปแบบฟอร์มมาตรฐาน MVC
     [HttpPost]
-    public IActionResult EditUser(string email, string? phone, string? role, string? status, string? fullName)
+    public IActionResult EditUser(string email, string? phone, string? role, string? status, string? fullName, int? points)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
-            // ส่งผลลัพธ์เป็น JSON แจ้งไม่มีสิทธิ์
-            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
+            return RedirectToAction("Login", "Account");
         }
 
         // ค้นหาข้อมูลผู้ใช้งานจากอีเมลในฐานข้อมูล
@@ -222,8 +259,8 @@ public class ITSupportController : Controller
         // ตรวจสอบว่าพบผู้ใช้งานหรือไม่
         if (user == null)
         {
-            // ส่งผลลัพธ์ JSON แจ้งไม่พบบัญชี
-            return Json(new { success = false, message = "ไม่พบผู้ใช้งานนี้ในระบบ" });
+            TempData["ErrorMessage"] = "ไม่พบผู้ใช้งานนี้ในระบบ";
+            return RedirectToAction("Users");
         }
 
         // อัปเดตเบอร์โทรศัพท์หากมีการระบุค่าใหม่
@@ -232,97 +269,104 @@ public class ITSupportController : Controller
         if (!string.IsNullOrWhiteSpace(fullName)) user.FullName = fullName.Trim();
         // อัปเดตสิทธิ์การใช้งานหากมีการระบุค่าใหม่
         if (!string.IsNullOrWhiteSpace(role)) user.RoleName = role.ToLower();
+        // อัปเดตแต้มสะสมหากมีการระบุค่าใหม่
+        if (points.HasValue && points.Value >= 0) user.Points = points.Value;
         // อัปเดตสถานะการใช้งานบัญชี
         if (!string.IsNullOrWhiteSpace(status))
         {
-            // กำหนด IsActive เป็น true เมื่อเลือก active หรือ ปกติ
+            // กำหนดสถานะเปิดใช้งานเมื่อเลือกค่าปกติ
             user.IsActive = (status.ToLower() == "active" || status == "ปกติ");
         }
 
-        // บันทึกประวัติการแก้ไขลงตาราง Systemlogs
+        // บันทึกประวัติการแก้ไขลงตารางบันทึกกิจกรรมระบบ
         _db.Systemlogs.Add(new Systemlog
         {
-            // กำหนดรหัส Log
+            // กำหนดรหัสบันทึกกิจกรรม
             LogCode = "EDIT-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // กำหนดระดับความสำคัญ
+            // กำหนดระดับความสำคัญของข้อมูล
             LogLevel = "INFO",
             // กำหนดโมดูลที่เกี่ยวข้อง
             Module = "auth.users",
             // ข้อความรายละเอียดการแก้ไขข้อมูล
-            Message = $"IT Support แก้ไขข้อมูลผู้ใช้: {user.Email} (สถานะ: {(user.IsActive == true ? "ปกติ" : "ถูกล็อก")})",
+            Message = $"ผู้ดูแลระบบไอทีแก้ไขข้อมูลผู้ใช้: {user.Email} สถานะการใช้งาน: {(user.IsActive == true ? "ปกติ" : "ถูกล็อก")}",
             // รหัสผู้ใช้เจ้าหน้าที่ไอทีที่แก้ไข
             UserId = HttpContext.Session.GetInt32("UserId"),
             // วันเวลาที่ทำการบันทึก
             Timestamp = DateTime.UtcNow
         });
 
-        // บันทึกการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล MySQL
+        // บันทึกการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล
         _db.SaveChanges();
-        // ส่งผลลัพธ์ JSON ยืนยันการอัปเดตสำเร็จ
-        return Json(new { success = true, message = "อัปเดตข้อมูลผู้ใช้งานเรียบร้อยแล้ว" });
+
+        // แจ้งผลการอัปเดตสำเร็จผ่าน TempData และเปลี่ยนเส้นทางกลับไปหน้ารายชื่อผู้ใช้
+        TempData["SuccessMessage"] = $"อัปเดตข้อมูลบัญชี {user.Email} เรียบร้อยแล้ว";
+        return RedirectToAction("Users");
     }
 
-    // UPDATE: รีเซ็ตรหัสผ่านชั่วคราว (Reset Password)
+    // UPDATE: รีเซ็ตรหัสผ่านชั่วคราวด้วยฟอร์มมาตรฐาน MVC
     [HttpPost]
     public IActionResult ResetPassword(int userId)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
-            // ส่งผลลัพธ์เป็น JSON แจ้งไม่มีสิทธิ์
-            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
+            return RedirectToAction("Login", "Account");
         }
 
-        // ค้นหาข้อมูลผู้ใช้งานจากรหัส UserId ในฐานข้อมูล
+        // ค้นหาข้อมูลผู้ใช้งานจากรหัสประจำตัวผู้ใช้งานในฐานข้อมูล
         var user = _db.Users.FirstOrDefault(u => u.UserId == userId);
         // ตรวจสอบว่าพบผู้ใช้งานหรือไม่
         if (user == null)
         {
-            // ส่งผลลัพธ์ JSON แจ้งไม่พบบัญชี
-            return Json(new { success = false, message = "ไม่พบบัญชีผู้ใช้งาน" });
+            TempData["ErrorMessage"] = "ไม่พบบัญชีผู้ใช้งานที่ต้องการรีเซ็ตรหัสผ่าน";
+            return RedirectToAction("Users");
         }
 
         // สุ่มตัวเลข 4 หลักเพื่อสร้างรหัสผ่านชั่วคราว
         var randomNum = new Random().Next(1000, 9999);
-        // ประกอบรหัสผ่านชั่วคราวในรูปแบบ FH-Temp-XXXX
+        // ประกอบรหัสผ่านชั่วคราวสำหรับส่งมอบให้ผู้ใช้งาน
         var tempPassword = "FH-Temp-" + randomNum;
 
-        // แฮชรหัสผ่านชั่วคราวและบันทึกลงฟิลด์ PasswordHash ของผู้ใช้
+        // แฮชรหัสผ่านชั่วคราวและบันทึกลงฟิลด์รหัสผ่านของผู้ใช้
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
 
-        // บันทึกประวัติการรีเซ็ตรหัสผ่านลงตาราง Systemlogs
+        // บันทึกประวัติการรีเซ็ตรหัสผ่านลงตารางบันทึกกิจกรรมระบบ
         _db.Systemlogs.Add(new Systemlog
         {
-            // กำหนดรหัส Log
+            // กำหนดรหัสบันทึกกิจกรรม
             LogCode = "RESET-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // กำหนดระดับความสำคัญเป็น WARNING
+            // กำหนดระดับความสำคัญเป็นแจ้งเตือน
             LogLevel = "WARNING",
             // กำหนดโมดูลที่เกี่ยวข้อง
             Module = "auth.security",
             // ข้อความรายละเอียดการรีเซ็ตรหัสผ่าน
-            Message = "IT Support รีเซ็ตรหัสผ่านชั่วคราวให้ผู้ใช้: " + user.Email,
+            Message = $"ผู้ดูแลระบบไอทีรีเซ็ตรหัสผ่านชั่วคราวให้ผู้ใช้: {user.Email}",
             // รหัสเจ้าหน้าที่ไอทีผู้ทำรายการ
             UserId = HttpContext.Session.GetInt32("UserId"),
             // วันเวลาที่ทำการบันทึก
             Timestamp = DateTime.UtcNow
         });
 
-        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล MySQL
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
 
-        // ส่งผลลัพธ์ JSON พร้อมรหัสผ่านชั่วคราวกลับไปแสดงผลใน Modal
-        return Json(new { success = true, email = user.Email, tempPassword = tempPassword });
+        // เก็บอีเมลและรหัสผ่านชั่วคราวลงใน TempData เพื่อแสดงในหน้าต่างแจ้งรหัสผ่านบนหน้า Users
+        TempData["ResetEmail"] = user.Email;
+        TempData["TempPassword"] = tempPassword;
+        TempData["SuccessMessage"] = $"สร้างรหัสผ่านชั่วคราวสำหรับบัญชี {user.Email} เรียบร้อยแล้ว: {tempPassword}";
+        return RedirectToAction("Users");
     }
 
-    // DELETE: ลบผู้ใช้งาน (Soft Delete: ปิดการใช้งาน IsActive = false เพื่อรักษา Foreign Key)
+    // DELETE: ลบหรือระงับการใช้งานบัญชีผู้ใช้งานเพื่อรักษาความสมบูรณ์ของข้อมูลอ้างอิงในฐานข้อมูล
     [HttpPost]
     public IActionResult DeleteUser(string email)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
-            // ส่งผลลัพธ์เป็น JSON แจ้งไม่มีสิทธิ์
-            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
+            return RedirectToAction("Login", "Account");
         }
 
         // ค้นหาข้อมูลผู้ใช้งานจากอีเมลในฐานข้อมูล
@@ -330,66 +374,82 @@ public class ITSupportController : Controller
         // ตรวจสอบว่าพบผู้ใช้งานหรือไม่
         if (user == null)
         {
-            // ส่งผลลัพธ์ JSON แจ้งไม่พบบัญชี
-            return Json(new { success = false, message = "ไม่พบบัญชีผู้ใช้งานที่ต้องการลบ" });
+            TempData["ErrorMessage"] = "ไม่พบบัญชีผู้ใช้งานที่ต้องการลบ";
+            return RedirectToAction("Users");
         }
 
-        // ปรับสถานะเป็น false เพื่อปิดการใช้งานบัญชี (Soft Delete ป้องกัน FK Error)
-        user.IsActive = false;
+        // ตรวจสอบว่าผู้ใช้มีประวัติคำสั่งซื้อหรือประวัติบันทึกกิจกรรมหรือไม่ หากไม่มีสามารถลบจริงได้ หากมีให้ปิดการใช้งาน
+        bool hasPreorders = _db.Preorders.Any(p => p.UserId == user.UserId);
+        bool hasLogs = _db.Systemlogs.Any(l => l.UserId == user.UserId);
+        bool hasRedemptions = _db.Rewardredemptions.Any(r => r.UserId == user.UserId);
 
-        // บันทึกประวัติการระงับบัญชีลงตาราง Systemlogs
+        if (!hasPreorders && !hasLogs && !hasRedemptions)
+        {
+            // ลบรายการในตะกร้าและลบข้อมูลผู้ใช้ออกจากตาราง
+            var carts = _db.Cartitems.Where(c => c.UserId == user.UserId).ToList();
+            if (carts.Any()) _db.Cartitems.RemoveRange(carts);
+            _db.Users.Remove(user);
+        }
+        else
+        {
+            // ปรับสถานะเป็นปิดการใช้งานบัญชีเพื่อรักษาประวัติคำสั่งซื้อและข้อมูลอ้างอิง
+            user.IsActive = false;
+        }
+
+        // บันทึกประวัติการระงับหรือลบบัญชีลงตารางบันทึกกิจกรรมระบบ
         _db.Systemlogs.Add(new Systemlog
         {
-            // กำหนดรหัส Log
+            // กำหนดรหัสบันทึกกิจกรรม
             LogCode = "DEL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // กำหนดระดับความสำคัญเป็น WARNING
+            // กำหนดระดับความสำคัญเป็นแจ้งเตือน
             LogLevel = "WARNING",
             // กำหนดโมดูลที่เกี่ยวข้อง
             Module = "auth.users",
             // ข้อความรายละเอียดการระงับบัญชี
-            Message = $"IT Support ระงับ/ลบบัญชีผู้ใช้: {user.Email}",
+            Message = $"ผู้ดูแลระบบไอทีระงับและลบบัญชีผู้ใช้: {email}",
             // รหัสเจ้าหน้าที่ไอทีผู้ทำรายการ
             UserId = HttpContext.Session.GetInt32("UserId"),
             // วันเวลาที่ทำการบันทึก
             Timestamp = DateTime.UtcNow
         });
 
-        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล MySQL
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
-        // ส่งผลลัพธ์ JSON แจ้งผลสำเร็จ
-        return Json(new { success = true, message = $"ระงับและลบบัญชี {user.Email} สำเร็จ" });
+
+        TempData["SuccessMessage"] = $"ดำเนินการลบบัญชีผู้ใช้งาน {email} เรียบร้อยแล้ว";
+        return RedirectToAction("Users");
     }
 
-    // READ: บันทึกกิจกรรมและข้อผิดพลาด (System Logs)
+    // READ: บันทึกกิจกรรมและข้อผิดพลาดของระบบ
     public IActionResult Logs(string? level, string? timeRange)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายไอที
         if (!IsAuthorizedIT())
         {
             // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชี IT Support";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบไอที";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
-        // สร้าง Query พื้นฐานสำหรับดึงข้อมูล Log จากตาราง Systemlogs
+        // สร้างคำสั่งคิวรีพื้นฐานสำหรับดึงข้อมูลบันทึกกิจกรรมจากตารางบันทึกกิจกรรมระบบ
         var query = _db.Systemlogs.AsQueryable();
 
-        // ตรวจสอบว่ามีการกรองตามระดับ LogLevel หรือไม่
+        // ตรวจสอบว่ามีการกรองตามระดับความสำคัญหรือไม่
         if (!string.IsNullOrEmpty(level) && level != "all")
         {
-            // กรองตามระดับ LogLevel ที่เลือก เช่น ERROR, WARNING, INFO
+            // กรองตามระดับความสำคัญที่เลือก
             query = query.Where(l => l.LogLevel == level);
         }
 
-        // ดึงรายการ Log ล่าสุดสูงสุด 100 รายการเรียงจากเวลาล่าสุด
+        // ดึงรายการบันทึกกิจกรรมล่าสุดสูงสุด 100 รายการเรียงจากเวลาล่าสุด
         var logs = query.OrderByDescending(l => l.Timestamp).Take(100).ToList();
         // ส่งค่าระดับที่เลือกไปยัง View
         ViewBag.SelectedLevel = level ?? "all";
         // ส่งค่าช่วงเวลาที่เลือกไปยัง View
         ViewBag.SelectedTimeRange = timeRange ?? "24h";
 
-        // ส่งรายการ Log ไปยังหน้าแสดงผล Logs View
+        // ส่งรายการบันทึกกิจกรรมไปยังหน้าแสดงผล
         return View(logs);
     }
 }

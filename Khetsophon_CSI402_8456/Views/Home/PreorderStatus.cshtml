@@ -1,35 +1,100 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.Preorder>?
+@model Khetsophon_CSI402_8456.ViewModels.PreorderListViewModel?
 @{
     ViewData["Title"] = "สถานะพรีออเดอร์ของฉัน — FriendHouse";
+
+    // การตั้งค่าเนื้อหาและไอคอนส่วนหัวของไฟล์ตามมาตรฐานโปรเจกต์
+    var pageConfig = new
+    {
+        BreadcrumbHome = "หน้าแรก",
+        BreadcrumbCurrent = "พรีออเดอร์ของฉัน",
+        Title = "สถานะพรีออเดอร์ของฉัน",
+        AddMoreText = "สั่งจองสินค้าเพิ่ม",
+        SearchPlaceholder = "ค้นหาด้วยหมายเลขใบจอง เบอร์โทรศัพท์ หรือชื่อฟิกเกอร์...",
+        SearchBtnText = "ค้นหา",
+        ClearBtnText = "ล้างตัวกรอง",
+        EmptyTitle = "ยังไม่มีรายการสั่งจองพรีออเดอร์",
+        EmptySubtitle = "เลือกฟิกเกอร์ที่คุณชื่นชอบแล้วสั่งจองล่วงหน้าได้ทันที",
+        EmptyActionText = "เลือกดูสินค้าในร้าน",
+        CancelBtnText = "ยกเลิกคำสั่งจอง"
+    };
+
     var preordersList = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Preorder>();
+    var selectedStatus = Model?.StatusFilter ?? "all";
 }
 
 <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
-    <!-- Breadcrumb -->
+    <!-- แถบนำทาง Breadcrumb -->
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
-        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
+        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">@pageConfig.BreadcrumbHome</a>
         <span>/</span>
-        <span class="text-text font-semibold">พรีออเดอร์ของฉัน</span>
+        <span class="text-text font-semibold">@pageConfig.BreadcrumbCurrent</span>
     </nav>
 
-    <!-- Header -->
+    @* แสดงข้อความแจ้งเตือนผลการทำงานสำเร็จ *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2.5 shadow-xs">
+            <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @* แสดงข้อความแจ้งเตือนข้อผิดพลาด *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2.5 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    <!-- ส่วนหัวของหน้าแสดงสถานะพรีออเดอร์ -->
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">สถานะพรีออเดอร์ของฉัน</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">รายการพรีออเดอร์ทั้งหมดของคุณ (@preordersList.Count รายการ)</p>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@pageConfig.Title</h1>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">รายการพรีออเดอร์ทั้งหมดของคุณ จำนวน @preordersList.Count รายการ</p>
         </div>
         <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>สั่งจองสินค้าเพิ่ม</span>
+            <span>@pageConfig.AddMoreText</span>
         </a>
     </div>
 
+    @* ฟอร์มค้นหาและกรองสถานะพรีออเดอร์ ส่งไปยัง HomeController แอ็กชัน PreorderStatus *@
+    <form asp-controller="Home" asp-action="PreorderStatus" class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div class="relative flex-1">
+            <svg class="size-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" name="searchTerm" value="@Model?.SearchTerm" placeholder="@pageConfig.SearchPlaceholder"
+                   class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-none" />
+        </div>
+        <select name="statusFilter" class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-slate-700 focus:border-primary focus:outline-none">
+            <option value="all" selected="@(selectedStatus == "all")">สถานะทั้งหมด</option>
+            <option value="active" selected="@(selectedStatus == "active")">กำลังดำเนินการ / พร้อมรับสินค้า</option>
+            <option value="completed" selected="@(selectedStatus == "completed")">รับสินค้าสำเร็จเรียบร้อย</option>
+            <option value="cancelled" selected="@(selectedStatus == "cancelled")">ยกเลิกคำสั่งจอง</option>
+        </select>
+        <div class="flex items-center gap-2">
+            <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
+                @pageConfig.SearchBtnText
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Model?.SearchTerm) || (selectedStatus != "all"))
+            {
+                <a asp-controller="Home" asp-action="PreorderStatus" class="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                    @pageConfig.ClearBtnText
+                </a>
+            }
+        </div>
+    </form>
+
     @if (!preordersList.Any())
     {
-        <!-- Empty State -->
+        <!-- กรณีไม่พบรายการพรีออเดอร์ -->
         <div class="rounded-3xl border border-dashed border-slate-200 p-12 text-center space-y-4">
             <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
                 <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -38,11 +103,11 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-base font-bold text-text">ยังไม่มีรายการสั่งจองพรีออเดอร์</h3>
-                <p class="text-xs text-slate-400 mt-1">เลือกฟิกเกอร์ที่คุณชื่นชอบแล้วสั่งจองล่วงหน้าได้ทันที</p>
+                <h3 class="text-base font-bold text-text">@pageConfig.EmptyTitle</h3>
+                <p class="text-xs text-slate-400 mt-1">@pageConfig.EmptySubtitle</p>
             </div>
             <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white hover:opacity-90">
-                เลือกดูสินค้าในร้าน
+                @pageConfig.EmptyActionText
             </a>
         </div>
     }
@@ -60,12 +125,14 @@
                 string statusBadgeClass = "bg-amber-50/80 border-amber-200/80 text-amber-800";
                 string noticeText = "รายการนี้จะแสดงสถานะอัปเดตแบบเรียลไทม์จากหน้าร้าน เมื่อมารับสินค้าแล้วสามารถแจ้งรหัสใบจองนี้ที่เคาน์เตอร์ได้ทันที";
                 var steps = new List<dynamic>();
+                bool canCancel = false;
 
-                if (po.CurrentStatus == "PendingConfirm" || po.CurrentStatus == "WaitingStock" || po.CurrentStatus == "ReadyForPickup")
+                if (po.CurrentStatus == "PendingConfirm" || po.CurrentStatus == "WaitingStock" || po.CurrentStatus == "ReadyForPickup" || po.CurrentStatus == "Reserved")
                 {
+                    canCancel = true;
                     statusBadgeText = po.CurrentStatus == "ReadyForPickup" ? "สินค้าพร้อมรับแล้ว" : "รอดำเนินการ";
                     steps.Add(new { StepNumber = 1, Title = "แจ้งจองออเดอร์", IsCompleted = true, IsActive = false, IsCancelled = false });
-                    steps.Add(new { StepNumber = 2, Title = "รอชำระเงิน/รับสินค้า", IsCompleted = false, IsActive = true, IsCancelled = false });
+                    steps.Add(new { StepNumber = 2, Title = "รอชำระเงินและรับสินค้า", IsCompleted = false, IsActive = true, IsCancelled = false });
                 }
                 else if (po.CurrentStatus == "Completed")
                 {
@@ -73,20 +140,20 @@
                     statusBadgeClass = "bg-emerald-50/80 border-emerald-200/80 text-emerald-800";
                     noticeText = "รายการพรีออเดอร์นี้เสร็จสมบูรณ์เรียบร้อย ลูกค้าชำระเงินและรับสินค้าแล้ว ขอขอบคุณที่เลือกซื้อสินค้ากับ FriendHouse";
                     steps.Add(new { StepNumber = 1, Title = "แจ้งจองออเดอร์", IsCompleted = true, IsActive = false, IsCancelled = false });
-                    steps.Add(new { StepNumber = 2, Title = "ชำระเงิน/รับสินค้าแล้ว", IsCompleted = true, IsActive = false, IsCancelled = false });
+                    steps.Add(new { StepNumber = 2, Title = "ชำระเงินและรับสินค้าแล้ว", IsCompleted = true, IsActive = false, IsCancelled = false });
                     steps.Add(new { StepNumber = 3, Title = "สำเร็จ", IsCompleted = true, IsActive = true, IsCancelled = false });
                 }
                 else if (po.CurrentStatus == "Cancelled")
                 {
-                    statusBadgeText = "ยกเลิก / ไม่รับสินค้า";
+                    statusBadgeText = "ยกเลิกคำสั่งจอง";
                     statusBadgeClass = "bg-rose-50/80 border-rose-200/80 text-rose-800";
-                    noticeText = "รายการนี้ถูกยกเลิกแล้ว (ลูกค้าไม่รับสินค้าหรือไม่ได้มารับสินค้าตามกำหนด)";
+                    noticeText = "รายการนี้ถูกยกเลิกแล้ว เนื่องจากลูกค้ายกเลิกคำสั่งจองหรือไม่ได้มารับสินค้าตามกำหนด";
                     steps.Add(new { StepNumber = 1, Title = "แจ้งจองออเดอร์", IsCompleted = true, IsActive = false, IsCancelled = false });
-                    steps.Add(new { StepNumber = 2, Title = "ไม่รับสินค้า / ยกเลิก", IsCompleted = false, IsActive = false, IsCancelled = true });
+                    steps.Add(new { StepNumber = 2, Title = "ยกเลิกคำสั่งจอง", IsCompleted = false, IsActive = false, IsCancelled = true });
                 }
 
                 <div class="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden transition-all hover:border-primary/30">
-                    <!-- Top Banner with Ref and Status -->
+                    <!-- แถบสถานะและหมายเลขใบจองด้านบน -->
                     <div class="flex items-center justify-between border-b @statusBadgeClass px-6 py-3.5">
                         <div class="flex items-center gap-2 text-xs sm:text-sm font-bold">
                             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -98,9 +165,8 @@
                         <span class="text-xs font-semibold opacity-80">อ้างอิง @po.ReservationNumber</span>
                     </div>
 
-                    <!-- Order Items Info -->
+                    <!-- รายละเอียดสินค้าในใบสั่งจอง -->
                     <div class="p-6 sm:p-8 space-y-6">
-                        <!-- Product Items List -->
                         <div class="space-y-3">
                             @foreach (var item in po.Preorderitems)
                             {
@@ -120,7 +186,7 @@
                             }
                         </div>
 
-                        <!-- Summary info (Date / Deadline / Total) -->
+                        <!-- ข้อมูลสรุปวันที่ทำรายการ กำหนดรับสินค้า และยอดรวม -->
                         <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 text-xs">
                             <div class="flex items-center gap-6">
                                 <div>
@@ -132,13 +198,26 @@
                                     <span class="font-bold text-text">@po.EstimatedPickupDate.ToString("d MMM yyyy")</span>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <span class="text-slate-400 block">ยอดรวมทั้งสิ้น (@totalQty ชิ้น)</span>
-                                <span class="text-base font-extrabold text-primary">฿@po.TotalFinalPrice.ToString("N0")</span>
+                            <div class="flex items-center gap-4">
+                                <div class="text-right">
+                                    <span class="text-slate-400 block">ยอดรวมทั้งสิ้น จำนวน @totalQty ชิ้น</span>
+                                    <span class="text-base font-extrabold text-primary">฿@po.TotalFinalPrice.ToString("N0")</span>
+                                </div>
+
+                                @if (canCancel)
+                                {
+                                    @* ฟอร์มยกเลิกคำสั่งจองพรีออเดอร์ ส่งไปยัง HomeController แอ็กชัน CancelPreorder *@
+                                    <form asp-controller="Home" asp-action="CancelPreorder">
+                                        <input type="hidden" name="preorderId" value="@po.PreorderId" />
+                                        <button type="submit" class="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer">
+                                            @pageConfig.CancelBtnText
+                                        </button>
+                                    </form>
+                                }
                             </div>
                         </div>
 
-                        <!-- Progress Tracker -->
+                        <!-- แถบแสดงความคืบหน้าของสถานะใบสั่งจอง -->
                         <div class="border-t border-slate-100 pt-6">
                             <div class="relative max-w-md mx-auto">
                                 <div class="absolute top-4.5 left-8 right-8 h-0.5 bg-slate-200 -z-0">
@@ -188,7 +267,7 @@
                             </div>
                         </div>
 
-                        <!-- Notice Box -->
+                        <!-- กล่องข้อความคำแนะนำการรับสินค้า -->
                         <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3 text-xs text-slate-600 leading-relaxed">
                             <svg class="size-5 shrink-0 text-primary mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>

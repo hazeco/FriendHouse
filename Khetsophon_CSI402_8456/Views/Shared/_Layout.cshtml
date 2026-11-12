@@ -17,7 +17,7 @@
     var customerUserId = Context.Session.GetInt32("CustomerUserId");
     var queryRole = Context.Request.Query["role"].ToString().ToLowerInvariant();
 
-    // WHY: Layout หน้าร้าน (Storefront) จะแสดง Navbar หน้าร้านเสมอ
+    // WHY: Layout หน้าร้านจะแสดง Navbar หน้าร้านเสมอ
     // ไม่สลับไปเป็น Navbar ฝั่งจัดการของพนักงาน/ผู้จัดการ แม้จะมีการล็อกอินบทบาทอื่นในอีกแท็บก็ตาม
     string userRole = "guest";
     if (sessionRole == "customer" || customerUserId.HasValue || queryRole == "customer")

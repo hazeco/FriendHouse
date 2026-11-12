@@ -26,7 +26,7 @@ public class AccountantController : Controller
     {
         if (!IsAuthorizedAccountant())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ทำบัญชี (Accountant)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีฝ่ายบัญชีและการเงิน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -52,7 +52,7 @@ public class AccountantController : Controller
     {
         if (!IsAuthorizedAccountant())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ทำบัญชี (Accountant)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีฝ่ายบัญชีและการเงิน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -78,7 +78,7 @@ public class AccountantController : Controller
     {
         if (!IsAuthorizedAccountant())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ทำบัญชี (Accountant)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีฝ่ายบัญชีและการเงิน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -102,7 +102,7 @@ public class AccountantController : Controller
     {
         if (!IsAuthorizedAccountant())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีผู้ทำบัญชี (Accountant)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีฝ่ายบัญชีและการเงิน";
             return RedirectToAction("Login", "Account");
         }
 

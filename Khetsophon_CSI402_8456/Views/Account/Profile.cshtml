@@ -1,15 +1,15 @@
-@model Khetsophon_CSI402_8456.Models.User?
+@model Khetsophon_CSI402_8456.ViewModels.UserProfileViewModel
 @{
     ViewData["Title"] = "โปรไฟล์ของฉัน — FriendHouse";
 
     // Top-of-file Media & Content Configuration
     var defaultUser = new {
-        Name = !string.IsNullOrEmpty(Model?.FullName) ? Model.FullName : (Model != null ? Model.Email.Split('@')[0] : "เขมิกา วัฒนกุล"),
-        Email = Model?.Email ?? "thunderwolf2209@gmail.com",
+        Name = Model?.DisplayName ?? "สมาชิก FriendHouse",
+        Email = Model?.Email ?? "customer@friendhouse.local",
         Phone = Model?.Phone ?? "081-234-5678",
-        Points = $"{(Model?.Points ?? 1250):N0} แต้ม",
-        PendingOrders = ViewBag.PendingPreorderCount != null ? $"คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ {ViewBag.PendingPreorderCount} รายการ" : "คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ 1 รายการ",
-        DefaultAvatar = !string.IsNullOrEmpty(Model?.AvatarUrl) ? Model.AvatarUrl : "~/logo/logo.png"
+        Points = Model?.PointsFormatted ?? "0 แต้ม",
+        PendingOrders = Model?.PendingOrderNotice ?? "คุณมีพรีออเดอร์ที่รอดำเนินการอยู่ 0 รายการ",
+        DefaultAvatar = Model?.EffectiveAvatarUrl ?? "~/logo/logo.png"
     };
 }
 
@@ -20,6 +20,22 @@
         <span>/</span>
         <span class="text-text font-semibold">โปรไฟล์ของฉัน</span>
     </nav>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mx-auto max-w-[576px] mb-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mx-auto max-w-[576px] mb-5 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
 
     <!-- Centered Profile Layout (Exact Figma Node 60:1174, 576px wide) -->
     <div class="mx-auto max-w-[576px] space-y-5">
@@ -167,9 +183,26 @@
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </a>
+
+            <div class="h-px w-full bg-slate-100"></div>
+
+            <!-- Link 3: ยกเลิกและลบบัญชีสมาชิก -->
+            <button type="button" id="btn-open-delete-account"
+                    class="w-full flex items-center justify-between px-5 py-4 text-rose-600 hover:bg-rose-50/60 transition-colors cursor-pointer group text-left">
+                <div class="flex items-center gap-3">
+                    <svg class="size-4 text-rose-400 group-hover:text-rose-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-rose-600">ลบบัญชีผู้ใช้งาน</span>
+                </div>
+                <svg class="size-4 text-rose-300 group-hover:text-rose-600 group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
         </div>
 
-        <!-- Logout Button (Figma Node 60:1270) -->
+        <!-- ปุ่มออกจากระบบ -->
         <a asp-controller="Account" asp-action="Logout"
            class="block w-full rounded-xl border border-red-300 bg-white py-3 text-center text-sm font-semibold text-red-500 shadow-2xs hover:bg-red-50 transition-colors cursor-pointer">
             ออกจากระบบ
@@ -177,7 +210,7 @@
     </div>
 </div>
 
-<!-- EDIT PROFILE MODAL (Allows saving name and uploading/changing profile photo) -->
+<!-- หน้าต่างแก้ไขข้อมูลโปรไฟล์สมาชิก -->
 <div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
     <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -190,50 +223,76 @@
             </button>
         </div>
 
-        @* Form Parameters expected by Controller:
-           [FullName: string, Email: string, Phone: string, AvatarFile: IFormFile (optional)]
-        *@
-        <form id="editProfileForm" class="space-y-4">
-            <!-- Profile Photo Upload -->
+        @* ฟอร์มแก้ไขข้อมูลส่วนตัวของสมาชิก ส่งไปยัง AccountController แอ็กชัน UpdateProfile *@
+        <form asp-controller="Account" asp-action="UpdateProfile" class="space-y-4">
+            <!-- อัปโหลดรูปโปรไฟล์ -->
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">รูปโปรไฟล์</label>
                 <div class="flex items-center gap-3">
                     <div class="size-14 rounded-full overflow-hidden border border-slate-200 bg-slate-50 shrink-0">
                         <img id="modalAvatarPreview" src="@Url.Content(defaultUser.DefaultAvatar)" class="size-full object-cover" />
                     </div>
+                    <input type="hidden" asp-for="AvatarUrl" id="avatarUrlHidden" />
                     <input type="file" id="avatarFileInput" accept="image/*" class="text-xs text-slate-500 file:mr-2.5 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20 cursor-pointer" />
                 </div>
             </div>
 
-            <!-- Full Name -->
+            <!-- ชื่อ-นามสกุล -->
             <div>
                 <label for="editFullName" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล</label>
-                <input type="text" id="editFullName" value="@defaultUser.Name"
+                <input type="text" id="editFullName" asp-for="FullName" required
                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
             </div>
 
-            <!-- Email -->
+            <!-- อีเมล -->
             <div>
                 <label for="editEmail" class="block text-xs font-semibold text-slate-700 mb-1">อีเมล</label>
-                <input type="email" id="editEmail" value="@defaultUser.Email"
-                       class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
+                <input type="email" id="editEmail" value="@defaultUser.Email" disabled
+                       class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 focus:outline-none cursor-not-allowed" />
             </div>
 
-            <!-- Phone -->
+            <!-- เบอร์โทรศัพท์ -->
             <div>
                 <label for="editPhone" class="block text-xs font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์</label>
-                <input type="tel" id="editPhone" value="@defaultUser.Phone"
+                <input type="tel" id="editPhone" asp-for="Phone" required
                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" id="btn-cancel-edit" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                <button type="button" id="btn-cancel-edit" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
                     ยกเลิก
                 </button>
-                <button type="submit" class="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-xs hover:opacity-90">
+                <button type="submit" class="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-xs hover:opacity-90 cursor-pointer">
                     บันทึกข้อมูล
                 </button>
             </div>
+        </form>
+    </div>
+</div>
+
+<!-- หน้าต่างยืนยันการลบบัญชีสมาชิก -->
+<div id="delete-account-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+    <div class="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl space-y-4 text-center">
+        <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        </div>
+        <div>
+            <h3 class="text-base font-bold text-text">ยืนยันการลบบัญชีผู้ใช้งาน</h3>
+            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีสมาชิก <span class="font-semibold text-text">@defaultUser.Email</span>? บัญชีของคุณจะถูกระงับการใช้งานและออกจากระบบทันที
+            </p>
+        </div>
+        @* ฟอร์มยืนยันการลบบัญชี ส่งไปยัง AccountController แอ็กชัน DeleteAccount *@
+        <form asp-controller="Account" asp-action="DeleteAccount" class="flex items-center gap-2 pt-2">
+            <button type="button" id="btn-cancel-delete-account" class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="submit" class="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 cursor-pointer">
+                ยืนยันลบบัญชี
+            </button>
         </form>
     </div>
 </div>
@@ -246,41 +305,14 @@
         var avatarTrigger = document.getElementById('btn-avatar-trigger');
         var closeBtn = document.getElementById('btn-close-edit-modal');
         var cancelBtn = document.getElementById('btn-cancel-edit');
-        var form = document.getElementById('editProfileForm');
 
-        var nameDisplay = document.getElementById('userNameDisplay');
-        var emailDisplay = document.getElementById('userEmailDisplay');
-        var phoneDisplay = document.getElementById('userPhoneDisplay');
-        var avatarImg = document.getElementById('userAvatarImg');
+        var deleteModal = document.getElementById('delete-account-modal');
+        var openDeleteBtn = document.getElementById('btn-open-delete-account');
+        var cancelDeleteBtn = document.getElementById('btn-cancel-delete-account');
+
         var modalAvatarPreview = document.getElementById('modalAvatarPreview');
         var avatarFileInput = document.getElementById('avatarFileInput');
-
-        var inputName = document.getElementById('editFullName');
-        var inputEmail = document.getElementById('editEmail');
-        var inputPhone = document.getElementById('editPhone');
-
-        // Load saved profile data from localStorage if available
-        var savedName = localStorage.getItem('friendhouse_user_name');
-        var savedEmail = localStorage.getItem('friendhouse_user_email');
-        var savedPhone = localStorage.getItem('friendhouse_user_phone');
-        var savedAvatar = localStorage.getItem('friendhouse_user_avatar');
-
-        if (savedName) {
-            nameDisplay.textContent = savedName;
-            inputName.value = savedName;
-        }
-        if (savedEmail) {
-            emailDisplay.textContent = savedEmail;
-            inputEmail.value = savedEmail;
-        }
-        if (savedPhone) {
-            phoneDisplay.textContent = savedPhone;
-            inputPhone.value = savedPhone;
-        }
-        if (savedAvatar) {
-            avatarImg.src = savedAvatar;
-            modalAvatarPreview.src = savedAvatar;
-        }
+        var avatarUrlHidden = document.getElementById('avatarUrlHidden');
 
         function openModal() {
             modal.classList.remove('hidden');
@@ -292,57 +324,44 @@
             modal.classList.remove('flex');
         }
 
+        function openDeleteModal() {
+            if (deleteModal) {
+                deleteModal.classList.remove('hidden');
+                deleteModal.classList.add('flex');
+            }
+        }
+
+        function closeDeleteModal() {
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+                deleteModal.classList.remove('flex');
+            }
+        }
+
         if (openBtn) openBtn.addEventListener('click', openModal);
         if (avatarTrigger) avatarTrigger.addEventListener('click', openModal);
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
-        // Preview uploaded avatar
+        if (openDeleteBtn) openDeleteBtn.addEventListener('click', openDeleteModal);
+        if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+        // แสดงภาพตัวอย่างรูปโปรไฟล์ที่เลือกและอัปเดตค่าในช่องซ่อน
         if (avatarFileInput) {
             avatarFileInput.addEventListener('change', function (e) {
                 var file = e.target.files[0];
                 if (file) {
                     var reader = new FileReader();
                     reader.onload = function (evt) {
-                        modalAvatarPreview.src = evt.target.result;
+                        if (modalAvatarPreview) {
+                            modalAvatarPreview.src = evt.target.result;
+                        }
+                        if (avatarUrlHidden) {
+                            avatarUrlHidden.value = evt.target.result;
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
-            });
-        }
-
-        // Save profile via AJAX to backend and localStorage fallback
-        if (form) {
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                var newName = inputName.value.trim();
-                var newPhone = inputPhone.value.trim();
-                var newAvatar = modalAvatarPreview.src;
-
-                // Call Backend UpdateProfile
-                var formData = new FormData();
-                formData.append('fullName', newName);
-                formData.append('phone', newPhone);
-                formData.append('avatarUrl', newAvatar);
-
-                try {
-                    await fetch('/Account/UpdateProfile', { method: 'POST', body: formData });
-                } catch (err) { }
-
-                if (newName) {
-                    localStorage.setItem('friendhouse_user_name', newName);
-                    nameDisplay.textContent = newName;
-                }
-                if (newPhone) {
-                    localStorage.setItem('friendhouse_user_phone', newPhone);
-                    phoneDisplay.textContent = newPhone;
-                }
-                if (newAvatar) {
-                    localStorage.setItem('friendhouse_user_avatar', newAvatar);
-                    avatarImg.src = newAvatar;
-                }
-
-                closeModal();
             });
         }
     });

@@ -30,7 +30,7 @@ public class OwnerController : Controller
     {
         if (!IsAuthorizedOwner())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -43,7 +43,7 @@ public class OwnerController : Controller
     {
         if (!IsAuthorizedOwner())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -82,7 +82,7 @@ public class OwnerController : Controller
     {
         if (!IsAuthorizedOwner())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -101,7 +101,7 @@ public class OwnerController : Controller
     {
         if (!IsAuthorizedOwner())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
             return RedirectToAction("Login", "Account");
         }
 
@@ -173,7 +173,7 @@ public class OwnerController : Controller
     {
         if (!IsAuthorizedOwner())
         {
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน (Owner)";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
             return RedirectToAction("Login", "Account");
         }
 

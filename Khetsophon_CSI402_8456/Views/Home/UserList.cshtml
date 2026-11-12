@@ -1,37 +1,89 @@
-@model IEnumerable<Khetsophon_CSI402_8456.Models.User>
+@model Khetsophon_CSI402_8456.ViewModels.UserManagementViewModel
 
 @{
-    ViewData["Title"] = "รายชื่อผู้ใช้งานทั้งหมด - FriendHouse";
+    // กำหนดหัวข้อหน้าเว็บสำหรับระบบจัดการข้อมูลผู้ใช้งานและลูกค้า (User Full CRUD + Search)
+    ViewData["Title"] = "ระบบจัดการข้อมูลสมาชิกและลูกค้า — ร้านบ้านเพื่อน";
 
-    // Top-of-file Media and Content Configuration
+    // READ: การตั้งค่าข้อมูลเนื้อหา ข้อความ ตัวเลือกการกรอง และไอคอน SVG ที่ส่วนบนสุดของไฟล์ (Top-of-file Configuration)
+    // WHY: รวมศูนย์ข้อความภาษาไทยทั้งหมดไว้ด้านบนสุดตามกฎของโปรเจกต์ ห้ามมีภาษาอังกฤษในวงเล็บ และห้ามใช้อีโมจิ
     var pageContent = new {
-        Badge = "ระบบจัดการข้อมูลผู้ใช้",
-        Title = "รายชื่อผู้ใช้งานทั้งหมดในระบบ",
-        Subtitle = "ดึงข้อมูลจากตาราง Users ในฐานข้อมูล MySQL (Read Operation)",
-        TotalCountLabel = "จำนวนผู้ใช้งานทั้งหมด",
-        EmptyMessage = "ยังไม่มีข้อมูลผู้ใช้งานในระบบ",
+        Badge = "ระบบบริหารจัดการบัญชีสมาชิกและลูกค้า",
+        Title = "รายชื่อสมาชิกและจัดการข้อมูลลูกค้าครบวงจร",
+        Subtitle = "ค้นหา เพิ่มบัญชีสมาชิกใหม่ แก้ไขข้อมูลส่วนตัว ปรับแต้มสะสม และจัดการสถานะการใช้งานของลูกค้าในระบบ",
+        TotalCountLabel = "จำนวนสมาชิกที่พบ",
+        EmptyMessage = "ไม่พบข้อมูลผู้ใช้งานที่ตรงกับเงื่อนไขการค้นหา",
+        SearchPlaceholder = "ค้นหาด้วยชื่อ-นามสกุล, อีเมล, รหัสสมาชิก หรือเบอร์โทรศัพท์...",
         Headers = new {
-            Id = "ID",
-            UserCode = "รหัสผู้ใช้",
+            Id = "ลำดับ",
+            UserCode = "รหัสสมาชิก",
+            FullName = "ชื่อ-นามสกุล",
             Email = "อีเมล",
             Phone = "เบอร์โทรศัพท์",
-            Role = "บทบาท",
+            Role = "บทบาทผู้ใช้งาน",
             Points = "แต้มสะสม",
-            Status = "สถานะ",
-            CreatedAt = "วันที่สมัคร"
+            Status = "สถานะบัญชี",
+            CreatedAt = "วันที่สมัคร",
+            Actions = "การจัดการ"
         },
         Icons = new {
             Users = "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
-            Shield = "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
-            Plus = "M12 4v16m8-8H4"
+            Search = "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z",
+            Plus = "M12 4v16m8-8H4",
+            Edit = "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10",
+            Trash = "M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0",
+            Check = "M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+            Alert = "M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z",
+            Close = "M6 18L18 6M6 6l12 12"
         }
     };
+
+    // ตัวเลือกบทบาทผู้ใช้งานสำหรับการกรองข้อมูล (เน้นบทบาทลูกค้าเป็นหลักตามโจทย์)
+    var roleOptions = new[] {
+        new { Value = "all", Label = "ทุกบทบาทผู้ใช้งาน" },
+        new { Value = "customer", Label = "ลูกค้าทั่วไป" },
+        new { Value = "staff", Label = "พนักงานหน้าร้าน" },
+        new { Value = "owner", Label = "เจ้าของร้าน" },
+        new { Value = "itsupport", Label = "ผู้ดูแลระบบไอที" },
+        new { Value = "accountant", Label = "ฝ่ายบัญชีและการเงิน" }
+    };
+
+    // ตัวเลือกสถานะบัญชีผู้ใช้งาน
+    var statusOptions = new[] {
+        new { Value = "all", Label = "ทุกสถานะบัญชี" },
+        new { Value = "ปกติ", Label = "ใช้งานปกติ" },
+        new { Value = "ถูกล็อก", Label = "ระงับการใช้งาน" }
+    };
+
+    var userItems = Model?.UserItems ?? new List<Khetsophon_CSI402_8456.ViewModels.UserAccountItemViewModel>();
+    var currentSearch = Model?.SearchQuery ?? string.Empty;
+    var currentRole = Model?.RoleFilter ?? "all";
+    var currentStatus = Model?.StatusFilter ?? "all";
 }
 
 <div class="min-h-screen bg-background py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
     <div class="mx-auto max-w-7xl space-y-6">
 
-        <!-- Header Section -->
+        <!-- แถบแจ้งเตือนผลการดำเนินการ CRUD จาก TempData -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-xs sm:text-sm font-semibold text-emerald-800 shadow-2xs">
+                <svg class="size-5 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Check" />
+                </svg>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-xs sm:text-sm font-semibold text-rose-800 shadow-2xs">
+                <svg class="size-5 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Alert" />
+                </svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+
+        <!-- ส่วนหัวของหน้ารายชื่อผู้ใช้งานและปุ่มเปิดหน้าต่างสร้างบัญชีลูกค้าใหม่ -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
             <div>
                 <div class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary mb-2 shadow-xs">
@@ -48,22 +100,90 @@
                 </p>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs">
                     <span>@pageContent.TotalCountLabel:</span>
-                    <span class="font-bold text-primary">@(Model?.Count() ?? 0)</span>
+                    <span class="font-bold text-primary">@userItems.Count บัญชี</span>
                 </span>
-                <a asp-controller="Account" asp-action="Register"
-                   class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-90">
+                <!-- CREATE: ปุ่มเปิดหน้าต่างเพิ่มสมาชิกใหม่ในหน้าเดียวทันที -->
+                <button type="button"
+                        onclick="openCreateCustomerModal()"
+                        class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-accent cursor-pointer">
                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="@pageContent.Icons.Plus"></path>
                     </svg>
-                    <span>เพิ่มสมาชิกใหม่</span>
-                </a>
+                    <span>เพิ่มบัญชีลูกค้าใหม่</span>
+                </button>
             </div>
         </div>
 
-        <!-- Table Container Card -->
+        <!-- READ: ฟอร์มค้นหาและกรองข้อมูลผู้ใช้งาน (ไม่มีแอตทริบิวต์ method ตามกฎ MVC ของโปรเจกต์) -->
+        <form asp-controller="Home" asp-action="UserList" class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                <!-- ช่องค้นหาด้วยชื่อ อีเมล รหัสผู้ใช้ หรือเบอร์โทรศัพท์ -->
+                <div class="sm:col-span-5 relative">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Search" />
+                        </svg>
+                    </span>
+                    <input type="text"
+                           name="searchQuery"
+                           value="@currentSearch"
+                           placeholder="@pageContent.SearchPlaceholder"
+                           class="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-text placeholder:text-slate-400 focus:border-primary focus:bg-white focus:outline-hidden" />
+                </div>
+
+                <!-- ตัวกรองบทบาทผู้ใช้งาน -->
+                <div class="sm:col-span-3">
+                    <select name="roleFilter" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:bg-white focus:outline-hidden">
+                        @foreach (var roleOpt in roleOptions)
+                        {
+                            if (string.Equals(currentRole, roleOpt.Value, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@roleOpt.Value" selected>@roleOpt.Label</option>
+                            }
+                            else
+                            {
+                                <option value="@roleOpt.Value">@roleOpt.Label</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- ตัวกรองสถานะบัญชี -->
+                <div class="sm:col-span-2">
+                    <select name="statusFilter" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:bg-white focus:outline-hidden">
+                        @foreach (var statusOpt in statusOptions)
+                        {
+                            if (string.Equals(currentStatus, statusOpt.Value, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <option value="@statusOpt.Value" selected>@statusOpt.Label</option>
+                            }
+                            else
+                            {
+                                <option value="@statusOpt.Value">@statusOpt.Label</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- ปุ่มกดค้นหาและปุ่มล้างตัวกรอง -->
+                <div class="sm:col-span-2 flex items-center gap-2">
+                    <button type="submit" class="w-full rounded-xl bg-primary px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-accent transition-colors cursor-pointer">
+                        ค้นหาข้อมูล
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(currentSearch) || currentRole != "all" || currentStatus != "all")
+                    {
+                        <a asp-controller="Home" asp-action="UserList" class="shrink-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                            ล้างค่า
+                        </a>
+                    }
+                </div>
+            </div>
+        </form>
+
+        <!-- ตารางแสดงข้อมูลสมาชิกและปุ่มจัดการแก้ไข/ลบ (User Full CRUD Table) -->
         <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
@@ -71,18 +191,20 @@
                         <tr>
                             <th scope="col" class="py-3.5 pl-6 pr-3">@pageContent.Headers.Id</th>
                             <th scope="col" class="py-3.5 px-3">@pageContent.Headers.UserCode</th>
+                            <th scope="col" class="py-3.5 px-3">@pageContent.Headers.FullName</th>
                             <th scope="col" class="py-3.5 px-3">@pageContent.Headers.Email</th>
                             <th scope="col" class="py-3.5 px-3">@pageContent.Headers.Phone</th>
                             <th scope="col" class="py-3.5 px-3">@pageContent.Headers.Role</th>
                             <th scope="col" class="py-3.5 px-3 text-right">@pageContent.Headers.Points</th>
                             <th scope="col" class="py-3.5 px-3 text-center">@pageContent.Headers.Status</th>
-                            <th scope="col" class="py-3.5 pl-3 pr-6 text-right">@pageContent.Headers.CreatedAt</th>
+                            <th scope="col" class="py-3.5 px-3 text-right">@pageContent.Headers.CreatedAt</th>
+                            <th scope="col" class="py-3.5 pl-3 pr-6 text-right">@pageContent.Headers.Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @if (Model != null && Model.Any())
+                        @if (userItems.Any())
                         {
-                            @foreach (var user in Model)
+                            @foreach (var user in userItems)
                             {
                                 <tr class="hover:bg-slate-50/80 transition-colors">
                                     <td class="py-3.5 pl-6 pr-3 font-semibold text-text">
@@ -91,32 +213,63 @@
                                     <td class="py-3.5 px-3 font-mono text-xs text-slate-500">
                                         @user.UserCode
                                     </td>
-                                    <td class="py-3.5 px-3 font-medium text-text">
+                                    <td class="py-3.5 px-3 font-bold text-text">
+                                        @user.DisplayName
+                                    </td>
+                                    <td class="py-3.5 px-3 font-medium text-slate-700">
                                         @user.Email
                                     </td>
                                     <td class="py-3.5 px-3 text-slate-600">
                                         @user.Phone
                                     </td>
                                     <td class="py-3.5 px-3">
-                                        <span class="inline-flex items-center rounded-md bg-secondary/30 px-2 py-0.5 text-xs font-semibold text-primary">
-                                            @user.RoleName
+                                        <span class="inline-flex items-center rounded-md bg-secondary/30 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                                            @user.RoleDisplayThai
                                         </span>
                                     </td>
                                     <td class="py-3.5 px-3 text-right font-bold text-primary">
-                                        @user.Points.ToString("N0")
+                                        @user.Points.ToString("N0") แต้ม
                                     </td>
                                     <td class="py-3.5 px-3 text-center">
-                                        @if (user.IsActive == true)
+                                        @if (user.IsActive)
                                         {
-                                            <span class="inline-flex size-2 rounded-full bg-emerald-500 ring-4 ring-emerald-50"></span>
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
+                                                <span class="size-1.5 rounded-full bg-emerald-500"></span>
+                                                <span>ใช้งานปกติ</span>
+                                            </span>
                                         }
                                         else
                                         {
-                                            <span class="inline-flex size-2 rounded-full bg-rose-500 ring-4 ring-rose-50"></span>
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-bold text-rose-700">
+                                                <span class="size-1.5 rounded-full bg-rose-500"></span>
+                                                <span>ระงับการใช้งาน</span>
+                                            </span>
                                         }
                                     </td>
-                                    <td class="py-3.5 pl-3 pr-6 text-right text-xs text-slate-400">
+                                    <td class="py-3.5 px-3 text-right text-xs text-slate-400">
                                         @user.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </td>
+                                    <td class="py-3.5 pl-3 pr-6 text-right">
+                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                            <!-- UPDATE: ปุ่มเปิดหน้าต่างแก้ไขข้อมูลผู้ใช้ -->
+                                            <button type="button"
+                                                    onclick="openEditCustomerModal(@user.UserId, '@user.UserCode', '@(user.FullName ?? "")', '@user.Email', '@user.Phone', @user.Points, @(user.IsActive ? "true" : "false"))"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                                                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Edit" />
+                                                </svg>
+                                                <span>แก้ไข</span>
+                                            </button>
+                                            <!-- DELETE: ปุ่มเปิดหน้าต่างยืนยันการลบบัญชีผู้ใช้ -->
+                                            <button type="button"
+                                                    onclick="openDeleteCustomerModal(@user.UserId, '@user.Email', '@user.UserCode')"
+                                                    class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer">
+                                                <svg class="size-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Trash" />
+                                                </svg>
+                                                <span>ลบ</span>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -124,7 +277,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="8" class="py-12 text-center text-sm text-slate-400">
+                                <td colspan="10" class="py-12 text-center text-sm text-slate-400">
                                     @pageContent.EmptyMessage
                                 </td>
                             </tr>
@@ -136,3 +289,192 @@
 
     </div>
 </div>
+
+<!-- CREATE MODAL: หน้าต่างสร้างบัญชีลูกค้าใหม่ด้วยฟอร์ม MVC มาตรฐาน -->
+<div id="createCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+    <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-extrabold text-text">เพิ่มบัญชีลูกค้าใหม่</h2>
+                <p class="text-xs text-slate-500 mt-0.5">กรอกข้อมูลสมาชิกเพื่อสร้างบัญชีลูกค้าเข้าสู่ฐานข้อมูลพร้อมรับแต้มต้อนรับ</p>
+            </div>
+            <button type="button" onclick="closeCreateCustomerModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Close" />
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Home" asp-action="CreateCustomerUser" class="space-y-4">
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-text">ชื่อ-นามสกุลลูกค้า</label>
+                <input type="text" name="fullName" required placeholder="ระบุชื่อและนามสกุลภาษาไทย" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">อีเมลสำหรับเข้าสู่ระบบ</label>
+                    <input type="email" name="email" required placeholder="customer@friendhouse.com" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">เบอร์โทรศัพท์ติดต่อ</label>
+                    <input type="tel" name="phone" required placeholder="0812345678" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">รหัสผ่านเริ่มต้น</label>
+                    <input type="password" name="password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">แต้มสะสมต้อนรับ</label>
+                    <input type="number" name="points" value="100" min="0" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeCreateCustomerModal()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-accent cursor-pointer">
+                    บันทึกบัญชีลูกค้าใหม่
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- UPDATE MODAL: หน้าต่างแก้ไขข้อมูลลูกค้าและสถานะบัญชีด้วยฟอร์ม MVC มาตรฐาน -->
+<div id="editCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+    <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+                <h2 class="text-lg font-extrabold text-text">แก้ไขข้อมูลบัญชีสมาชิก</h2>
+                <p id="editCustomerCodeLabel" class="text-xs font-mono text-primary mt-0.5"></p>
+            </div>
+            <button type="button" onclick="closeEditCustomerModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Close" />
+                </svg>
+            </button>
+        </div>
+
+        <form asp-controller="Home" asp-action="UpdateCustomerUser" class="space-y-4">
+            <input type="hidden" id="editUserId" name="userId" />
+            <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-text">ชื่อ-นามสกุล</label>
+                <input type="text" id="editFullName" name="fullName" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">อีเมล</label>
+                    <input type="email" id="editEmail" name="email" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">เบอร์โทรศัพท์</label>
+                    <input type="tel" id="editPhone" name="phone" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">แต้มสะสมของสมาชิก</label>
+                    <input type="number" id="editPoints" name="points" min="0" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm text-text focus:border-primary focus:outline-hidden" />
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-text">สถานะการใช้งานบัญชี</label>
+                    <select id="editIsActive" name="isActive" class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:outline-hidden">
+                        <option value="true">ใช้งานปกติ</option>
+                        <option value="false">ระงับการใช้งาน</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeEditCustomerModal()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                    ยกเลิก
+                </button>
+                <button type="submit" class="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-accent cursor-pointer">
+                    บันทึกการแก้ไข
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DELETE MODAL: หน้าต่างยืนยันการลบบัญชีผู้ใช้ด้วยฟอร์ม MVC มาตรฐาน -->
+<div id="deleteCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+    <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">
+        <div class="flex items-start gap-3.5">
+            <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
+                <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@pageContent.Icons.Trash" />
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-text">ยืนยันการลบบัญชีผู้ใช้งาน</h2>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    คุณต้องการลบหรือปิดการใช้งานบัญชี <strong id="deleteCustomerEmailLabel" class="text-text"></strong> รหัสสมาชิก <span id="deleteCustomerCodeLabel" class="font-mono text-primary"></span> ใช่หรือไม่
+                </p>
+            </div>
+        </div>
+
+        <form asp-controller="Home" asp-action="DeleteCustomerUser" class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <input type="hidden" id="deleteUserId" name="userId" />
+            <button type="button" onclick="closeDeleteCustomerModal()" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
+                ยกเลิก
+            </button>
+            <button type="submit" class="rounded-xl bg-rose-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-rose-700 cursor-pointer">
+                ยืนยันการลบบัญชี
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ฟังก์ชันเปิดและปิดหน้าต่างเพิ่มบัญชีลูกค้าใหม่ (Create Modal)
+        function openCreateCustomerModal() {
+            const modal = document.getElementById('createCustomerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeCreateCustomerModal() {
+            const modal = document.getElementById('createCustomerModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ฟังก์ชันเปิดและเติมข้อมูลลงในหน้าต่างแก้ไขข้อมูลบัญชีสมาชิก (Update Modal)
+        function openEditCustomerModal(userId, userCode, fullName, email, phone, points, isActive) {
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editCustomerCodeLabel').textContent = 'รหัสสมาชิก: ' + userCode;
+            document.getElementById('editFullName').value = fullName || '';
+            document.getElementById('editEmail').value = email || '';
+            document.getElementById('editPhone').value = phone || '';
+            document.getElementById('editPoints').value = points || 0;
+            document.getElementById('editIsActive').value = isActive ? 'true' : 'false';
+
+            const modal = document.getElementById('editCustomerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeEditCustomerModal() {
+            const modal = document.getElementById('editCustomerModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // ฟังก์ชันเปิดและตั้งค่ารหัสผู้ใช้สำหรับหน้าต่างยืนยันการลบบัญชี (Delete Modal)
+        function openDeleteCustomerModal(userId, email, userCode) {
+            document.getElementById('deleteUserId').value = userId;
+            document.getElementById('deleteCustomerEmailLabel').textContent = email;
+            document.getElementById('deleteCustomerCodeLabel').textContent = userCode;
+
+            const modal = document.getElementById('deleteCustomerModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        function closeDeleteCustomerModal() {
+            const modal = document.getElementById('deleteCustomerModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    </script>
+}

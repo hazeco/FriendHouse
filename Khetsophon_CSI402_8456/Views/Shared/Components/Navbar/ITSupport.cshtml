@@ -27,16 +27,16 @@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
-        <!-- Center Nav Items (frame_9_19.png: Dashboard, ผู้ใช้งาน, Logs) -->
+        <!-- Center Nav Items (frame_9_19.png: แผงควบคุมระบบ, ผู้ใช้งาน, บันทึกกิจกรรมระบบ) -->
         <nav class="hidden md:flex items-center gap-2">
             <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard")">
-                <span>Dashboard</span>
+                <span>แผงควบคุมระบบ</span>
             </a>
             <a asp-controller="ITSupport" asp-action="Users" class="@NavClass("Users")">
                 <span>ผู้ใช้งาน</span>
             </a>
             <a asp-controller="ITSupport" asp-action="Logs" class="@NavClass("Logs")">
-                <span>Logs</span>
+                <span>บันทึกกิจกรรมระบบ</span>
             </a>
         </nav>
 
@@ -59,9 +59,9 @@
 
     <!-- Mobile Sub-navigation Bar -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
-        <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard") text-xs py-1.5 px-3 shrink-0">Dashboard</a>
+        <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard") text-xs py-1.5 px-3 shrink-0">แผงควบคุมระบบ</a>
         <a asp-controller="ITSupport" asp-action="Users" class="@NavClass("Users") text-xs py-1.5 px-3 shrink-0">ผู้ใช้งาน</a>
-        <a asp-controller="ITSupport" asp-action="Logs" class="@NavClass("Logs") text-xs py-1.5 px-3 shrink-0">Logs</a>
+        <a asp-controller="ITSupport" asp-action="Logs" class="@NavClass("Logs") text-xs py-1.5 px-3 shrink-0">บันทึกกิจกรรมระบบ</a>
         @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
         <a asp-controller="Account" asp-action="Logout" asp-route-role="itsupport"
            class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
