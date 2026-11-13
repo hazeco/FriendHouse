@@ -10,9 +10,18 @@
     var cartItems = Model?.Items ?? new List<Khetsophon_CSI402_8456.ViewModels.CartItemViewModel>();
     int totalItemCount = Model?.TotalItemCount ?? 0;
     string subtotalFormatted = Model?.SubtotalFormatted ?? "฿0";
+    string discountFormatted = Model?.DiscountFormatted ?? "-฿0";
     string platformFeeFormatted = Model?.PlatformFeeFormatted ?? "ฟรี (฿0)";
     string grandTotalFormatted = Model?.GrandTotalFormatted ?? "฿0";
     string userPhone = Model?.UserPhone ?? ((string?)ViewBag.UserPhone ?? "");
+    string minPickupDate = Model?.MinPickupDate ?? DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    string? appliedPromoCode = Model?.AppliedPromoCode;
+    string? appliedPromoName = Model?.AppliedPromoName;
+    string? promoBenefitSummary = Model?.PromoBenefitSummary;
+    string? promoValidationError = Model?.PromoValidationError;
+    decimal discountAmount = Model?.DiscountAmount ?? 0m;
+    bool isDoublePoints = Model?.IsDoublePoints ?? false;
+    var collectedPromos = Model?.CollectedPromos ?? new List<Khetsophon_CSI402_8456.ViewModels.CollectedPromoOptionViewModel>();
     string storeNoticeTitle = Model?.StoreNoticeTitle ?? "รับและชำระเงินที่หน้าร้านเท่านั้น";
     string storeNoticeDesc = Model?.StoreNoticeDesc ?? "การสั่งจองพรีออเดอร์ไม่ต้องชำระเงินออนไลน์ ชำระยอดเต็มหรือมัดจำเมื่อมารับสินค้าที่สาขา FriendHouse HQ";
 }
@@ -177,18 +186,106 @@
             <div class="sticky top-24 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
                 <h2 class="text-lg font-bold text-text border-b border-slate-100 pb-3">สรุปคำสั่งจองพรีออเดอร์</h2>
 
+                <!-- Promo Code Section (ใช้กับสินค้าในตะกร้าเท่านั้น) -->
+                @if (cartItems.Count > 0)
+                {
+                    <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-extrabold text-text">โค้ดส่วนลดโปรโมชั่น</span>
+                            <a asp-controller="Home" asp-action="Promotion" class="text-[11px] font-bold text-primary hover:underline">
+                                หาโค้ดเพิ่ม
+                            </a>
+                        </div>
+
+                        <form asp-controller="Home" asp-action="ApplyPromoCode" class="flex items-center gap-2">
+                            <input type="text"
+                                   name="voucherCode"
+                                   value="@appliedPromoCode"
+                                   placeholder="กรอกรหัสโค้ด (เช่น WELCOME10)"
+                                   class="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold uppercase text-text placeholder:font-sans placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-primary focus:outline-none" />
+                            <button type="submit"
+                                    class="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white hover:bg-accent transition-colors cursor-pointer">
+                                ใช้โค้ด
+                            </button>
+                        </form>
+
+                        @if (!string.IsNullOrEmpty(appliedPromoName) && string.IsNullOrEmpty(promoValidationError))
+                        {
+                            <div class="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px]">
+                                <div class="min-w-0">
+                                    <div class="font-extrabold text-emerald-800 truncate">ใช้โค้ด @appliedPromoCode แล้ว</div>
+                                    <div class="text-emerald-700">@promoBenefitSummary</div>
+                                </div>
+                                <form asp-controller="Home" asp-action="RemovePromoCode" class="shrink-0">
+                                    <button type="submit" class="rounded-lg border border-emerald-300 bg-white px-2 py-1 font-bold text-rose-600 hover:bg-rose-50 cursor-pointer">
+                                        ยกเลิก
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(promoValidationError))
+                        {
+                            <div class="flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                                <span class="font-semibold">@promoValidationError</span>
+                                <form asp-controller="Home" asp-action="RemovePromoCode" class="shrink-0">
+                                    <button type="submit" class="font-bold underline cursor-pointer">ล้างโค้ด</button>
+                                </form>
+                            </div>
+                        }
+
+                        @if (collectedPromos.Any())
+                        {
+                            <div class="space-y-1.5 pt-1 border-t border-slate-200/70">
+                                <span class="text-[11px] font-bold text-slate-500 block">คูปองที่เก็บไว้ของฉัน (คลิกเพื่อใช้งาน):</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach (var cp in collectedPromos)
+                                    {
+                                        <form asp-controller="Home" asp-action="ApplyPromoCode" class="inline">
+                                            <input type="hidden" name="voucherCode" value="@cp.VoucherCode" />
+                                            <button type="submit"
+                                                    title="@cp.Title (@cp.BenefitLabel)"
+                                                    class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer @(cp.IsApplied ? "border-emerald-400 bg-emerald-100 text-emerald-900" : "border-primary/30 bg-white text-primary hover:bg-primary/5")">
+                                                <span class="font-mono">@cp.VoucherCode</span>
+                                                <span class="text-slate-400 font-normal">· @cp.BenefitLabel</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            ใช้ได้เฉพาะสินค้าในตะกร้าเท่านั้น ไม่สามารถใช้ร่วมกับการแลกของรางวัลด้วยแต้มสะสมได้
+                        </p>
+                    </div>
+                }
+
                 <!-- Subtotals -->
                 <div class="space-y-3 text-sm">
                     <div class="flex items-center justify-between text-slate-500">
                         <span>ยอดรวมสินค้า (@totalItemCount ชิ้น)</span>
                         <span class="font-bold text-text">@subtotalFormatted</span>
                     </div>
+                    @if (discountAmount > 0m)
+                    {
+                        <div class="flex items-center justify-between text-emerald-700">
+                            <span>ส่วนลดโปรโมชั่น (@appliedPromoCode)</span>
+                            <span class="font-extrabold">@discountFormatted</span>
+                        </div>
+                    }
+                    else if (isDoublePoints)
+                    {
+                        <div class="flex items-center justify-between text-primary">
+                            <span>สิทธิพิเศษ (@appliedPromoCode)</span>
+                            <span class="font-bold">รับแต้มสะสม x2</span>
+                        </div>
+                    }
                     <div class="flex items-center justify-between text-slate-500">
                         <span>ค่าธรรมเนียมบริการ</span>
                         <span class="font-bold text-emerald-600">@platformFeeFormatted</span>
                     </div>
                     <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
-                        <span class="text-base font-bold text-text">ยอดรวมที่ต้องชำระหน้าร้าน</span>
+                        <span class="text-base font-bold text-text">ยอดรวมสุทธิที่ต้องชำระหน้าร้าน</span>
                         <span class="text-2xl font-extrabold text-primary">@grandTotalFormatted</span>
                     </div>
                 </div>
@@ -210,13 +307,25 @@
                 {
                     @* ฟอร์มส่งข้อมูลยืนยันการจองสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ConfirmPreorder *@
                     <form asp-controller="Home" asp-action="ConfirmPreorder" class="space-y-3">
-                        @* ตัวแปรซ่อนกำหนดสาขาที่รับสินค้า *@
+                        @* ตัวแปรซ่อนกำหนดสาขาที่รับสินค้า และรหัสโค้ดที่ใช้งานอยู่ *@
                         <input type="hidden" name="pickupBranch" value="FriendHouse HQ สาขาสยามสแควร์" />
+                        @if (!string.IsNullOrEmpty(appliedPromoName) && string.IsNullOrEmpty(promoValidationError))
+                        {
+                            <input type="hidden" name="voucherCode" value="@appliedPromoCode" />
+                        }
+                        <div>
+                            @* ป้ายกำกับช่องเลือกวันที่สะดวกเข้ารับสินค้า *@
+                            <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าที่หน้าร้าน</label>
+                            @* ช่องเลือกวันที่นัดรับสินค้า พร้อมป้องกันการเลือกวันย้อนหลังด้วย min วันที่ปัจจุบัน *@
+                            <input type="date" id="pickupDate" name="pickupDate" min="@minPickupDate" required autocomplete="off"
+                                   class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
+                            <p class="text-[11px] text-slate-400 mt-1">เลือกวันที่สะดวกรับสินค้าได้ตั้งแต่วันนี้เป็นต้นไป</p>
+                        </div>
                         <div>
                             @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์ *@
-                            <label class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS / สะสมแต้ม</label>
-                            @* ช่องกรอกหมายเลขโทรศัพท์สำหรับรับ SMS และบันทึกคำสั่งจอง *@
-                            <input type="tel" name="contactPhone" value="@userPhone" placeholder="08x-xxx-xxxx" required
+                            <label for="contactPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS / สะสมแต้ม</label>
+                            @* ช่องกรอกหมายเลขโทรศัพท์สำหรับรับ SMS และบันทึกคำสั่งจอง (Auto-fill จากข้อมูลสมาชิก) *@
+                            <input type="tel" id="contactPhone" name="contactPhone" value="@userPhone" placeholder="08x-xxx-xxxx" required
                                    class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
                         </div>
                         @* ปุ่มกดยืนยันการสั่งจองสินค้าทั้งหมดในตะกร้า *@

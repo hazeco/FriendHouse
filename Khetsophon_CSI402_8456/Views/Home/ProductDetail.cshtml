@@ -707,14 +707,14 @@
                 }
                 else
                 {
-                    <!-- Open Pre-order / Redeem Modal Button -->
-                    <button type="button" id="btn-open-preorder-modal"
-                            class="flex-1 w-full sm:w-auto rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
-                        @(isRewardItem ? "แลกของรางวัลนี้" : "สั่งจองสินค้านี้")
-                    </button>
-
                     @if (isRewardItem)
                     {
+                        <!-- Open Redeem Modal Button -->
+                        <button type="button" id="btn-open-preorder-modal"
+                                class="flex-1 w-full sm:w-auto rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
+                            แลกของรางวัลนี้
+                        </button>
+
                         <!-- Back to Rewards Link -->
                         <a asp-controller="Home" asp-action="Rewards"
                            class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
@@ -723,12 +723,25 @@
                     }
                     else
                     {
-                        @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                        @* ฟอร์มกด "ซื้อตอนนี้" เพิ่มลงตะกร้าแล้วพาไปหน้าตะกร้าทันทีเพื่อเลือกวันรับและเบอร์โทร *@
+                        <form asp-controller="Home" asp-action="AddToCart" class="flex-1 w-full sm:w-auto">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <input type="hidden" name="quantity" value="1" />
+                            <input type="hidden" name="goToCart" value="true" />
+                            <button type="submit"
+                                    class="w-full rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
+                                ซื้อตอนนี้
+                            </button>
+                        </form>
+
+                        @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้าแล้วอยู่หน้าเดิม ไปยัง HomeController แอ็กชัน AddToCart *@
                         <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
                             @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
                             <input type="hidden" name="productId" value="@product.Id" />
                             @* ตัวแปรซ่อนกำหนดจำนวนสินค้าเริ่มต้นเป็น 1 ชิ้น *@
                             <input type="hidden" name="quantity" value="1" />
+                            @* ตัวแปรซ่อนให้กลับมายังหน้ารายละเอียดสินค้าเดิม *@
+                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
                             @* ปุ่มกดยืนยันเพิ่มสินค้าลงในตะกร้า *@
                             <button type="submit"
                                class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
@@ -789,7 +802,7 @@
                 @* ป้ายกำกับช่องเลือกวันที่สะดวกเข้ารับสินค้า *@
                 <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าโดยประมาณ</label>
                 @* ช่องเลือกวันที่นัดรับสินค้าพร้อมป้องกันการเลือกวันย้อนหลังด้วย min วันที่ปัจจุบัน *@
-                <input type="date" id="pickupDate" name="pickupDate" required autocomplete="off" min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                <input type="date" id="pickupDate" name="pickupDate" required autocomplete="off" min="@DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)"
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
 

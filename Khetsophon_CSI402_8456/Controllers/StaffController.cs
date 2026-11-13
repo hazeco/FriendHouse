@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Khetsophon_CSI402_8456.Helpers;
 using Khetsophon_CSI402_8456.Models;
 using Khetsophon_CSI402_8456.ViewModels;
 
@@ -108,86 +109,25 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ประกาศตัวแปรเก็บข้อมูลใบจองพรีออเดอร์ที่ค้นหาพบ (เริ่มต้นเป็นค่าว่าง null)
+        // ประกาศตัวแปรเก็บข้อมูลใบจองพรีออเดอร์และรายการแลกของรางวัลที่ค้นหาพบ
         Preorder? foundPreorder = null;
-        // ประกาศตัวแปรเก็บข้อมูลการแลกของรางวัลที่ค้นหาพบ (เริ่มต้นเป็นค่าว่าง null)
         Rewardredemption? foundRedemption = null;
 
         // ตรวจสอบว่าผู้ใช้ส่งข้อความค้นหา (query) เข้ามาหรือไม่ (รองรับการค้นหาโดยไม่ต้องพิมพ์ขีด - หรือ #)
         if (!string.IsNullOrWhiteSpace(query))
         {
-            // ตัดช่องว่างหัวท้ายและตัดเครื่องหมาย # ออกจากข้อความค้นหา
-            string cleanQuery = query.Trim().Replace("#", "");
-            string lowerQuery = cleanQuery.ToLower();
-            // ตัดเครื่องหมายขีดลบ (-) และช่องว่างออกเพื่อรองรับการค้นหาเลขใบจอง รหัสของรางวัล และเบอร์โทรศัพท์แบบไม่ใส่ขีด
-            string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
-
-            // ดึงข้อมูลใบสั่งจองจากตาราง Preorders โดยโหลดตาราง Preorderitems, Product และ User ร่วมด้วย
-            var allPreorders = _db.Preorders
-                .Include(p => p.Preorderitems)
-                    .ThenInclude(item => item.Product)
-                .Include(p => p.User)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToList();
-
-            // ตรวจสอบเงื่อนไขว่าตรงกับรหัสใบจอง เบอร์โทรผู้ติดต่อ หรือชื่อลูกค้า ทั้งแบบมีขีดและไม่มีขีด (รองรับทั้งพิมพ์เต็มและพิมพ์บางส่วน)
-            foundPreorder = allPreorders.FirstOrDefault(p =>
-                p.ReservationNumber.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
-                || p.ContactPhone.ToLower().Contains(lowerQuery)
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ContactPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
-                || (p.User != null && p.User.Phone != null && p.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
-                || (p.User != null && p.User.FullName != null && p.User.FullName.ToLower().Contains(lowerQuery)));
-
-            // ตรวจสอบว่าค้นพบข้อมูลใบสั่งจองในฐานข้อมูลหรือไม่
-            if (foundPreorder != null)
-            {
-                // ส่งข้อมูลใบจองที่พบไปยัง View ผ่านตัวแปร ViewBag.SearchResult
-                ViewBag.SearchResult = foundPreorder;
-                // กำหนดข้อความแจ้งผลการค้นหาใบจองสำเร็จเพื่อแสดงบนหน้าจอ
-                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{foundPreorder.ReservationNumber} ลูกค้า: {foundPreorder.User?.FullName ?? foundPreorder.ContactPhone}";
-            }
-            // หากไม่พบใบจองในตาราง Preorders ให้ตรวจสอบต่อในตารางแลกของรางวัล
-            else
-            {
-                // ดึงข้อมูลการแลกของรางวัลจากตาราง Rewardredemptions พร้อมข้อมูล Reward และ User
-                var allRedemptions = _db.Rewardredemptions
-                    .Include(r => r.Reward)
-                    .Include(r => r.User)
-                    .OrderByDescending(r => r.RedeemedAt)
-                    .ToList();
-
-                // ตรวจสอบว่าตรงกับรหัสแลกของรางวัล หรือเบอร์โทรสมาชิก ทั้งแบบมีขีดและไม่มีขีด
-                foundRedemption = allRedemptions.FirstOrDefault(r =>
-                    r.RedemptionCode.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
-                    || (!string.IsNullOrEmpty(normalizedQuery) && r.RedemptionCode.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
-                    || (r.User != null && r.User.Phone != null && r.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery)));
-
-                // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลในฐานข้อมูลหรือไม่
-                if (foundRedemption != null)
-                {
-                    // ส่งข้อมูลการแลกของรางวัลที่พบไปยัง View ผ่าน ViewBag.SearchResultRedemption
-                    ViewBag.SearchResultRedemption = foundRedemption;
-                    // กำหนดข้อความแจ้งผลการค้นหารหัสของรางวัลเพื่อแสดงบนหน้าจอ
-                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{foundRedemption.RedemptionCode} ลูกค้า: {foundRedemption.User?.FullName ?? foundRedemption.User?.Email}";
-                }
-            }
+            (foundPreorder, foundRedemption) = ResolveCounterSearch(query);
         }
 
-        // กรณีไม่ได้ระบุคำค้นหา หรือค้นหาแล้วไม่พบข้อมูล ให้แสดงใบจองล่าสุดเป็นตัวอย่าง
-        if (foundPreorder == null && foundRedemption == null)
+        // กรณีไม่ได้ระบุคำค้นหา ให้แสดงใบจองล่าสุดเป็นตัวอย่าง
+        if (foundPreorder == null && foundRedemption == null && string.IsNullOrWhiteSpace(query))
         {
-            // ดึงข้อมูลใบสั่งจองรายการล่าสุดในระบบที่สถานะยังรอมารับสินค้า
             var defaultPreorder = _db.Preorders
                 .Include(p => p.Preorderitems)
                     .ThenInclude(item => item.Product)
                 .Include(p => p.User)
-                // จัดเรียงตามวันเวลาที่สั่งจองจากใหม่ไปเก่า
                 .OrderByDescending(p => p.CreatedAt)
-                // เลือกใบจองที่สถานะเป็น ReadyForPickup หรือ PendingConfirm เป็นลำดับแรก
                 .FirstOrDefault(p => p.CurrentStatus == "ReadyForPickup" || p.CurrentStatus == "PendingConfirm")
-                // หากไม่มีรายการรอมารับ ให้ดึงใบจองล่าสุดที่มีในระบบไม่ว่าสถานะใด
                 ?? _db.Preorders
                     .Include(p => p.Preorderitems)
                         .ThenInclude(item => item.Product)
@@ -195,33 +135,17 @@ public class StaffController : Controller
                     .OrderByDescending(p => p.CreatedAt)
                     .FirstOrDefault();
 
-            // ตรวจสอบว่ามีใบสั่งจองสำหรับแสดงผลเริ่มต้นหรือไม่
             if (defaultPreorder != null)
             {
-                // ส่งข้อมูลใบจองเริ่มต้นไปยัง View ผ่าน ViewBag.SearchResult
                 ViewBag.SearchResult = defaultPreorder;
-                // กำหนดข้อความแจ้งว่ากำลังแสดงข้อมูลใบสั่งจองล่าสุดในระบบ
                 ViewBag.Status = $"กำลังแสดงรายการพรีออเดอร์ล่าสุด #{defaultPreorder.ReservationNumber} ({defaultPreorder.ContactPhone})";
             }
         }
 
-        // ดึงรายการประวัติการจอง 6 รายการล่าสุดจากฐานข้อมูลสำหรับสร้างปุ่มค้นหาด่วน
-        ViewBag.RecentPreorders = _db.Preorders
-            .Include(p => p.Preorderitems).ThenInclude(item => item.Product)
-            .Include(p => p.User)
-            .OrderByDescending(p => p.CreatedAt)
-            .Take(6)
-            .ToList();
+        // เตรียมข้อมูลค้นหาด่วน (ทั้ง Preorder และ RewardRedemption) และเบอร์สมาชิก
+        PopulateCounterRecentData();
 
-        // ดึงรายชื่อเบอร์โทรศัพท์และอีเมลสมาชิกทั้งหมดในระบบ เพื่อใช้ตรวจสอบเบอร์สมาชิกในหน้าต่างสะสมแต้ม
-        ViewBag.KnownMemberPhones = _db.Users
-            .Where(u => !string.IsNullOrEmpty(u.Phone))
-            .Select(u => u.Phone!.Replace("-", "").Replace(" ", "").Trim().ToLower())
-            .Distinct()
-            .ToList();
-
-        // ส่ง ViewModel พร้อมรหัสใบจองที่ค้นพบไปยังหน้า View เพื่อแสดงผล
-        return View(new CounterPreorderViewModel { ReservationNumber = foundPreorder?.ReservationNumber ?? query ?? "" });
+        return View(new CounterPreorderViewModel { ReservationNumber = foundPreorder?.ReservationNumber ?? foundRedemption?.RedemptionCode ?? query ?? "" });
     }
 
     // Action สำหรับค้นหาใบจองพรีออเดอร์จากช่องค้นหา (POST Method)
@@ -238,82 +162,115 @@ public class StaffController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ดึงข้อความค้นหาจากช่องรหัสใบจองหรือช่องเบอร์โทรศัพท์ พร้อมตัดช่องว่าง
         string rawQuery = (data?.ReservationNumber ?? data?.Phone ?? "").Trim();
-        // ตัดเครื่องหมาย # ออกจากข้อความค้นหา
-        string cleanQuery = rawQuery.Replace("#", "").Trim();
-        string lowerQuery = cleanQuery.ToLower();
-        // ตัดเครื่องหมายขีด (-) และช่องว่างออกเพื่อรองรับทั้งเลขใบจอง รหัสของรางวัล และเบอร์โทรศัพท์แบบไม่ใส่ขีด
-        string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
 
-        // ตรวจสอบว่าผู้ใช้งานกรอกข้อความค้นหาเข้ามาหรือไม่
-        if (!string.IsNullOrEmpty(cleanQuery))
+        if (!string.IsNullOrEmpty(rawQuery))
         {
-            // ค้นหาข้อมูลใบสั่งจองในตาราง Preorders ด้วยรหัสใบจอง เบอร์โทรศัพท์ หรือชื่อลูกค้า (รองรับการค้นหาโดยไม่ใส่ขีด - และค้นหาบางส่วน)
-            var allPreorders = _db.Preorders
-                .Include(p => p.Preorderitems)
-                    .ThenInclude(item => item.Product)
-                .Include(p => p.User)
-                .OrderByDescending(p => p.CreatedAt)
-                .ToList();
-
-            var preorder = allPreorders.FirstOrDefault(p =>
-                p.ReservationNumber.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
-                || p.ContactPhone.ToLower().Contains(lowerQuery)
-                || (!string.IsNullOrEmpty(normalizedQuery) && p.ContactPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
-                || (p.User != null && p.User.Phone != null && p.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
-                || (p.User != null && p.User.FullName != null && p.User.FullName.ToLower().Contains(lowerQuery))
-                || (p.User != null && p.User.Email.ToLower().Contains(lowerQuery)));
-
-            // ตรวจสอบว่าพบข้อมูลใบสั่งจองหรือไม่
-            if (preorder != null)
-            {
-                // นำใบสั่งจองที่พบส่งต่อไปยัง View
-                ViewBag.SearchResult = preorder;
-                // กำหนดข้อความแจ้งผลการค้นหาใบจองสำเร็จ
-                ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{preorder.ReservationNumber} ลูกค้า: {preorder.User?.FullName ?? preorder.ContactPhone}";
-            }
-            // หากไม่พบใบสั่งจอง ให้ค้นหาต่อในตารางของรางวัล
-            else
-            {
-                // ค้นหาข้อมูลในตาราง Rewardredemptions ด้วยรหัสแลกของรางวัลหรือเบอร์โทร (รองรับการพิมพ์แบบไม่ใส่ขีด -)
-                var allRedemptions = _db.Rewardredemptions
-                    .Include(r => r.Reward)
-                    .Include(r => r.User)
-                    .OrderByDescending(r => r.RedeemedAt)
-                    .ToList();
-
-                var redemption = allRedemptions.FirstOrDefault(r =>
-                    r.RedemptionCode.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
-                    || (!string.IsNullOrEmpty(normalizedQuery) && r.RedemptionCode.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
-                    || (r.User != null && r.User.Phone != null && r.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery)));
-
-                // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลหรือไม่
-                if (redemption != null)
-                {
-                    // นำข้อมูลของรางวัลที่พบส่งไปยัง View
-                    ViewBag.SearchResultRedemption = redemption;
-                    // กำหนดข้อความแจ้งผลการค้นหาของรางวัลสำเร็จ
-                    ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{redemption.RedemptionCode} ลูกค้า: {redemption.User.FullName ?? redemption.User.Email}";
-                }
-                // กรณีค้นหาไม่พบทั้งใบจองและของรางวัล
-                else
-                {
-                    // กำหนดข้อความแจ้งผู้ใช้ว่าไม่พบข้อมูลตามเงื่อนไขที่ระบุ
-                    ViewBag.Status = $"ไม่พบข้อมูลใบสั่งจองหรือรหัสแลกของรางวัลตามเงื่อนไข \"{rawQuery}\" ในระบบ";
-                }
-            }
+            ResolveCounterSearch(rawQuery);
         }
-        // กรณีผู้ใช้กดค้นหาโดยไม่ได้กรอกข้อความใดๆ
         else
         {
-            // กำหนดข้อความแจ้งเตือนให้ผู้ใช้งานกรอกข้อมูลก่อนค้นหา
-            ViewBag.Status = "กรุณากรอกรหัสพรีออเดอร์หรือเบอร์โทรศัพท์สำหรับค้นหา";
+            ViewBag.Status = "กรุณากรอกรหัสพรีออเดอร์ รหัสแลกของรางวัล หรือเบอร์โทรศัพท์สำหรับค้นหา";
         }
 
-        // ดึงรายการประวัติการจองล่าสุด 6 รายการเพื่อแสดงเป็นปุ่มทางลัด
+        PopulateCounterRecentData();
+
+        return View(data);
+    }
+
+    // ฟังก์ชันช่วยค้นหาใบสั่งจอง (Preorders) และรายการแลกของรางวัล (Rewardredemptions) ร่วมกันระหว่าง GET และ POST
+    private (Preorder? Preorder, Rewardredemption? Redemption) ResolveCounterSearch(string rawQuery)
+    {
+        string cleanQuery = rawQuery.Replace("#", "").Trim();
+        string lowerQuery = cleanQuery.ToLower();
+        string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
+
+        bool preferRedemption = normalizedQuery.StartsWith("rwd");
+
+        if (preferRedemption)
+        {
+            var matchedRedemption = FindRedemptionByQuery(cleanQuery, lowerQuery, normalizedQuery);
+            if (matchedRedemption != null)
+            {
+                ViewBag.SearchResultRedemption = matchedRedemption;
+                ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{matchedRedemption.RedemptionCode} ลูกค้า: {matchedRedemption.User?.FullName ?? matchedRedemption.User?.Email}";
+                return (null, matchedRedemption);
+            }
+        }
+
+        var matchedPreorder = FindPreorderByQuery(cleanQuery, lowerQuery, normalizedQuery);
+        if (matchedPreorder != null)
+        {
+            ViewBag.SearchResult = matchedPreorder;
+            ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{matchedPreorder.ReservationNumber} ลูกค้า: {matchedPreorder.User?.FullName ?? matchedPreorder.ContactPhone}";
+            return (matchedPreorder, null);
+        }
+
+        if (!preferRedemption)
+        {
+            var matchedRedemption = FindRedemptionByQuery(cleanQuery, lowerQuery, normalizedQuery);
+            if (matchedRedemption != null)
+            {
+                ViewBag.SearchResultRedemption = matchedRedemption;
+                ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{matchedRedemption.RedemptionCode} ลูกค้า: {matchedRedemption.User?.FullName ?? matchedRedemption.User?.Email}";
+                return (null, matchedRedemption);
+            }
+        }
+
+        ViewBag.Status = $"ไม่พบข้อมูลใบสั่งจองหรือรหัสแลกของรางวัลตามเงื่อนไข \"{rawQuery}\" ในระบบ";
+        return (null, null);
+    }
+
+    // ค้นหาใบสั่งจองพรีออเดอร์รองรับการค้นหาแบบไม่ใส่ขีด - และค้นหาบางส่วน
+    private Preorder? FindPreorderByQuery(string cleanQuery, string lowerQuery, string normalizedQuery)
+    {
+        var allPreorders = _db.Preorders
+            .Include(p => p.Preorderitems)
+                .ThenInclude(item => item.Product)
+            .Include(p => p.User)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToList();
+
+        return allPreorders.FirstOrDefault(p =>
+            p.ReservationNumber.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+            || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+            || (!string.IsNullOrEmpty(normalizedQuery) && p.ReservationNumber.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+            || p.ContactPhone.ToLower().Contains(lowerQuery)
+            || (!string.IsNullOrEmpty(normalizedQuery) && p.ContactPhone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+            || (p.User != null && p.User.Phone != null && p.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+            || (p.User != null && p.User.FullName != null && p.User.FullName.ToLower().Contains(lowerQuery))
+            || (p.User != null && p.User.Email.ToLower().Contains(lowerQuery)));
+    }
+
+    // ค้นหารายการแลกของรางวัลรองรับรหัส RWD แบบไม่ใส่ขีด - เบอร์โทรที่ระบุตอนแลก/บัญชี และชื่อลูกค้า
+    private Rewardredemption? FindRedemptionByQuery(string cleanQuery, string lowerQuery, string normalizedQuery)
+    {
+        var rewardLogs = _db.Systemlogs.Where(l => l.Module == "reward.redeem").ToList();
+        var metaMap = PromoAndRedemptionHelper.BuildRedemptionMetaMap(rewardLogs);
+
+        var allRedemptions = _db.Rewardredemptions
+            .Include(r => r.Reward)
+            .Include(r => r.User)
+            .OrderByDescending(r => r.RedeemedAt)
+            .ToList();
+
+        return allRedemptions.FirstOrDefault(r =>
+        {
+            metaMap.TryGetValue(r.RedemptionCode, out var rMeta);
+            string metaPhone = PromoAndRedemptionHelper.NormalizePhoneDigits(rMeta?.ContactPhone);
+
+            return r.RedemptionCode.Equals(cleanQuery, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrEmpty(normalizedQuery) && r.RedemptionCode.Replace("-", "").Replace("#", "").ToLower().Contains(normalizedQuery))
+                || (!string.IsNullOrEmpty(normalizedQuery) && metaPhone.Contains(normalizedQuery))
+                || (r.User != null && r.User.Phone != null && r.User.Phone.Replace("-", "").Replace(" ", "").ToLower().Contains(normalizedQuery))
+                || (r.User != null && r.User.FullName != null && r.User.FullName.ToLower().Contains(lowerQuery))
+                || (r.User != null && r.User.Email.ToLower().Contains(lowerQuery));
+        });
+    }
+
+    // เตรียมข้อมูลทางลัดค้นหาด่วน (พรีออเดอร์ + แลกของรางวัล) เบอร์สมาชิก และรายละเอียดโปรโมชั่น/วันนัดรับ
+    private void PopulateCounterRecentData()
+    {
         ViewBag.RecentPreorders = _db.Preorders
             .Include(p => p.Preorderitems).ThenInclude(item => item.Product)
             .Include(p => p.User)
@@ -321,15 +278,23 @@ public class StaffController : Controller
             .Take(6)
             .ToList();
 
-        // ดึงรายชื่อเบอร์โทรศัพท์สมาชิกทั้งหมดในระบบ เพื่อใช้ตรวจสอบเบอร์สมาชิกในหน้าต่างสะสมแต้ม
+        ViewBag.RecentRedemptions = _db.Rewardredemptions
+            .Include(r => r.Reward)
+            .Include(r => r.User)
+            .OrderByDescending(r => r.RedeemedAt)
+            .Take(6)
+            .ToList();
+
         ViewBag.KnownMemberPhones = _db.Users
             .Where(u => !string.IsNullOrEmpty(u.Phone))
             .Select(u => u.Phone!.Replace("-", "").Replace(" ", "").Trim().ToLower())
             .Distinct()
             .ToList();
 
-        // ส่ง ViewModel กลับไปแสดงผลที่ View
-        return View(data);
+        var rewardLogs = _db.Systemlogs.Where(l => l.Module == "reward.redeem").ToList();
+        var promoLogs = _db.Systemlogs.Where(l => l.Module == "preorder.promo").ToList();
+        ViewBag.RedemptionMetaMap = PromoAndRedemptionHelper.BuildRedemptionMetaMap(rewardLogs);
+        ViewBag.PreorderPromoMap = PromoAndRedemptionHelper.BuildPreorderPromoMap(promoLogs);
     }
 
     // Action สำหรับบันทึกการมารับสินค้า ชำระเงิน ตัดสต็อก และสะสมแต้ม (POST Method)
@@ -379,6 +344,11 @@ public class StaffController : Controller
             return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
         }
 
+        // ตรวจสอบข้อมูลโปรโมชั่นที่ใช้กับใบจองนี้ (ถ้ามี เช่น ส่วนลด หรือ แต้มคูณสอง)
+        var promoLogs = _db.Systemlogs.Where(l => l.Module == "preorder.promo").ToList();
+        var promoMap = PromoAndRedemptionHelper.BuildPreorderPromoMap(promoLogs);
+        promoMap.TryGetValue(preorder.ReservationNumber, out var preorderPromo);
+
         // ประกาศตัวแปรเก็บจำนวนแต้มสะสมที่สมาชิกจะได้รับ (เริ่มต้นที่ 0)
         int pointsEarned = 0;
         // ประกาศตัวแปรเก็บข้อความรายละเอียดการสะสมแต้มสำหรับนำไปแสดงผล
@@ -399,12 +369,17 @@ public class StaffController : Controller
             // ตรวจสอบว่าพบข้อมูลสมาชิกในระบบหรือไม่
             if (memberUser != null)
             {
-                // คำนวณแต้มสะสม: 10% ของยอดเงินรวม (ขั้นต่ำ 10 แต้ม)
+                // คำนวณแต้มสะสม: 10% ของยอดเงินรวม (ขั้นต่ำ 10 แต้ม) และคูณ 2 หากใช้โปรโมชั่นแต้มสะสมสองเท่า
                 pointsEarned = (int)Math.Max(10, Math.Round(preorder.TotalFinalPrice / 10));
+                if (preorderPromo?.IsDoublePoints == true)
+                {
+                    pointsEarned *= 2;
+                }
                 // คำนวณแต้มสะสมจากยอดเงิน แล้วนำไปบวกให้สมาชิก memberUser.Points += pointsEarned;
                 memberUser.Points += pointsEarned;
+                string doubleTag = preorderPromo?.IsDoublePoints == true ? " [โปรโมชั่นแต้ม x2]" : "";
                 // กำหนดข้อความรายละเอียดการสะสมแต้มสำเร็จ พร้อมระบุชื่อสมาชิกและแต้มคงเหลือรวม
-                memberLogMsg = $" (สะสมแต้มให้คุณ {memberUser.FullName ?? memberUser.Email}: +{pointsEarned} แต้ม รวมปัจจุบัน {memberUser.Points} แต้ม)";
+                memberLogMsg = $" (สะสมแต้มให้คุณ {memberUser.FullName ?? memberUser.Email}: +{pointsEarned} แต้ม{doubleTag} รวมปัจจุบัน {memberUser.Points} แต้ม)";
             }
             // กรณีพนักงานกรอกเบอร์โทรเข้ามาแต่ไม่พบข้อมูลสมาชิกในระบบ และยังไม่ได้ยืนยันข้ามการสะสมแต้ม
             else if (forceWithoutMember != true)
@@ -444,10 +419,12 @@ public class StaffController : Controller
             CustomerPhone = !string.IsNullOrWhiteSpace(memberPhone) ? memberPhone : preorder.ContactPhone,
             // บันทึกรหัสพนักงานแคชเชียร์ผู้ออกใบเสร็จ
             CashierUserId = cashierUserId,
-            // กำหนดยอดเงินรวมก่อนหักส่วนลด
-            SubtotalAmount = preorder.TotalFinalPrice,
-            // กำหนดยอดส่วนลด (0.00 บาท)
-            DiscountAmount = 0.00m,
+            // กำหนดยอดเงินรวมก่อนหักส่วนลด และส่วนลดจริงจากโปรโมชั่น (ถ้ามี)
+            SubtotalAmount = preorderPromo != null && preorderPromo.OriginalSubtotal > preorder.TotalFinalPrice
+                ? preorderPromo.OriginalSubtotal
+                : preorder.TotalFinalPrice,
+            // กำหนดยอดส่วนลดจริง
+            DiscountAmount = preorderPromo?.DiscountAmount ?? 0.00m,
             // คำนวณภาษีมูลค่าเพิ่ม 7% จากยอดรวม
             VatAmount = Math.Round(preorder.TotalFinalPrice * 0.07m, 2),
             // กำหนดยอดเงินสุทธิที่ลูกค้าต้องชำระจริง
@@ -700,11 +677,11 @@ public class StaffController : Controller
             return RedirectToAction("CounterPreorder");
         }
 
-        // ตรวจสอบว่ารายการนี้ถูกส่งมอบไปแล้วหรือไม่ เพื่อป้องกันการทำซ้ำ
-        if (redemption.Status == "Completed")
+        // ตรวจสอบว่ารายการนี้ถูกส่งมอบหรือยกเลิกไปแล้วหรือไม่ เพื่อป้องกันการทำซ้ำ
+        if (redemption.Status == "Completed" || redemption.Status == "Cancelled")
         {
-            // กำหนดข้อความแจ้งเตือนกรณีส่งมอบไปแล้ว
-            TempData["ErrorMessage"] = "รายการนี้ได้ทำการส่งมอบของรางวัลไปแล้ว ไม่สามารถดำเนินการซ้ำได้";
+            // กำหนดข้อความแจ้งเตือนกรณีปิดสถานะไปแล้ว
+            TempData["ErrorMessage"] = $"รายการแลกของรางวัล #{redemption.RedemptionCode} ได้ดำเนินการปิดสถานะไปแล้ว ไม่สามารถทำซ้ำได้";
             // เปลี่ยนเส้นทางกลับหน้าเคาน์เตอร์พร้อมระบุรหัสของรางวัล
             return RedirectToAction("CounterPreorder", new { query = redemption.RedemptionCode });
         }
@@ -737,6 +714,82 @@ public class StaffController : Controller
         // กำหนดข้อความแจ้งเตือนผลสำเร็จผ่าน TempData
         TempData["SuccessMessage"] = $"บันทึกส่งมอบ \"{redemption.Reward.Title}\" ให้ลูกค้าเรียบร้อยแล้ว";
         // เปลี่ยนเส้นทางกลับหน้าเคาน์เตอร์พร้อมระบุรหัสของรางวัล
+        return RedirectToAction("CounterPreorder", new { query = redemption.RedemptionCode });
+    }
+
+    // Action สำหรับบันทึกลูกค้าไม่มารับของรางวัลตามกำหนด พร้อมคืนแต้มและคืนสต็อก (POST Method)
+    [HttpPost]
+    public IActionResult NoShowRewardRedemption(long? redemptionId, string reason, string? remark)
+    {
+        return CancelRewardRedemptionCore(redemptionId, reason, remark, isNoShow: true);
+    }
+
+    // Action สำหรับบันทึกลูกค้าปฏิเสธไม่รับของรางวัลหน้าร้าน พร้อมคืนแต้มและคืนสต็อก (POST Method)
+    [HttpPost]
+    public IActionResult RejectRewardRedemption(long? redemptionId, string reason, string? remark)
+    {
+        return CancelRewardRedemptionCore(redemptionId, reason, remark, isNoShow: false);
+    }
+
+    // ฟังก์ชันกลางสำหรับยกเลิกรายการแลกของรางวัลทั้งกรณีไม่รับสินค้าและไม่มารับสินค้า คืนแต้ม + คืนสต็อก + บันทึก Systemlog
+    private IActionResult CancelRewardRedemptionCore(long? redemptionId, string reason, string? remark, bool isNoShow)
+    {
+        if (!IsAuthorizedStaff())
+        {
+            TempData["ErrorMessage"] = "ไม่มีสิทธิ์เข้าถึง";
+            return RedirectToAction("Login", "Account");
+        }
+
+        if (!redemptionId.HasValue || redemptionId.Value <= 0)
+        {
+            TempData["ErrorMessage"] = "ไม่พบรหัสรายการแลกของรางวัล";
+            return RedirectToAction("CounterPreorder");
+        }
+
+        var redemption = _db.Rewardredemptions
+            .Include(r => r.Reward)
+            .Include(r => r.User)
+            .FirstOrDefault(r => r.RedemptionId == redemptionId.Value);
+
+        if (redemption == null)
+        {
+            TempData["ErrorMessage"] = "ไม่พบรายการแลกของรางวัลในระบบ";
+            return RedirectToAction("CounterPreorder");
+        }
+
+        if (redemption.Status == "Completed" || redemption.Status == "Cancelled")
+        {
+            TempData["ErrorMessage"] = $"รายการแลกของรางวัล #{redemption.RedemptionCode} ได้ดำเนินการปิดสถานะไปแล้ว";
+            return RedirectToAction("CounterPreorder", new { query = redemption.RedemptionCode });
+        }
+
+        // เปลี่ยนสถานะเป็น Cancelled และคืนทั้งแต้มสะสมกับสต็อกของรางวัลให้ลูกค้าและคลังสินค้า
+        redemption.Status = "Cancelled";
+        if (redemption.User != null)
+        {
+            redemption.User.Points += redemption.PointsSpent;
+        }
+        if (redemption.Reward != null)
+        {
+            redemption.Reward.StockQuantity += 1;
+        }
+
+        string actionLabel = isNoShow ? "ลูกค้าไม่มารับของรางวัล" : "ลูกค้าไม่รับของรางวัล";
+        string logPrefix = isNoShow ? "NOSHOW-RWD-" : "REJECT-RWD-";
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = logPrefix + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "Warning",
+            Module = "CounterPreorder",
+            Message = $"{actionLabel} รหัสแลก #{redemption.RedemptionCode} ({redemption.Reward?.Title}) สาเหตุ: {reason} | รายละเอียด: {remark ?? "ไม่มี"} | คืน {redemption.PointsSpent:N0} แต้มและคืนสต็อกแล้ว",
+            UserId = HttpContext.Session.GetInt32("UserId"),
+            Timestamp = DateTime.Now
+        });
+
+        _db.SaveChanges();
+
+        TempData["SuccessMessage"] = $"บันทึก{actionLabel}เรียบร้อยแล้ว (#{redemption.RedemptionCode}) ระบบคืน {redemption.PointsSpent:N0} แต้มสะสมและคืนสต็อกของรางวัลเรียบร้อยแล้ว";
         return RedirectToAction("CounterPreorder", new { query = redemption.RedemptionCode });
     }
 

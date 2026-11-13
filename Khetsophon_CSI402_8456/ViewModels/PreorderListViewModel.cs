@@ -19,6 +19,9 @@ public class PreorderListViewModel : List<Preorder>
     // รายการใบสั่งจองพรีออเดอร์ทั้งหมดของสมาชิกแบบ ViewModel พร้อมใช้งาน
     public List<PreorderSummaryViewModel> Preorders { get; set; } = new();
 
+    // รายการจองแลกของรางวัลด้วยแต้มสะสมของสมาชิก (RWD-...)
+    public List<RewardRedemptionViewModel> Redemptions { get; set; } = new();
+
     // จำนวนใบสั่งจองพรีออเดอร์ทั้งหมด
     public int TotalOrders => Preorders.Count > 0 ? Preorders.Count : this.Count;
 }
@@ -67,6 +70,15 @@ public class PreorderSummaryViewModel
 
     // ยอดรวมราคาสุทธิจัดรูปแบบเงินบาทไทย เช่น ฿4,290
     public string TotalFinalPriceFormatted => $"฿{TotalFinalPrice:N0}";
+
+    // ข้อมูลโปรโมชั่นและส่วนลดที่ใช้กับคำสั่งจองนี้ (ถ้ามี)
+    public string? AppliedPromoCode { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public decimal OriginalSubtotal { get; set; }
+
+    public bool IsDoublePoints { get; set; }
 
     // จำนวนชิ้นสินค้ารวมในใบสั่งจองนี้
     public int TotalQuantity => Items.Sum(i => i.Quantity);

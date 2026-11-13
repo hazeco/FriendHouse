@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Khetsophon_CSI402_8456.ViewModels;
@@ -20,14 +21,31 @@ public class CartViewModel
     // ยอดรวมราคาสินค้าจัดรูปแบบเงินบาทไทย เช่น ฿8,580
     public string SubtotalFormatted => $"฿{SubtotalAmount:N0}";
 
+    // ข้อมูลโค้ดโปรโมชั่นที่ใช้งานอยู่กับรายการสินค้าในตะกร้า
+    public string? AppliedPromoCode { get; set; }
+
+    public string? AppliedPromoName { get; set; }
+
+    public string? PromoBenefitSummary { get; set; }
+
+    public string? PromoValidationError { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public string DiscountFormatted => $"-฿{DiscountAmount:N0}";
+
+    public bool IsDoublePoints { get; set; }
+
+    public List<CollectedPromoOptionViewModel> CollectedPromos { get; set; } = new();
+
     // ค่าธรรมเนียมการให้บริการระบบ (ร้าน FriendHouse ให้บริการสั่งจองฟรี)
     public decimal PlatformFee => 0m;
 
     // ข้อความแสดงค่าธรรมเนียมระบบ
     public string PlatformFeeFormatted => "ฟรี (฿0)";
 
-    // ยอดรวมสุทธิที่ต้องชำระที่หน้าร้านเมื่อมารับสินค้า
-    public decimal GrandTotalAmount => SubtotalAmount + PlatformFee;
+    // ยอดรวมสุทธิที่ต้องชำระที่หน้าร้านเมื่อมารับสินค้า (หักส่วนลดโปรโมชั่นแล้ว)
+    public decimal GrandTotalAmount => Math.Max(0m, SubtotalAmount - DiscountAmount) + PlatformFee;
 
     // ยอดรวมสุทธิจัดรูปแบบเงินบาทไทย
     public string GrandTotalFormatted => $"฿{GrandTotalAmount:N0}";
@@ -37,6 +55,9 @@ public class CartViewModel
 
     // สาขาหน้าร้านที่กำหนดให้มารับสินค้า
     public string PickupBranch { get; set; } = "FriendHouse HQ สาขาสยามสแควร์";
+
+    // วันที่ขั้นต่ำที่อนุญาตให้เลือกนัดรับสินค้า (วันปัจจุบันในรูปแบบ ISO yyyy-MM-dd แบบ ค.ศ. เสมอ)
+    public string MinPickupDate => DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     // หัวข้อคำชี้แจงการรับสินค้าหน้าร้าน
     public string StoreNoticeTitle { get; set; } = "รับและชำระเงินที่หน้าร้านเท่านั้น";
@@ -80,4 +101,13 @@ public class CartItemViewModel
 
     // ข้อความแจ้งกำหนดการเข้าร้าน
     public string ScheduleNotice { get; set; } = "กำหนดเข้าร้าน: สินค้าพร้อมส่งมอบตามรอบพรีออเดอร์";
+}
+
+// READ: ViewModel แสดงตัวเลือกคูปองที่ลูกค้าเก็บไว้จากหน้าโปรโมชั่นสำหรับกดใช้ในตะกร้า
+public class CollectedPromoOptionViewModel
+{
+    public string VoucherCode { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string BenefitLabel { get; set; } = string.Empty;
+    public bool IsApplied { get; set; }
 }

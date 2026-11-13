@@ -62,7 +62,21 @@ public class OwnerController : Controller
         return View(promotions);
     }
 
-    // CREATE: แสดงหน้าแบบฟอร์มและบันทึกโปรโมชั่นใหม่ลงในฐานข้อมูล
+    // CREATE: แสดงหน้าแบบฟอร์มสร้างโปรโมชั่นใหม่
+    [HttpGet]
+    public IActionResult AddPromotion()
+    {
+        if (!IsAuthorizedOwner())
+        {
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            return RedirectToAction("Login", "Account");
+        }
+
+        return View();
+    }
+
+    // CREATE: บันทึกโปรโมชั่นใหม่ลงในฐานข้อมูลจริง
+    [HttpPost]
     public IActionResult AddPromotion(Promotion? data)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
@@ -114,11 +128,12 @@ public class OwnerController : Controller
             return RedirectToAction("Promotions");
         }
 
-        // กรณีเป็นการเปิดหน้าแบบฟอร์มครั้งแรก ให้แสดงหน้าสร้างโปรโมชั่นใหม่
-        return View();
+        TempData["ErrorMessage"] = "กรุณาระบุชื่อโปรโมชั่นให้ครบถ้วน";
+        return View(data);
     }
 
     // READ: แสดงหน้าแบบฟอร์มแก้ไขข้อมูลโปรโมชั่นตามรหัสโปรโมชั่นที่ระบุ
+    [HttpGet]
     public IActionResult EditPromotion(int? id)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
@@ -184,6 +199,7 @@ public class OwnerController : Controller
 
             // บันทึกการแก้ไขลงฐานข้อมูลจริง
             _db.SaveChanges();
+
             // กำหนดข้อความแจ้งเตือนผลการแก้ไขสำเร็จผ่าน TempData
             TempData["SuccessMessage"] = $"บันทึกการแก้ไขโปรโมชั่น \"{promo.Name}\" เรียบร้อยแล้ว";
             // เปลี่ยนเส้นทางกลับไปยังหน้ารายการโปรโมชั่นทั้งหมด

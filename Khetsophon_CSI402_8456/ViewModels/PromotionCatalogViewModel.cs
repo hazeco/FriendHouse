@@ -14,6 +14,9 @@ public class PromotionCatalogViewModel : List<Promotion>
     // ประเภทโปรโมชั่นที่เลือกกรอง
     public string? SelectedType { get; set; }
 
+    // รายการรหัสคูปองที่ลูกค้ากดเก็บไว้ใน Session
+    public List<string> CollectedCodes { get; set; } = new();
+
     // รายการการ์ดโปรโมชั่นที่แปลงเป็นภาษาไทยพร้อมแสดงผลบนหน้าเว็บ
     public List<PromotionCardItemViewModel> PromotionCards { get; set; } = new();
 }
@@ -41,5 +44,11 @@ public class PromotionCardItemViewModel
 
     // รหัสคูปองโปรโมชั่น
     public string VoucherCode { get; set; } = string.Empty;
+
+    // ขอบเขตสินค้าที่ใช้ได้จริงในระบบ (all, figures, clearance)
+    public string ApplicableScope { get; set; } = "all";
+
+    // สถานะว่าลูกค้าเก็บคูปองนี้ไว้ใช้งานแล้วหรือยัง
+    public bool IsCollected { get; set; }
 }
 

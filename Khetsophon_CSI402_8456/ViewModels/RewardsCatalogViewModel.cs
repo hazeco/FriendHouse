@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Khetsophon_CSI402_8456.ViewModels;
 
@@ -9,6 +10,12 @@ public class RewardsCatalogViewModel
 {
     // สถานะการเข้าสู่ระบบของผู้ใช้งาน
     public bool IsLoggedIn { get; set; }
+
+    // เบอร์โทรศัพท์ของสมาชิกสำหรับกรอกอัตโนมัติในหน้าต่างแลกของรางวัล
+    public string UserPhone { get; set; } = string.Empty;
+
+    // วันที่ขั้นต่ำที่อนุญาตให้เลือกนัดรับของรางวัล (รูปแบบ ค.ศ. yyyy-MM-dd)
+    public string MinPickupDate => DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
     // จำนวนแต้มสะสมปัจจุบันของผู้ใช้งาน
     public int UserPoints { get; set; }
@@ -72,7 +79,7 @@ public class RewardItemViewModel
     public bool CanAfford { get; set; }
 }
 
-// READ: ViewModel สำหรับแสดงรายการประวัติการแลกของรางวัล
+// READ: ViewModel สำหรับแสดงรายการประวัติและสถานะการจองแลกของรางวัล
 public class RewardRedemptionViewModel
 {
     // รหัสการทำรายการแลกในตาราง Rewardredemptions
@@ -87,17 +94,28 @@ public class RewardRedemptionViewModel
     // ชื่อของรางวัลที่แลก
     public string RewardTitle { get; set; } = string.Empty;
 
+    // แบรนด์ของรางวัล
+    public string RewardBrand { get; set; } = "FriendHouse Exclusive";
+
+    // พาธรูปภาพของรางวัล
+    public string ImageUrl { get; set; } = "~/media/images/naruto_hero_fig.png";
+
     // จำนวนแต้มที่ใช้ไปในการแลกครั้งนี้
     public int PointsSpent { get; set; }
 
     // จำนวนแต้มที่ใช้จัดรูปแบบข้อความ เช่น 500 แต้ม
     public string PointsSpentFormatted => $"{PointsSpent:N0} แต้ม";
 
-    // สถานะการรับของรางวัลในฐานข้อมูล เช่น PendingPickup หรือ Completed
+    // สถานะการรับของรางวัลในฐานข้อมูล เช่น PendingPickup, Completed, Cancelled
     public string Status { get; set; } = "PendingPickup";
 
-    // ข้อความสถานะภาษาไทย เช่น รอรับที่ร้าน หรือ รับของแล้ว
-    public string StatusText => Status == "Completed" ? "รับของแล้ว" : "รอรับที่ร้าน";
+    // ข้อความสถานะภาษาไทยตามสถานะปัจจุบัน
+    public string StatusText => Status switch
+    {
+        "Completed" => "รับของรางวัลแล้ว",
+        "Cancelled" => "ยกเลิก / คืนแต้มแล้ว",
+        _ => "รอรับที่ร้าน"
+    };
 
     // วันที่และเวลาที่ทำรายการแลกของรางวัล
     public DateTime RedeemedAt { get; set; }
@@ -105,6 +123,21 @@ public class RewardRedemptionViewModel
     // วันที่และเวลาแลกจัดรูปแบบภาษาไทย
     public string RedeemedAtFormatted { get; set; } = string.Empty;
 
+    // วันที่และเวลาที่ส่งมอบเสร็จสิ้น (ถ้ามี)
+    public string? CompletedAtFormatted { get; set; }
+
+    // วันที่ลูกค้าสะดวกมารับของรางวัลที่หน้าร้าน (จากที่ระบุตอนแลกแต้ม)
+    public string? PickupDateFormatted { get; set; }
+
+    // เบอร์โทรศัพท์สำหรับติดต่อแจ้งรับของรางวัล
+    public string? ContactPhone { get; set; }
+
+    // สถานะว่ารอรับที่หน้าร้านอยู่หรือไม่ (สามารถยกเลิกหรือดำเนินการต่อได้)
+    public bool IsPendingPickup => Status == "PendingPickup";
+
     // สถานะว่ารับของรางวัลเรียบร้อยแล้วหรือไม่
     public bool IsCompleted => Status == "Completed";
+
+    // สถานะว่าถูกยกเลิกแล้วหรือไม่
+    public bool IsCancelled => Status == "Cancelled";
 }

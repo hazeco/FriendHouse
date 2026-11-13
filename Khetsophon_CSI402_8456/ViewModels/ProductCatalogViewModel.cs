@@ -25,6 +25,15 @@ public class ProductCatalogViewModel
     // ช่วงราคาที่เลือกกรอง เช่น ฿0 - ฿1,000 หรือ ทั้งหมด
     public string? SelectedPriceRange { get; set; }
 
+    // รหัสโปรโมชั่นและขอบเขตสินค้าที่ร่วมรายการเมื่อกดมาจากหน้าโปรโมชั่น
+    public string? SelectedPromoCode { get; set; }
+
+    public string? SelectedPromoScope { get; set; }
+
+    public string? PromoBannerTitle { get; set; }
+
+    public string? PromoBannerCondition { get; set; }
+
     // รายการชื่อหมวดหมู่ทั้งหมดที่มีในฐานข้อมูลสำหรับใส่ใน Select Dropdown
     public List<string> AvailableCategories { get; set; } = new();
 

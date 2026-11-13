@@ -7,18 +7,19 @@
     {
         BreadcrumbHome = "หน้าแรก",
         BreadcrumbCurrent = "พรีออเดอร์ของฉัน",
-        Title = "สถานะพรีออเดอร์ของฉัน",
+        Title = "สถานะพรีออเดอร์และรายการจองของฉัน",
         AddMoreText = "สั่งจองสินค้าเพิ่ม",
-        SearchPlaceholder = "ค้นหาด้วยเลขใบจอง (เช่น PO20269187 หรือ 9187 โดยไม่ต้องใส่ขีด) เบอร์โทร หรือชื่อสินค้า...",
+        SearchPlaceholder = "ค้นหาด้วยเลขใบจอง/รหัสแลกแต้ม (เช่น PO20269187, RWD845612) เบอร์โทร หรือชื่อสินค้า...",
         SearchBtnText = "ค้นหา",
         ClearBtnText = "ล้างตัวกรอง",
-        EmptyTitle = "ยังไม่มีรายการสั่งจองพรีออเดอร์",
-        EmptySubtitle = "เลือกฟิกเกอร์ที่คุณชื่นชอบแล้วสั่งจองล่วงหน้าได้ทันที",
+        EmptyTitle = "ยังไม่มีรายการสั่งจองหรือแลกของรางวัล",
+        EmptySubtitle = "เลือกฟิกเกอร์ที่คุณชื่นชอบหรือนำแต้มสะสมไปจองแลกของรางวัลได้ที่หน้าร้าน",
         EmptyActionText = "เลือกดูสินค้าในร้าน",
         CancelBtnText = "ยกเลิกคำสั่งจอง"
     };
 
     var preordersList = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Preorder>();
+    var redemptionsList = Model?.Redemptions ?? new List<Khetsophon_CSI402_8456.ViewModels.RewardRedemptionViewModel>();
     var selectedStatus = Model?.StatusFilter ?? "all";
 }
 
@@ -52,7 +53,7 @@
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@pageConfig.Title</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">รายการพรีออเดอร์ทั้งหมดของคุณ จำนวน @preordersList.Count รายการ</p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">รายการพรีออเดอร์ @preordersList.Count รายการ · รายการจองแลกของรางวัล @redemptionsList.Count รายการ</p>
         </div>
         <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -92,9 +93,9 @@
         </div>
     </form>
 
-    @if (!preordersList.Any())
+    @if (!preordersList.Any() && !redemptionsList.Any())
     {
-        <!-- กรณีไม่พบรายการพรีออเดอร์ -->
+        <!-- กรณีไม่พบรายการพรีออเดอร์และรายการจองแลกของรางวัล -->
         <div class="rounded-3xl border border-dashed border-slate-200 p-12 text-center space-y-4">
             <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400">
                 <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -199,8 +200,27 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
+                                @{
+                                    var promoMeta = Model?.Preorders?.FirstOrDefault(x => x.PreorderId == po.PreorderId);
+                                }
                                 <div class="text-right">
                                     <span class="text-slate-400 block">ยอดรวมทั้งสิ้น จำนวน @totalQty ชิ้น</span>
+                                    @if (promoMeta != null && !string.IsNullOrEmpty(promoMeta.AppliedPromoCode))
+                                    {
+                                        <div class="flex items-center justify-end gap-1.5 mt-0.5">
+                                            <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                                โค้ด @promoMeta.AppliedPromoCode
+                                            </span>
+                                            @if (promoMeta.DiscountAmount > 0m)
+                                            {
+                                                <span class="text-xs text-slate-400 line-through">฿@promoMeta.OriginalSubtotal.ToString("N0")</span>
+                                            }
+                                            else if (promoMeta.IsDoublePoints)
+                                            {
+                                                <span class="text-[11px] font-bold text-primary">แต้ม x2</span>
+                                            }
+                                        </div>
+                                    }
                                     <span class="text-base font-extrabold text-primary">฿@po.TotalFinalPrice.ToString("N0")</span>
                                 </div>
 
@@ -281,4 +301,209 @@
             }
         </div>
     }
+
+    @if (redemptionsList.Any())
+    {
+        <!-- ส่วนแสดงรายการจองแลกของรางวัลด้วยแต้มสะสม -->
+        <div class="space-y-4 pt-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-extrabold text-text">รายการจองแลกของรางวัลด้วยแต้มสะสม</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">แสดงรหัสจองรับของรางวัลที่เคาน์เตอร์ พร้อมสถานะและสิทธิ์ยกเลิกเพื่อคืนแต้มก่อนรับสินค้า</p>
+                </div>
+                <a asp-controller="Home" asp-action="Rewards" class="inline-flex items-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors">
+                    ไปหน้าแลกของรางวัล
+                </a>
+            </div>
+
+            <div class="space-y-5">
+                @foreach (var red in redemptionsList)
+                {
+                    string rBadgeClass = red.IsCompleted
+                        ? "bg-emerald-50/80 border-emerald-200/80 text-emerald-800"
+                        : red.IsCancelled
+                            ? "bg-rose-50/80 border-rose-200/80 text-rose-800"
+                            : "bg-amber-50/80 border-amber-200/80 text-amber-800";
+
+                    string rNotice = red.IsCompleted
+                        ? "ส่งมอบของรางวัลชิ้นนี้ให้คุณเรียบร้อยแล้ว ขอขอบคุณที่ใช้บริการ FriendHouse"
+                        : red.IsCancelled
+                            ? $"รายการนี้ถูกยกเลิกแล้ว ระบบได้คืน {red.PointsSpentFormatted} และคืนสิทธิ์สต็อกเรียบร้อยแล้ว"
+                            : "นำรหัสรับของรางวัลนี้ไปแจ้งพนักงานที่เคาน์เตอร์หน้าร้านเพื่อรับของรางวัล (ไม่มีค่าใช้จ่ายเพิ่มเติม)";
+
+                    <div class="rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden transition-all hover:border-primary/30">
+                        <div class="flex items-center justify-between border-b @rBadgeClass px-6 py-3.5">
+                            <div class="flex items-center gap-2 text-xs sm:text-sm font-bold">
+                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                <span>@red.StatusText</span>
+                            </div>
+                            <span class="text-xs font-mono font-bold opacity-90">รหัส @red.RedemptionCode</span>
+                        </div>
+
+                        <div class="p-6 sm:p-8 space-y-5">
+                            <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                <div class="size-16 shrink-0 rounded-xl border border-slate-200 overflow-hidden bg-white">
+                                    <img src="@Url.Content(red.ImageUrl)" alt="@red.RewardTitle" class="size-full object-cover" />
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-[11px] font-bold text-primary">@red.RewardBrand</span>
+                                    <h3 class="text-sm font-bold text-text truncate">@red.RewardTitle</h3>
+                                    <div class="text-xs font-semibold text-slate-500 mt-0.5">แลกด้วยแต้มสะสม: @red.PointsSpentFormatted · จำนวน 1 ชิ้น</div>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-sm font-extrabold text-primary">@red.PointsSpentFormatted</span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 text-xs">
+                                <div class="flex flex-wrap items-center gap-6">
+                                    <div>
+                                        <span class="text-slate-400 block">วันที่ทำรายการจอง</span>
+                                        <span class="font-bold text-text">@red.RedeemedAtFormatted</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(red.PickupDateFormatted))
+                                    {
+                                        <div>
+                                            <span class="text-slate-400 block">วันที่นัดรับที่ระบุ</span>
+                                            <span class="font-bold text-primary">@red.PickupDateFormatted</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(red.ContactPhone))
+                                    {
+                                        <div>
+                                            <span class="text-slate-400 block">เบอร์โทรติดต่อ</span>
+                                            <span class="font-bold text-text">@red.ContactPhone</span>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(red.CompletedAtFormatted))
+                                    {
+                                        <div>
+                                            <span class="text-slate-400 block">วันที่รับของรางวัล</span>
+                                            <span class="font-bold text-emerald-700">@red.CompletedAtFormatted</span>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    @if (red.IsPendingPickup)
+                                    {
+                                        <button type="button"
+                                                onclick="openCancelRedeemStatusModal(this)"
+                                                data-redemption-id="@red.RedemptionId"
+                                                data-redemption-code="@red.RedemptionCode"
+                                                data-reward-title="@red.RewardTitle"
+                                                data-points-spent="@red.PointsSpent"
+                                                class="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer">
+                                            ยกเลิกและคืนแต้ม
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- แถบขั้นตอนติดตามสถานะจองแลกของรางวัล -->
+                            <div class="border-t border-slate-100 pt-5">
+                                <div class="relative max-w-sm mx-auto">
+                                    <div class="relative z-10 grid grid-cols-2 gap-6">
+                                        <div class="flex flex-col items-center text-center space-y-2">
+                                            <div class="flex size-9 items-center justify-center rounded-full bg-primary text-white shadow-xs">
+                                                <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            </div>
+                                            <span class="text-xs font-semibold text-text">ตัดแต้มและจองของรางวัล</span>
+                                        </div>
+                                        <div class="flex flex-col items-center text-center space-y-2">
+                                            @if (red.IsCancelled)
+                                            {
+                                                <div class="flex size-9 items-center justify-center rounded-full bg-rose-500 text-white shadow-xs">
+                                                    <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                </div>
+                                                <span class="text-xs font-bold text-rose-600">ยกเลิก / คืนแต้มแล้ว</span>
+                                            }
+                                            else if (red.IsCompleted)
+                                            {
+                                                <div class="flex size-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs">
+                                                    <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                </div>
+                                                <span class="text-xs font-bold text-emerald-700">รับของรางวัลแล้ว</span>
+                                            }
+                                            else
+                                            {
+                                                <div class="flex size-9 items-center justify-center rounded-full bg-primary text-white ring-4 ring-primary/20 shadow-xs">
+                                                    <span class="size-2.5 rounded-full bg-white animate-pulse"></span>
+                                                </div>
+                                                <span class="text-xs font-bold text-primary">รอรับที่เคาน์เตอร์หน้าร้าน</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3 text-xs text-slate-600 leading-relaxed">
+                                <svg class="size-5 shrink-0 text-primary mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                                <span>@rNotice</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
 </div>
+
+<!-- Modal ยืนยันยกเลิกการจองแลกของรางวัล -->
+<div id="cancelRedeemStatusModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-start gap-3">
+            <div class="size-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-base font-extrabold text-text">ยืนยันยกเลิกการจองแลกของรางวัล</h3>
+                <p id="statusCancelRedeemCode" class="text-xs font-mono text-primary font-bold mt-0.5"></p>
+            </div>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+            ต้องการยกเลิกการจอง "<span id="statusCancelRedeemTitle" class="font-bold text-text"></span>" ใช่หรือไม่? ระบบจะคืน <span id="statusCancelRedeemPoints" class="font-bold text-emerald-700"></span> แต้มสะสมและคืนสต็อกสินค้าเข้าสู่ระบบทันที
+        </p>
+
+        @* ฟอร์มยกเลิกการจองแลกของรางวัล ส่งไปยัง HomeController แอ็กชัน CancelRedemption *@
+        <form asp-controller="Home" asp-action="CancelRedemption" class="flex items-center gap-2.5 pt-1">
+            <input type="hidden" id="statusCancelRedeemId" name="redemptionId" value="" />
+            <input type="hidden" name="returnAction" value="PreorderStatus" />
+            <button type="button" onclick="closeCancelRedeemStatusModal()" class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">
+                ย้อนกลับ
+            </button>
+            <button type="submit" class="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-700 cursor-pointer shadow-xs">
+                ยืนยันยกเลิกและคืนแต้ม
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function openCancelRedeemStatusModal(btn) {
+        document.getElementById('statusCancelRedeemId').value = btn.dataset.redemptionId || '';
+        document.getElementById('statusCancelRedeemCode').textContent = 'รหัสอ้างอิง: ' + (btn.dataset.redemptionCode || '');
+        document.getElementById('statusCancelRedeemTitle').textContent = btn.dataset.rewardTitle || '';
+        document.getElementById('statusCancelRedeemPoints').textContent = parseInt(btn.dataset.pointsSpent || '0', 10).toLocaleString('th-TH');
+
+        const modal = document.getElementById('cancelRedeemStatusModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeCancelRedeemStatusModal() {
+        const modal = document.getElementById('cancelRedeemStatusModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+}

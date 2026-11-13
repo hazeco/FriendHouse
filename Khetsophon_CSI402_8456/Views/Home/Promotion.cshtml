@@ -38,6 +38,7 @@
     var promoCards = Model?.PromotionCards ?? new List<Khetsophon_CSI402_8456.ViewModels.PromotionCardItemViewModel>();
     var currentSearch = Model?.SearchTerm ?? string.Empty;
     var currentType = Model?.SelectedType ?? "all";
+    var currentReturnUrl = Context.Request.Path + Context.Request.QueryString;
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
@@ -47,6 +48,27 @@
         <span>/</span>
         <span class="text-text font-semibold">โปรโมชั่นและสิทธิพิเศษ</span>
     </nav>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-2.5">
+                <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+            <a asp-controller="Home" asp-action="Cart" class="shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700 transition-colors">
+                ไปใช้โค้ดที่ตะกร้าสินค้า
+            </a>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2.5 shadow-xs">
+            <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>@TempData["ErrorMessage"]</span>
+        </div>
+    }
 
     <!-- ส่วนหัวของหน้าโปรโมชั่น -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -139,11 +161,43 @@
                             <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">@promo.Description</p>
                         </div>
 
-                        <!-- กล่องแสดงรหัสคูปองและระยะเวลา -->
-                        <div class="space-y-2 pt-3 border-t border-slate-200/60 text-xs">
-                            <div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 border border-dashed border-primary/30">
-                                <span class="text-slate-500 font-medium">รหัสคูปองส่วนลด:</span>
-                                <span class="font-mono font-extrabold text-primary tracking-wider">@promo.VoucherCode</span>
+                        <!-- กล่องแสดงรหัสคูปอง ปุ่มคัดลอก ปุ่มเก็บโค้ด และระยะเวลา -->
+                        <div class="space-y-2.5 pt-3 border-t border-slate-200/60 text-xs">
+                            <div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-dashed border-primary/30">
+                                <div class="min-w-0">
+                                    <span class="text-slate-500 font-medium block text-[11px]">รหัสคูปองส่วนลด:</span>
+                                    <span class="font-mono font-extrabold text-primary tracking-wider text-sm">@promo.VoucherCode</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <button type="button"
+                                            onclick="copyVoucherCode('@promo.VoucherCode', this)"
+                                            class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700 hover:border-primary/40 hover:text-primary transition-colors cursor-pointer">
+                                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                                        </svg>
+                                        <span>คัดลอก</span>
+                                    </button>
+                                    @if (promo.IsCollected)
+                                    {
+                                        <span class="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-2.5 py-1.5 text-[11px] font-bold text-emerald-800">
+                                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                            <span>เก็บโค้ดแล้ว</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        @* ฟอร์มกดเก็บคูปองลง Session (ไม่มี method attribute) *@
+                                        <form asp-controller="Home" asp-action="CollectPromoCode" class="inline">
+                                            <input type="hidden" name="voucherCode" value="@promo.VoucherCode" />
+                                            <input type="hidden" name="returnUrl" value="@currentReturnUrl" />
+                                            <button type="submit"
+                                                    class="inline-flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-accent transition-colors cursor-pointer">
+                                                <span>เก็บโค้ด</span>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
                             </div>
                             <div class="text-slate-500">
                                 <strong class="text-text">ระยะเวลาจัดรายการ:</strong> @promo.Period
@@ -151,11 +205,16 @@
                             <div class="text-slate-500 font-medium">
                                 @promo.Condition
                             </div>
+                            <div class="text-[11px] text-slate-400">
+                                ใช้ได้กับสินค้าที่ร่วมรายการในหน้าตะกร้าเท่านั้น (ไม่ร่วมกับการแลกของรางวัลด้วยแต้ม)
+                            </div>
                         </div>
                     </div>
 
                     <div class="mt-6 pt-3 flex items-center justify-between border-t border-slate-100">
                         <a asp-controller="Home" asp-action="Collection"
+                           asp-route-promoCode="@promo.VoucherCode"
+                           asp-route-promoScope="@promo.ApplicableScope"
                            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline">
                             <span>เลือกชมสินค้าที่ร่วมรายการ</span>
                             <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor">
@@ -190,3 +249,41 @@
         </div>
     }
 </div>
+
+@section Scripts {
+<script>
+    function copyVoucherCode(code, btn) {
+        const done = () => {
+            const label = btn.querySelector('span');
+            if (!label) return;
+            const original = label.textContent;
+            label.textContent = 'คัดลอกแล้ว';
+            btn.classList.add('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+            setTimeout(() => {
+                label.textContent = original;
+                btn.classList.remove('border-emerald-300', 'bg-emerald-50', 'text-emerald-700');
+            }, 1800);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(done).catch(() => {
+                fallbackCopy(code, done);
+            });
+        } else {
+            fallbackCopy(code, done);
+        }
+    }
+
+    function fallbackCopy(code, cb) {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+        cb();
+    }
+</script>
+}

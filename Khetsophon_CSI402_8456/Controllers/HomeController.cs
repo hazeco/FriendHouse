@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Khetsophon_CSI402_8456.Helpers;
 using Khetsophon_CSI402_8456.Models;
 using Microsoft.VisualBasic;
 using System.Security.Cryptography.X509Certificates;
@@ -482,7 +484,7 @@ public class HomeController : Controller
     // READ: Action สำหรับแสดงรายการสินค้าฟิกเกอร์ทั้งหมดในร้าน พร้อมระบบค้นหา ตัวกรองหลายมิติ และแบ่งหน้า (หน้าละ 20 ชิ้น)
     // WHY: รองรับการสืบค้นข้อมูลผ่านคำค้นหาและการกรองตามหมวดหมู่ ซีรีส์ สถานะสต็อก และช่วงราคา
     // โดยใช้ LINQ กับ Entity Framework Core และมีระบบสำรองข้อมูลแคตตาล็อกรองรับกรณีฐานข้อมูลออฟไลน์
-    public IActionResult Collection(string? searchTerm, string? category, string? series, string? status, string? priceRange, int page = 1)
+    public IActionResult Collection(string? searchTerm, string? category, string? series, string? status, string? priceRange, string? promoCode = null, string? promoScope = null, int page = 1)
     {
         // ขั้นตอนที่ 1: สร้างออบเจกต์ ProductCatalogViewModel และกำหนดค่าตัวกรองเริ่มต้นที่ได้รับจากคำขอ
         var viewModel = new ProductCatalogViewModel
@@ -492,6 +494,8 @@ public class HomeController : Controller
             SelectedSeries = string.IsNullOrWhiteSpace(series) ? null : series.Trim(),
             SelectedStatus = string.IsNullOrWhiteSpace(status) ? null : status.Trim(),
             SelectedPriceRange = string.IsNullOrWhiteSpace(priceRange) ? null : priceRange.Trim(),
+            SelectedPromoCode = string.IsNullOrWhiteSpace(promoCode) ? null : PromoAndRedemptionHelper.NormalizeCode(promoCode),
+            SelectedPromoScope = string.IsNullOrWhiteSpace(promoScope) ? null : promoScope.Trim().ToLowerInvariant(),
             PageSize = 20
         };
 
@@ -606,8 +610,36 @@ public class HomeController : Controller
                         }
                     }
 
-                    // ดึงรายการผลลัพธ์และแปลงเป็น ProductCardViewModel
+                    // ตรวจสอบข้อมูลโปรโมชั่นจริงจากฐานข้อมูลเมื่อมีพารามิเตอร์ promoCode หรือ promoScope
+                    if (!string.IsNullOrWhiteSpace(viewModel.SelectedPromoCode))
+                    {
+                        var matchedPromo = _db.Promotions.FirstOrDefault(p => p.VoucherCode.ToUpper() == viewModel.SelectedPromoCode);
+                        if (matchedPromo != null)
+                        {
+                            viewModel.SelectedPromoScope = (matchedPromo.ApplicableScope ?? "all").Trim().ToLowerInvariant();
+                            viewModel.PromoBannerTitle = $"{matchedPromo.Name} (รหัส {matchedPromo.VoucherCode})";
+                            string discountText = (matchedPromo.PromoType == "percent" || matchedPromo.PromoType == "percentage")
+                                ? $"ส่วนลด {matchedPromo.DiscountValue:0.#}%"
+                                : matchedPromo.PromoType == "double_points"
+                                    ? "แต้มสะสม x2"
+                                    : $"ส่วนลด ฿{matchedPromo.DiscountValue:N0}";
+                            viewModel.PromoBannerCondition = $"ร่วมรายการ: {PromoAndRedemptionHelper.GetScopeThaiLabel(viewModel.SelectedPromoScope)} • {discountText} • ขั้นต่ำ ฿{matchedPromo.MinimumSpend:N0}";
+                        }
+                    }
+                    else if (!string.IsNullOrWhiteSpace(viewModel.SelectedPromoScope))
+                    {
+                        viewModel.PromoBannerTitle = $"รายการสินค้าตามสิทธิ์โปรโมชั่น";
+                        viewModel.PromoBannerCondition = $"ขอบเขตสินค้า: {PromoAndRedemptionHelper.GetScopeThaiLabel(viewModel.SelectedPromoScope)}";
+                    }
+
+                    // ดึงรายการผลลัพธ์และแปลงเป็น ProductCardViewModel (พร้อมกรองตามขอบเขตโปรโมชั่นหากระบุ)
                     var filteredProducts = query.ToList();
+                    if (!string.IsNullOrWhiteSpace(viewModel.SelectedPromoScope))
+                    {
+                        filteredProducts = filteredProducts
+                            .Where(p => PromoAndRedemptionHelper.MatchesScope(p, viewModel.SelectedPromoScope))
+                            .ToList();
+                    }
                     viewModel.Products = filteredProducts.Select(p => new ProductCardViewModel
                     {
                         ProductId = p.ProductId,
@@ -1083,55 +1115,99 @@ public class HomeController : Controller
         }
 
         var promotions = query.OrderBy(p => p.PromotionId).ToList();
+        var collectedCodes = PromoAndRedemptionHelper.ReadCollectedCodes(
+            HttpContext.Session.GetString(PromoAndRedemptionHelper.CollectedPromoSessionKey));
 
         // ขั้นตอนที่ 4: ประกอบข้อมูลลงใน PromotionCatalogViewModel พร้อมแปลงข้อความเป็นภาษาไทยบริสุทธิ์
         var viewModel = new PromotionCatalogViewModel
         {
             SearchTerm = searchTerm,
-            SelectedType = promoType ?? "all"
+            SelectedType = promoType ?? "all",
+            CollectedCodes = collectedCodes
         };
         viewModel.AddRange(promotions);
 
         viewModel.PromotionCards = promotions.Select(p =>
         {
-            // แปลงรหัสประเภทโปรโมชั่นเป็นภาษาไทย
-            string tagThai = (p.PromoType ?? "").ToLowerInvariant() switch
-            {
-                "percent" or "percentage" => "ส่วนลดเปอร์เซ็นต์",
-                "fixed" => "ส่วนลดมูลค่าคงที่",
-                "bogo" => "ซื้อ 1 แถม 1",
-                "bundle" => "ชุดเซ็ตสุดคุ้ม",
-                "double_points" => "แต้มสะสมสองเท่า",
-                _ => "โปรโมชั่นพิเศษ"
-            };
-
-            // แปลงขอบเขตสินค้าที่ร่วมรายการเป็นภาษาไทย
-            string scopeThai = (p.ApplicableScope ?? "").ToLowerInvariant() switch
-            {
-                "all" => "สินค้าทุกหมวดหมู่ในร้าน",
-                "figures" => "หมวดหมู่ฟิกเกอร์",
-                "clearance" => "สินค้าลดล้างสต๊อก",
-                _ => !string.IsNullOrWhiteSpace(p.ApplicableScope) ? p.ApplicableScope : "สินค้าทุกหมวดหมู่ในร้าน"
-            };
+            string tagThai = PromoAndRedemptionHelper.GetPromoTypeThaiLabel(p.PromoType);
+            string scopeCode = (p.ApplicableScope ?? "all").Trim().ToLowerInvariant();
+            string scopeThai = PromoAndRedemptionHelper.GetScopeThaiLabel(scopeCode);
 
             // จัดรูปแบบคำอธิบายส่วนลดตามประเภท
             string discountText = (p.PromoType == "percent" || p.PromoType == "percentage")
                 ? $"ส่วนลด {p.DiscountValue:0.#}%"
-                : $"ส่วนลด ฿{p.DiscountValue:N0}";
+                : p.PromoType == "double_points"
+                    ? "รับแต้มสะสม x2"
+                    : $"ส่วนลด ฿{p.DiscountValue:N0}";
 
             return new PromotionCardItemViewModel
             {
                 PromotionId = p.PromotionId,
                 Tag = tagThai,
                 Title = p.Name,
-                Description = $"ใช้ได้กับ{scopeThai} จำกัดจำนวน {p.UsageLimit ?? 100} สิทธิ์",
+                Description = $"ใช้ได้กับ{scopeThai} จำกัดจำนวน {p.UsageLimit ?? 100} สิทธิ์ (ใช้แล้ว {p.CurrentUsageCount:N0} สิทธิ์)",
                 Period = $"{p.StartDate:dd/MM/yyyy} - {p.EndDate:dd/MM/yyyy}",
                 Condition = $"รหัสคูปอง: {p.VoucherCode} • {discountText} • ยอดขั้นต่ำ ฿{p.MinimumSpend:N0}",
-                VoucherCode = p.VoucherCode
+                VoucherCode = p.VoucherCode,
+                ApplicableScope = scopeCode,
+                IsCollected = collectedCodes.Contains(p.VoucherCode, StringComparer.OrdinalIgnoreCase)
             };
         }).ToList();
 
         return View(viewModel);
+    }
+
+    // ACTION: ลูกค้ากดเก็บคูปองโปรโมชั่นไว้ใช้ในหน้าตะกร้าสินค้า (POST Method)
+    [HttpPost]
+    public IActionResult CollectPromoCode(string? voucherCode, string? returnUrl)
+    {
+        string normalized = PromoAndRedemptionHelper.NormalizeCode(voucherCode);
+        if (string.IsNullOrEmpty(normalized))
+        {
+            TempData["ErrorMessage"] = "ไม่พบรหัสคูปองที่ต้องการเก็บ";
+            return RedirectToAction("Promotion");
+        }
+
+        var promo = _db.Promotions.FirstOrDefault(p => p.VoucherCode.ToUpper() == normalized);
+        if (promo == null || promo.IsActive == false)
+        {
+            TempData["ErrorMessage"] = $"ไม่พบโปรโมชั่นรหัส \"{normalized}\" หรือถูกปิดใช้งานแล้ว";
+            return RedirectToAction("Promotion");
+        }
+
+        var today = PromoAndRedemptionHelper.TodayGregorian();
+        if (today > promo.EndDate)
+        {
+            TempData["ErrorMessage"] = $"คูปอง \"{promo.VoucherCode}\" หมดอายุการใช้งานแล้ว";
+            return RedirectToAction("Promotion");
+        }
+
+        if (promo.UsageLimit.HasValue && promo.CurrentUsageCount >= promo.UsageLimit.Value)
+        {
+            TempData["ErrorMessage"] = $"คูปอง \"{promo.VoucherCode}\" ถูกใช้ครบสิทธิ์แล้ว";
+            return RedirectToAction("Promotion");
+        }
+
+        var collected = PromoAndRedemptionHelper.ReadCollectedCodes(
+            HttpContext.Session.GetString(PromoAndRedemptionHelper.CollectedPromoSessionKey));
+        if (!collected.Contains(promo.VoucherCode, StringComparer.OrdinalIgnoreCase))
+        {
+            collected.Add(promo.VoucherCode.ToUpperInvariant());
+            HttpContext.Session.SetString(
+                PromoAndRedemptionHelper.CollectedPromoSessionKey,
+                PromoAndRedemptionHelper.SerializeCollectedCodes(collected));
+            TempData["SuccessMessage"] = $"เก็บคูปอง \"{promo.VoucherCode}\" ({promo.Name}) เรียบร้อยแล้ว สามารถกดใช้งานได้ที่หน้าตะกร้าสินค้า";
+        }
+        else
+        {
+            TempData["SuccessMessage"] = $"คุณมีคูปอง \"{promo.VoucherCode}\" อยู่ในรายการที่เก็บไว้แล้ว";
+        }
+
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+        return RedirectToAction("Promotion");
     }
 
     public IActionResult Customer()
@@ -1163,8 +1239,10 @@ public class HomeController : Controller
         // ขั้นตอนที่ 2: ดึงข้อมูลผู้ใช้งานจริงจากฐานข้อมูลเพื่อเตรียมเบอร์โทรศัพท์ติดต่อ
         var user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
 
-        // ขั้นตอนที่ 3: ดึงรายการสินค้าในตะกร้าของผู้ใช้คนนี้ พร้อมข้อมูลสินค้าและคลังสินค้า
+        // ขั้นตอนที่ 3: ดึงรายการสินค้าในตะกร้าของผู้ใช้คนนี้ พร้อมข้อมูลสินค้า หมวดหมู่ และคลังสินค้า
         var rawItems = _db.Cartitems
+            .Include(c => c.Product)
+                .ThenInclude(p => p.Category)
             .Include(c => c.Product)
                 .ThenInclude(p => p.Inventory)
             .Where(c => c.UserId == userId.Value)
@@ -1189,16 +1267,129 @@ public class HomeController : Controller
             }).ToList()
         };
 
+        // ขั้นตอนที่ 4.1: ตรวจสอบคูปองโปรโมชั่นที่เก็บไว้และคูปองที่ใช้งานอยู่ในตะกร้าสินค้า
+        var collectedCodes = PromoAndRedemptionHelper.ReadCollectedCodes(
+            HttpContext.Session.GetString(PromoAndRedemptionHelper.CollectedPromoSessionKey));
+        string? appliedCode = HttpContext.Session.GetString(PromoAndRedemptionHelper.AppliedPromoSessionKey);
+
+        if (collectedCodes.Any())
+        {
+            var collectedPromos = _db.Promotions
+                .Where(p => (p.IsActive == true || p.IsActive == null) && collectedCodes.Contains(p.VoucherCode.ToUpper()))
+                .OrderBy(p => p.PromotionId)
+                .ToList();
+
+            viewModel.CollectedPromos = collectedPromos.Select(p =>
+            {
+                string label = (p.PromoType == "percent" || p.PromoType == "percentage")
+                    ? $"ลด {p.DiscountValue:0.#}%"
+                    : p.PromoType == "double_points"
+                        ? "แต้ม x2"
+                        : $"ลด ฿{p.DiscountValue:N0}";
+                return new CollectedPromoOptionViewModel
+                {
+                    VoucherCode = p.VoucherCode,
+                    Title = p.Name,
+                    BenefitLabel = $"{label} (ขั้นต่ำ ฿{p.MinimumSpend:N0})",
+                    IsApplied = !string.IsNullOrEmpty(appliedCode)
+                        && string.Equals(p.VoucherCode, appliedCode, StringComparison.OrdinalIgnoreCase)
+                };
+            }).ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(appliedCode) && rawItems.Any())
+        {
+            var promo = FindPromotionByVoucherCode(appliedCode);
+            var eval = PromoAndRedemptionHelper.EvaluateCartPromotion(promo, rawItems);
+            if (eval.IsValid)
+            {
+                viewModel.AppliedPromoCode = eval.VoucherCode;
+                viewModel.AppliedPromoName = eval.PromoName;
+                viewModel.PromoBenefitSummary = eval.BenefitSummary;
+                viewModel.DiscountAmount = eval.DiscountAmount;
+                viewModel.IsDoublePoints = eval.IsDoublePoints;
+            }
+            else
+            {
+                viewModel.AppliedPromoCode = appliedCode;
+                viewModel.PromoValidationError = eval.ErrorMessage;
+            }
+        }
+
         // ส่งเบอร์โทรศัพท์ผ่าน ViewBag เพื่อรองรับการทำงานร่วมกันกับ View
         ViewBag.UserPhone = viewModel.UserPhone;
 
         return View(viewModel);
     }
 
+    // ค้นหาโปรโมชั่นจากรหัสคูปอง (รองรับทั้งพิมพ์ตรงและไม่ใส่ขีด -)
+    private Promotion? FindPromotionByVoucherCode(string? voucherCode)
+    {
+        string normalized = PromoAndRedemptionHelper.NormalizeCode(voucherCode);
+        string noHyphen = PromoAndRedemptionHelper.NormalizeCodeNoHyphen(voucherCode);
+        if (string.IsNullOrEmpty(normalized)) return null;
+
+        return _db.Promotions.ToList().FirstOrDefault(p =>
+            p.VoucherCode.Equals(normalized, StringComparison.OrdinalIgnoreCase)
+            || (!string.IsNullOrEmpty(noHyphen) && PromoAndRedemptionHelper.NormalizeCodeNoHyphen(p.VoucherCode) == noHyphen));
+    }
+
+    // ACTION: กรอกหรือเลือกใช้รหัสโปรโมชั่นกับรายการสินค้าในตะกร้า (POST Method)
+    [HttpPost]
+    public IActionResult ApplyPromoCode(string? voucherCode)
+    {
+        var userId = GetCurrentCustomerId();
+        if (!userId.HasValue)
+        {
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนใช้งานรหัสโปรโมชั่น";
+            return RedirectToAction("Login", "Account");
+        }
+
+        string cleanCode = PromoAndRedemptionHelper.NormalizeCode(voucherCode);
+        if (string.IsNullOrEmpty(cleanCode))
+        {
+            TempData["ErrorMessage"] = "กรุณากรอกรหัสคูปองโปรโมชั่นก่อนกดใช้งาน";
+            return RedirectToAction("Cart");
+        }
+
+        var rawItems = _db.Cartitems
+            .Include(c => c.Product).ThenInclude(p => p.Category)
+            .Include(c => c.Product).ThenInclude(p => p.Inventory)
+            .Where(c => c.UserId == userId.Value)
+            .ToList();
+
+        if (!rawItems.Any())
+        {
+            TempData["ErrorMessage"] = "กรุณาเพิ่มสินค้าลงในตะกร้าก่อนใช้รหัสโปรโมชั่น";
+            return RedirectToAction("Cart");
+        }
+
+        var promo = FindPromotionByVoucherCode(cleanCode);
+        var eval = PromoAndRedemptionHelper.EvaluateCartPromotion(promo, rawItems);
+        if (!eval.IsValid || eval.Promotion == null)
+        {
+            TempData["ErrorMessage"] = eval.ErrorMessage ?? "ไม่สามารถใช้รหัสโปรโมชั่นนี้ได้";
+            return RedirectToAction("Cart");
+        }
+
+        HttpContext.Session.SetString(PromoAndRedemptionHelper.AppliedPromoSessionKey, eval.Promotion.VoucherCode);
+        TempData["SuccessMessage"] = $"ใช้คูปอง \"{eval.Promotion.VoucherCode}\" สำเร็จ ({eval.BenefitSummary})";
+        return RedirectToAction("Cart");
+    }
+
+    // ACTION: ยกเลิกการใช้รหัสโปรโมชั่นในตะกร้าสินค้า (POST Method)
+    [HttpPost]
+    public IActionResult RemovePromoCode()
+    {
+        HttpContext.Session.Remove(PromoAndRedemptionHelper.AppliedPromoSessionKey);
+        TempData["SuccessMessage"] = "ยกเลิกการใช้รหัสโปรโมชั่นในตะกร้าเรียบร้อยแล้ว";
+        return RedirectToAction("Cart");
+    }
+
     // Action สำหรับเพิ่มสินค้าลงในตะกร้าของสมาชิก (POST Method)
     [HttpPost]
-    // ฟังก์ชัน AddToCart รับ productId (รหัสสินค้า), quantity (จำนวนชิ้น) และ returnUrl (URL ย้อนกลับ)
-    public IActionResult AddToCart(int productId, int quantity = 1, string? returnUrl = null)
+    // ฟังก์ชัน AddToCart รับ productId (รหัสสินค้า), quantity (จำนวนชิ้น), returnUrl (URL ย้อนกลับ) และ goToCart (พาไปหน้าตะกร้าทันทีเมื่อกดซื้อตอนนี้)
+    public IActionResult AddToCart(int productId, int quantity = 1, string? returnUrl = null, bool goToCart = false)
     {
         // ขั้นตอนที่ 1: ดึงรหัสผู้ใช้งานปัจจุบันจาก Session เพื่อตรวจสอบสิทธิ์การเข้าสู่ระบบ
         var userId = GetCurrentCustomerId();
@@ -1206,10 +1397,14 @@ public class HomeController : Controller
         if (!userId.HasValue)
         {
             // กำหนดข้อความแจ้งเตือนให้ผู้ใช้งานเข้าสู่ระบบก่อน
-            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้า";
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนเพื่อเพิ่มสินค้าลงในตะกร้าและเลือกวันรับสินค้า";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบใน AccountController
             return RedirectToAction("Login", "Account");
         }
+
+        string? safeReturnUrl = (!goToCart && !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            ? returnUrl
+            : null;
 
         // ขั้นตอนที่ 2: แปลงรหัสสินค้าเพื่อรองรับรหัสข้อมูลดั้งเดิม (201-205 ให้แปลงเป็น 1-5)
         if (productId >= 201 && productId <= 205)
@@ -1229,7 +1424,7 @@ public class HomeController : Controller
             // กำหนดข้อความแจ้งเตือนกรณีไม่พบสินค้า
             TempData["ErrorMessage"] = "ไม่พบสินค้านี้ในระบบฐานข้อมูล";
             // สั่งเปลี่ยนเส้นทางกลับไปยังหน้ารายการสินค้า
-            return Redirect(returnUrl ?? Url.Action("Collection", "Home")!);
+            return Redirect(safeReturnUrl ?? Url.Action("Collection", "Home")!);
         }
 
         // ขั้นตอนที่ 3: คำนวณจำนวนสินค้าคงเหลือที่พร้อมให้สั่งจอง (QuantityOnHand ลบด้วย ReservedQuantity)
@@ -1240,7 +1435,7 @@ public class HomeController : Controller
             // กำหนดข้อความแจ้งเตือนกรณีสินค้าถูกจองเต็มจำนวนแล้ว
             TempData["ErrorMessage"] = "ขออภัย สินค้านี้ถูกจองเต็มจำนวนแล้ว (สินค้าหมดชั่วคราว)";
             // สั่งเปลี่ยนเส้นทางกลับไปยังหน้ารายการสินค้า
-            return Redirect(returnUrl ?? Url.Action("Collection", "Home")!);
+            return Redirect(safeReturnUrl ?? Url.Action("Collection", "Home")!);
         }
 
         // ขั้นตอนที่ 4: ค้นหาว่าผู้ใช้งานคนนี้มีสินค้านี้อยู่ในตะกร้าแล้วหรือไม่
@@ -1256,7 +1451,7 @@ public class HomeController : Controller
             // กำหนดข้อความแจ้งเตือนระบุจำนวนคงเหลือจริง และจำนวนที่มีในตะกร้าแล้ว
             TempData["ErrorMessage"] = $"สินค้าคงเหลือพร้อมให้สั่งจองมีเพียง {availableQty} ชิ้น (ในตะกร้ามีแล้ว {currentInCart} ชิ้น)";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าตะกร้าสินค้า
-            return Redirect(returnUrl ?? Url.Action("Cart", "Home")!);
+            return Redirect(safeReturnUrl ?? Url.Action("Cart", "Home")!);
         }
 
         // ขั้นตอนที่ 5: ตรวจสอบเพื่อเพิ่มหรือสร้างรายการสินค้าในตะกร้า
@@ -1285,9 +1480,11 @@ public class HomeController : Controller
         _db.SaveChanges();
 
         // กำหนดข้อความแจ้งเตือนผลสำเร็จระบุชื่อสินค้า
-        TempData["SuccessMessage"] = $"เพิ่ม \"{product.Name}\" ลงในตะกร้าเรียบร้อยแล้ว";
-        // สั่งเปลี่ยนเส้นทางไปยังหน้าตะกร้าสินค้าเพื่อดูสรุปรายการ
-        return Redirect(returnUrl ?? Url.Action("Cart", "Home")!);
+        TempData["SuccessMessage"] = goToCart
+            ? $"เพิ่ม \"{product.Name}\" ลงในตะกร้าแล้ว กรุณาเลือกวันที่รับสินค้าและตรวจสอบเบอร์โทรศัพท์เพื่อยืนยันคำสั่งซื้อ"
+            : $"เพิ่ม \"{product.Name}\" ลงในตะกร้าเรียบร้อยแล้ว";
+        // หากกด "ซื้อตอนนี้" ให้พาไปหน้าตะกร้าทันที ส่วนปุ่ม "ตะกร้า" ให้กลับไปยังหน้าเดิม
+        return Redirect(safeReturnUrl ?? Url.Action("Cart", "Home")!);
     }
 
     // Action สำหรับปรับปรุงจำนวนสินค้าในตะกร้า (POST Method)
@@ -1386,10 +1583,41 @@ public class HomeController : Controller
         return RedirectToAction("Cart");
     }
 
+    // ฟังก์ชันกลางตรวจสอบความถูกต้องของวันที่รับสินค้า (ใช้ร่วมกันระหว่างตะกร้าสินค้าและการสั่งซื้อโดยตรง)
+    private static bool TryResolvePickupDate(string? pickupDate, out DateOnly resolvedDate, out string? errorMessage)
+    {
+        resolvedDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7));
+        errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(pickupDate))
+        {
+            errorMessage = "กรุณาเลือกวันที่สะดวกเข้ารับสินค้าที่หน้าร้าน";
+            return false;
+        }
+
+        if (!DateOnly.TryParseExact(pickupDate.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsedDate)
+            && !DateOnly.TryParse(pickupDate.Trim(), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out parsedDate))
+        {
+            errorMessage = "รูปแบบวันที่รับสินค้าไม่ถูกต้อง กรุณาเลือกใหม่อีกครั้ง";
+            return false;
+        }
+
+        // ใช้ปี ค.ศ. จากปฏิทินสากลเปรียบเทียบเสมอ (ป้องกันระบบแปลง พ.ศ. 2569 ผิดพลาด)
+        var todayGregorian = new DateOnly(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+        if (parsedDate < todayGregorian)
+        {
+            errorMessage = "ไม่สามารถเลือกวันที่ย้อนหลังได้ กรุณาเลือกวันปัจจุบันเป็นต้นไป";
+            return false;
+        }
+
+        resolvedDate = parsedDate;
+        return true;
+    }
+
     // Action ยืนยันการสั่งจองพรีออเดอร์จากตะกร้าสินค้า (POST Method)
     [HttpPost]
-    // ฟังก์ชัน ConfirmPreorder รับเบอร์โทรติดต่อและสาขาที่ต้องการรับสินค้า
-    public IActionResult ConfirmPreorder(string? contactPhone, string? pickupBranch)
+    // ฟังก์ชัน ConfirmPreorder รับเบอร์โทรติดต่อ สาขาที่ต้องการรับ วันที่สะดวกเข้ารับสินค้า และรหัสคูปอง (ถ้ามี)
+    public IActionResult ConfirmPreorder(string? contactPhone, string? pickupBranch, string? pickupDate, string? voucherCode = null)
     {
         // ขั้นตอนที่ 1: ดึงรหัสลูกค้าปัจจุบันจาก Session
         var userId = GetCurrentCustomerId();
@@ -1402,14 +1630,25 @@ public class HomeController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // ตรวจสอบความถูกต้องของวันที่นัดรับสินค้าที่ลูกค้าเลือกจากหน้าตะกร้า
+        if (!TryResolvePickupDate(pickupDate, out DateOnly estPickupDate, out string? dateError))
+        {
+            TempData["ErrorMessage"] = dateError;
+            return RedirectToAction("Cart");
+        }
+
         // เริ่มต้นฐานข้อมูล Transaction เพื่อรองรับความปลอดภัยของสต็อกและป้องกัน Race Condition
         using var transaction = _db.Database.BeginTransaction();
         try
         {
             // ค้นหาข้อมูลผู้ใช้งานในตาราง Users
             var user = _db.Users.FirstOrDefault(u => u.UserId == userId.Value);
-            // ดึงรายการสินค้าทั้งหมดในตะกร้าของผู้ใช้คนนี้พร้อมข้อมูลสินค้า Product
-            var cartItems = _db.Cartitems.Include(c => c.Product).Where(c => c.UserId == userId.Value).ToList();
+            // ดึงรายการสินค้าทั้งหมดในตะกร้าของผู้ใช้คนนี้พร้อมข้อมูลสินค้า หมวดหมู่ และสต็อก
+            var cartItems = _db.Cartitems
+                .Include(c => c.Product).ThenInclude(p => p.Category)
+                .Include(c => c.Product).ThenInclude(p => p.Inventory)
+                .Where(c => c.UserId == userId.Value)
+                .ToList();
 
             // ตรวจสอบว่าในตะกร้ามีรายการสินค้าหรือไม่
             if (!cartItems.Any())
@@ -1439,10 +1678,35 @@ public class HomeController : Controller
                 }
             }
 
-            // คำนวณยอดเงินรวมทั้งหมดของสินค้าในตะกร้า
-            decimal total = cartItems.Sum(c => c.Product.RetailPrice * c.Quantity);
+            // คำนวณยอดเงินรวมทั้งหมดของสินค้าในตะกร้าก่อนส่วนลดและตรวจสอบรหัสโปรโมชั่นจริง
+            decimal originalSubtotal = cartItems.Sum(c => c.Product.RetailPrice * c.Quantity);
+            decimal discountAmount = 0m;
+            PromoEvaluationResult? appliedEval = null;
+
+            string? effectivePromoCode = !string.IsNullOrWhiteSpace(voucherCode)
+                ? voucherCode
+                : HttpContext.Session.GetString(PromoAndRedemptionHelper.AppliedPromoSessionKey);
+
+            if (!string.IsNullOrWhiteSpace(effectivePromoCode))
+            {
+                var promo = FindPromotionByVoucherCode(effectivePromoCode);
+                appliedEval = PromoAndRedemptionHelper.EvaluateCartPromotion(promo, cartItems);
+                if (!appliedEval.IsValid || appliedEval.Promotion == null)
+                {
+                    transaction.Rollback();
+                    TempData["ErrorMessage"] = appliedEval.ErrorMessage ?? "ไม่สามารถใช้รหัสโปรโมชั่นได้ กรุณาตรวจสอบอีกครั้ง";
+                    return RedirectToAction("Cart");
+                }
+                discountAmount = appliedEval.DiscountAmount;
+                appliedEval.Promotion.CurrentUsageCount += 1;
+            }
+
+            decimal total = Math.Max(0m, originalSubtotal - discountAmount);
             // สร้างรหัสใบสั่งจองพรีออเดอร์รูปแบบ PO-2026-XXXX
             var reservationNo = "PO-2026-" + new Random().Next(1000, 9999);
+            string resolvedPhone = !string.IsNullOrWhiteSpace(contactPhone)
+                ? contactPhone.Trim()
+                : (user?.Phone ?? "081-234-5678");
 
             // สร้างอ็อบเจกต์คำสั่งจอง Preorder ใหม่
             var preorder = new Preorder
@@ -1451,10 +1715,10 @@ public class HomeController : Controller
                 ReservationNumber = reservationNo,
                 // กำหนดรหัสลูกค้าผู้สั่งจอง
                 UserId = userId.Value,
-                // กำหนดเบอร์โทรติดต่อ (หากไม่กรอกให้ใช้เบอร์จากตารางผู้ใช้)
-                ContactPhone = contactPhone ?? user?.Phone ?? "081-234-5678",
-                // กำหนดวันนัดรับสินค้าล่วงหน้า 7 วัน
-                EstimatedPickupDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7)),
+                // กำหนดเบอร์โทรติดต่อ (ใช้ค่าที่กรอกหรือเบอร์สมาชิกที่ Auto-fill)
+                ContactPhone = resolvedPhone,
+                // กำหนดวันนัดรับสินค้าตามวันที่ลูกค้าเลือกจริงในหน้าตะกร้า
+                EstimatedPickupDate = estPickupDate,
                 // กำหนดสถานะเริ่มต้นเป็น พร้อมรับสินค้าที่ร้าน (ReadyForPickup)
                 CurrentStatus = "ReadyForPickup",
                 // กำหนดยอดเงินสุทธิรวม
@@ -1492,6 +1756,33 @@ public class HomeController : Controller
                 inv.ReservedQuantity += item.Quantity;
             }
 
+            if (appliedEval != null && appliedEval.Promotion != null)
+            {
+                var promoPayload = new PreorderPromoPayload
+                {
+                    ReservationNumber = reservationNo,
+                    VoucherCode = appliedEval.VoucherCode,
+                    PromoName = appliedEval.PromoName,
+                    PromoType = appliedEval.PromoType,
+                    OriginalSubtotal = originalSubtotal,
+                    DiscountAmount = discountAmount,
+                    IsDoublePoints = appliedEval.IsDoublePoints
+                };
+                string logCode = $"PRM-{reservationNo}-{Random.Shared.Next(100, 999)}";
+                if (logCode.Length > 30) logCode = logCode[..30];
+
+                _db.Systemlogs.Add(new Systemlog
+                {
+                    LogCode = logCode,
+                    LogLevel = "INFO",
+                    Module = "preorder.promo",
+                    Message = $"ใช้รหัสโปรโมชั่น {appliedEval.VoucherCode} กับใบจอง #{reservationNo} ({appliedEval.BenefitSummary})",
+                    DetailPayload = JsonSerializer.Serialize(promoPayload),
+                    UserId = userId.Value,
+                    Timestamp = DateTime.Now
+                });
+            }
+
             // ลบรายการสินค้าออกจากตะกร้าเมื่อสั่งจองสำเร็จ
             _db.Cartitems.RemoveRange(cartItems);
             // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
@@ -1500,8 +1791,14 @@ public class HomeController : Controller
             // ยืนยันคำสั่งทั้งหมดใน Transaction (Commit) เมื่อทำงานครบทุกขั้นตอน
             transaction.Commit();
 
+            HttpContext.Session.Remove(PromoAndRedemptionHelper.AppliedPromoSessionKey);
+
+            string promoSuccessSuffix = appliedEval != null
+                ? $" (ใช้โค้ด {appliedEval.VoucherCode}: {appliedEval.BenefitSummary})"
+                : string.Empty;
+
             // แจ้งเตือนข้อความสำเร็จพร้อมหมายเลขใบจองผ่าน TempData
-            TempData["SuccessMessage"] = $"บันทึกคำสั่งจองพรีออเดอร์ #{reservationNo} เรียบร้อยแล้ว สามารถมารับสินค้าได้ที่หน้าร้าน";
+            TempData["SuccessMessage"] = $"บันทึกคำสั่งจองพรีออเดอร์ #{reservationNo} เรียบร้อยแล้ว{promoSuccessSuffix} สามารถมารับสินค้าได้ที่หน้าร้าน";
             // เปลี่ยนเส้นทางไปยังหน้าแสดงสถานะคำสั่งจองของลูกค้า
             return RedirectToAction("PreorderStatus");
         }
@@ -1582,23 +1879,16 @@ public class HomeController : Controller
             // คำนวณยอดเงินรวมสุทธิ
             decimal totalPrice = product.RetailPrice * qty;
 
-            // กำหนดวันนัดรับสินค้าเริ่มต้นเป็น 7 วันนับจากวันนี้
+            // กำหนดวันนัดรับสินค้าโดยใช้ฟังก์ชันกลางตรวจสอบวันที่ (หากไม่ได้ระบุให้ค่าเริ่มต้นเป็น 7 วัน)
             DateOnly estDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7));
-            // ตรวจสอบว่าผู้ใช้เลือกวันที่นัดรับสินค้ามาหรือไม่
-            if (!string.IsNullOrEmpty(pickupDate) && DateOnly.TryParse(pickupDate, out var parsedDate))
+            if (!string.IsNullOrWhiteSpace(pickupDate))
             {
-                // ตรวจสอบเงื่อนไขว่าห้ามเลือกวันที่ย้อนหลังจากวันปัจจุบัน
-                if (parsedDate < DateOnly.FromDateTime(DateTime.Today))
+                if (!TryResolvePickupDate(pickupDate, out estDate, out string? dateError))
                 {
-                    // ยกเลิก Transaction
                     transaction.Rollback();
-                    // กำหนดข้อความแจ้งเตือนห้ามเลือกวันที่ย้อนหลัง
-                    TempData["ErrorMessage"] = "ไม่สามารถเลือกวันที่ย้อนหลังได้ กรุณาเลือกวันปัจจุบันเป็นต้นไป";
-                    // เปลี่ยนเส้นทางกลับหน้ารายละเอียดสินค้าเดิม
+                    TempData["ErrorMessage"] = dateError;
                     return RedirectToAction("ProductDetail", new { id = product.ProductId });
                 }
-                // กำหนดวันที่นัดรับสินค้าตามที่ลูกค้าเลือก
-                estDate = parsedDate;
             }
 
             // สร้างอ็อบเจกต์ Preorder สำหรับบันทึกคำสั่งจอง
@@ -1816,7 +2106,10 @@ public class HomeController : Controller
         // เพิ่มข้อมูล Preorder ดั้งเดิมเพื่อให้เข้ากันได้แบบ IEnumerable<Preorder>
         viewModel.AddRange(rawPreorders);
 
-        // ขั้นตอนที่ 3: แปลงแต่ละใบสั่งจองเป็น PreorderSummaryViewModel พร้อมขั้นตอนการติดตาม
+        // ขั้นตอนที่ 3: แปลงแต่ละใบสั่งจองเป็น PreorderSummaryViewModel พร้อมขั้นตอนการติดตาม (ดึง promoMap เพียงครั้งเดียว)
+        var promoLogs = _db.Systemlogs.Where(l => l.Module == "preorder.promo").ToList();
+        var promoMap = PromoAndRedemptionHelper.BuildPreorderPromoMap(promoLogs);
+
         foreach (var po in rawPreorders)
         {
             string statusBadgeText = "รอดำเนินการ";
@@ -1848,6 +2141,8 @@ public class HomeController : Controller
                 steps.Add(new PreorderTrackingStepViewModel { StepNumber = 2, Title = "ไม่รับสินค้า / ยกเลิก", Description = "ยกเลิกคำสั่งจอง", IsCompleted = false, IsCurrent = false });
             }
 
+            promoMap.TryGetValue(po.ReservationNumber, out var promoMeta);
+
             var summary = new PreorderSummaryViewModel
             {
                 PreorderId = po.PreorderId,
@@ -1863,6 +2158,10 @@ public class HomeController : Controller
                 EstimatedPickupDate = po.EstimatedPickupDate,
                 EstimatedPickupDateFormatted = po.EstimatedPickupDate.ToString("dd MMMM yyyy"),
                 TotalFinalPrice = po.TotalFinalPrice,
+                AppliedPromoCode = promoMeta?.VoucherCode,
+                DiscountAmount = promoMeta?.DiscountAmount ?? 0m,
+                OriginalSubtotal = promoMeta?.OriginalSubtotal ?? po.TotalFinalPrice,
+                IsDoublePoints = promoMeta?.IsDoublePoints ?? false,
                 Steps = steps,
                 Items = po.Preorderitems.Select(pi => new PreorderItemDetailViewModel
                 {
@@ -1878,7 +2177,93 @@ public class HomeController : Controller
             viewModel.Preorders.Add(summary);
         }
 
+        // ขั้นตอนที่ 4: ดึงรายการจองแลกของรางวัลด้วยแต้มสะสมของสมาชิก (RWD-...) เพื่อแสดงรวมเป็นรายการจองของลูกค้า
+        var rewardLogs = _db.Systemlogs.Where(l => l.Module == "reward.redeem").ToList();
+        var rewardMetaMap = PromoAndRedemptionHelper.BuildRedemptionMetaMap(rewardLogs);
+
+        var rawRedemptions = userId.HasValue
+            ? _db.Rewardredemptions
+                .Include(r => r.Reward)
+                .Include(r => r.User)
+                .Where(r => r.UserId == userId.Value)
+                .OrderByDescending(r => r.RedeemedAt)
+                .ToList()
+            : _db.Rewardredemptions
+                .Include(r => r.Reward)
+                .Include(r => r.User)
+                .OrderByDescending(r => r.RedeemedAt)
+                .Take(3)
+                .ToList();
+
+        // กรองรายการแลกของรางวัลตามคำค้นหา (รองรับค้นหารหัส RWD แบบไม่ใส่ขีด เบอร์โทรที่ระบุตอนแลก/บัญชี และชื่อของรางวัล)
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            string term = searchTerm.Trim().ToLower();
+            string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+            rawRedemptions = rawRedemptions.Where(r =>
+            {
+                string codeLower = (r.RedemptionCode ?? "").ToLower();
+                string codeNoHyphen = codeLower.Replace("-", "").Replace("#", "").Replace(" ", "");
+                string accountPhone = PromoAndRedemptionHelper.NormalizePhoneDigits(r.User?.Phone);
+                rewardMetaMap.TryGetValue(r.RedemptionCode ?? "", out var rMeta);
+                string metaPhone = PromoAndRedemptionHelper.NormalizePhoneDigits(rMeta?.ContactPhone);
+                string rewardTitle = (r.Reward?.Title ?? "").ToLower();
+
+                return codeLower.Contains(term)
+                    || (!string.IsNullOrEmpty(termNoHyphen) && codeNoHyphen.Contains(termNoHyphen))
+                    || (!string.IsNullOrEmpty(termNoHyphen) && accountPhone.Contains(termNoHyphen))
+                    || (!string.IsNullOrEmpty(termNoHyphen) && metaPhone.Contains(termNoHyphen))
+                    || rewardTitle.Contains(term);
+            }).ToList();
+        }
+
+        // กรองรายการแลกของรางวัลตามตัวกรองสถานะให้สอดคล้องกับใบจองพรีออเดอร์
+        if (!string.IsNullOrWhiteSpace(statusFilter) && statusFilter != "all")
+        {
+            rawRedemptions = statusFilter switch
+            {
+                "active" => rawRedemptions.Where(r => r.Status == "PendingPickup").ToList(),
+                "completed" => rawRedemptions.Where(r => r.Status == "Completed").ToList(),
+                "cancelled" => rawRedemptions.Where(r => r.Status == "Cancelled").ToList(),
+                _ => rawRedemptions
+            };
+        }
+
+        viewModel.Redemptions = MapRedemptionsToViewModels(rawRedemptions, rewardMetaMap);
+
         return View(viewModel);
+    }
+
+    // ฟังก์ชันช่วยแปลงรายการ Rewardredemption จากฐานข้อมูลเป็น ViewModel (ใช้ร่วมกันทั้งหน้า PreorderStatus และ Rewards)
+    private static List<RewardRedemptionViewModel> MapRedemptionsToViewModels(
+        IEnumerable<Rewardredemption> items,
+        IReadOnlyDictionary<string, RedemptionMetaPayload>? metaMap = null)
+    {
+        return items.Select(red =>
+        {
+            RedemptionMetaPayload? meta = null;
+            if (metaMap != null && !string.IsNullOrEmpty(red.RedemptionCode))
+            {
+                metaMap.TryGetValue(red.RedemptionCode, out meta);
+            }
+
+            return new RewardRedemptionViewModel
+            {
+                RedemptionId = red.RedemptionId,
+                RedemptionCode = red.RedemptionCode,
+                RewardId = red.RewardId,
+                RewardTitle = red.Reward?.Title ?? "ของรางวัลพรีเมียม",
+                RewardBrand = red.Reward?.Brand ?? "FriendHouse Exclusive",
+                ImageUrl = !string.IsNullOrEmpty(red.Reward?.ImageUrl) ? red.Reward.ImageUrl : "~/media/images/naruto_hero_fig.png",
+                PointsSpent = red.PointsSpent,
+                Status = red.Status,
+                RedeemedAt = red.RedeemedAt,
+                RedeemedAtFormatted = red.RedeemedAt.ToString("dd MMM yyyy HH:mm น."),
+                CompletedAtFormatted = red.CompletedAt?.ToString("dd MMM yyyy HH:mm น."),
+                PickupDateFormatted = meta != null ? PromoAndRedemptionHelper.FormatPickupDateThai(meta.PickupDate) : null,
+                ContactPhone = meta?.ContactPhone ?? red.User?.Phone
+            };
+        }).ToList();
     }
 
     // DELETE/UPDATE: ยกเลิกคำสั่งจองพรีออเดอร์ของสมาชิกและคืนสต็อกสำรอง (POST Method)
@@ -1947,6 +2332,7 @@ public class HomeController : Controller
         // ขั้นตอนที่ 1: ดึงรหัสสมาชิกปัจจุบันจาก Session
         var userId = GetCurrentCustomerId();
         int userPoints = 0;
+        string userPhone = string.Empty;
         var userRedemptions = new List<RewardRedemptionViewModel>();
         bool isLoggedIn = userId.HasValue;
 
@@ -1957,25 +2343,20 @@ public class HomeController : Controller
             if (user != null)
             {
                 userPoints = user.Points;
+                userPhone = user.Phone ?? string.Empty;
             }
+
+            var rewardLogs = _db.Systemlogs.Where(l => l.Module == "reward.redeem").ToList();
+            var rewardMetaMap = PromoAndRedemptionHelper.BuildRedemptionMetaMap(rewardLogs);
 
             var rawRedemptions = _db.Rewardredemptions
                 .Include(r => r.Reward)
+                .Include(r => r.User)
                 .Where(r => r.UserId == userId.Value)
                 .OrderByDescending(r => r.RedeemedAt)
                 .ToList();
 
-            userRedemptions = rawRedemptions.Select(red => new RewardRedemptionViewModel
-            {
-                RedemptionId = red.RedemptionId,
-                RedemptionCode = red.RedemptionCode,
-                RewardId = red.RewardId,
-                RewardTitle = red.Reward?.Title ?? "ของรางวัลพรีเมียม",
-                PointsSpent = red.PointsSpent,
-                Status = red.Status,
-                RedeemedAt = red.RedeemedAt,
-                RedeemedAtFormatted = red.RedeemedAt.ToString("dd MMM yyyy HH:mm น.")
-            }).ToList();
+            userRedemptions = MapRedemptionsToViewModels(rawRedemptions, rewardMetaMap);
         }
 
         // ขั้นตอนที่ 3: ดึงรายการของรางวัลที่พร้อมให้แลกจากฐานข้อมูล
@@ -2003,6 +2384,7 @@ public class HomeController : Controller
         var viewModel = new RewardsCatalogViewModel
         {
             IsLoggedIn = isLoggedIn,
+            UserPhone = userPhone,
             UserPoints = userPoints,
             Rewards = rewardItems,
             UserRedemptions = userRedemptions
@@ -2025,8 +2407,8 @@ public class HomeController : Controller
     // =========================================================================
     // รองรับการส่งคำขอแลกรางวัลผ่านฟอร์ม POST
     [HttpPost]
-    // ฟังก์ชันดำเนินการแลกของรางวัลโดยรับค่ารหัสของรางวัล rewardId
-    public IActionResult RedeemReward(int rewardId)
+    // ฟังก์ชันดำเนินการแลกของรางวัลโดยรับค่ารหัสของรางวัล วันที่สะดวกรับของ และเบอร์โทรติดต่อ
+    public IActionResult RedeemReward(int rewardId, string? pickupDate = null, string? contactPhone = null, string? voucherCode = null)
     {
         // ดึงรหัสสมาชิกปัจจุบันจากเซสชันล็อกอิน
         var userId = GetCurrentCustomerId();
@@ -2037,6 +2419,20 @@ public class HomeController : Controller
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนทำการแลกของรางวัล";
             // สั่งเปลี่ยนเส้นทางไปยังหน้าลงชื่อเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
+        }
+
+        // ป้องกันการใช้รหัสโปรโมชั่นร่วมกับการแลกของรางวัลด้วยแต้มสะสม
+        if (!string.IsNullOrWhiteSpace(voucherCode))
+        {
+            TempData["ErrorMessage"] = "รหัสคูปองโปรโมชั่นสามารถใช้กับสินค้าในตะกร้าเท่านั้น ไม่สามารถใช้กับการแลกของรางวัลด้วยแต้มสะสมได้";
+            return RedirectToAction("Rewards");
+        }
+
+        // ตรวจสอบวันที่สะดวกมารับของรางวัลที่ลูกค้าเลือก
+        if (!TryResolvePickupDate(pickupDate, out DateOnly estPickupDate, out string? dateError))
+        {
+            TempData["ErrorMessage"] = dateError ?? "กรุณาระบุวันที่สะดวกเข้ารับของรางวัล";
+            return RedirectToAction("Rewards");
         }
 
         // ค้นหาข้อมูลสมาชิกในตาราง Users ด้วยรหัสสมาชิก
@@ -2053,8 +2449,17 @@ public class HomeController : Controller
             return RedirectToAction("Rewards");
         }
 
-        // ตรวจสอบว่าสถานะของรางวัลถูกปิดให้บริการหรือไม่
-        if (reward.IsAvailable == false)
+        string resolvedPhone = !string.IsNullOrWhiteSpace(contactPhone)
+            ? contactPhone.Trim()
+            : (user.Phone ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(resolvedPhone))
+        {
+            TempData["ErrorMessage"] = "กรุณาระบุเบอร์โทรศัพท์สำหรับติดต่อแจ้งรับของรางวัล";
+            return RedirectToAction("Rewards");
+        }
+
+        // ตรวจสอบว่าสถานะของรางวัลถูกปิดให้บริการหรือสต็อกหมดหรือไม่
+        if (reward.IsAvailable == false || reward.StockQuantity <= 0)
         {
             // บันทึกข้อความแจ้งเตือนว่าสินค้าหมด
             TempData["ErrorMessage"] = "ขออภัย ของรางวัลชิ้นนี้หมดสต็อกชั่วคราว";
@@ -2071,15 +2476,16 @@ public class HomeController : Controller
             return RedirectToAction("Rewards");
         }
 
-        // หักแต้มสะสมของสมาชิกตามจำนวนแต้มที่รางวัลต้องการ
+        // หักแต้มสะสมของสมาชิกตามจำนวนแต้มที่รางวัลต้องการ และจองสต็อกของรางวัลไว้ 1 ชิ้นทันที
         user.Points -= reward.PointsRequired;
+        reward.StockQuantity = Math.Max(0, reward.StockQuantity - 1);
 
         // สุ่มตัวเลข 6 หลักเพื่อใช้สร้างรหัสรับของรางวัล
         int randomSuffix = new Random().Next(100000, 999999);
         // ประกอบรหัสรับของรางวัลในรูปแบบ RWD-XXXXXX
         string redemptionCode = "RWD-" + randomSuffix;
 
-        // สร้างออบเจกต์บันทึกการแลกของรางวัลใหม่
+        // สร้างออบเจกต์บันทึกการจองแลกของรางวัลใหม่
         var redemption = new Rewardredemption
         {
             // กำหนดรหัสรับของรางวัลที่สุ่มขึ้นมา
@@ -2097,13 +2503,92 @@ public class HomeController : Controller
         };
         // เพิ่มข้อมูลการแลกของรางวัลลงใน DbSet ของ Context
         _db.Rewardredemptions.Add(redemption);
+
+        var metaPayload = new RedemptionMetaPayload
+        {
+            RedemptionCode = redemptionCode,
+            PickupDate = estPickupDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+            ContactPhone = resolvedPhone
+        };
+        string pickupThai = estPickupDate.ToString("d MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("th-TH"));
+
+        // บันทึกประวัติการจองแลกของรางวัล พร้อมวันนัดรับและเบอร์ติดต่อลงตาราง Systemlogs
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = $"RWD-{randomSuffix}-{Random.Shared.Next(100, 999)}",
+            LogLevel = "INFO",
+            Module = "reward.redeem",
+            Message = $"สมาชิก {user.FullName ?? user.Email} จองแลกของรางวัล \"{reward.Title}\" รหัส #{redemptionCode} ใช้ {reward.PointsRequired:N0} แต้ม (นัดรับ: {pickupThai} · โทร: {resolvedPhone})",
+            DetailPayload = JsonSerializer.Serialize(metaPayload),
+            UserId = user.UserId,
+            Timestamp = DateTime.Now
+        });
+
         // บันทึกการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล MySQL
         _db.SaveChanges();
 
-        // บันทึกข้อความแจ้งเตือนสีเขียวพร้อมรหัสรับของรางวัลลง TempData
-        TempData["SuccessMessage"] = $"แลกของรางวัล \"{reward.Title}\" สำเร็จ! รหัสรับของรางวัลคือ {redemptionCode} (นำรหัสนี้ไปแจ้งพนักงานที่เคาน์เตอร์หน้าร้าน)";
+        // บันทึกข้อความแจ้งเตือนสีเขียวพร้อมรหัสรับของรางวัลและวันนัดรับลง TempData
+        TempData["SuccessMessage"] = $"จองแลกของรางวัล \"{reward.Title}\" สำเร็จ! รหัสรับของรางวัลคือ {redemptionCode} (นัดรับ {pickupThai} · โทร {resolvedPhone})";
         // สั่งเปลี่ยนเส้นทางกลับไปยังหน้ารายการของรางวัล
         return RedirectToAction("Rewards");
+    }
+
+    // DELETE/UPDATE: ยกเลิกการจองแลกของรางวัลของสมาชิก พร้อมคืนแต้มสะสมและคืนสต็อกของรางวัล (POST Method)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult CancelRedemption(long redemptionId, string? returnAction)
+    {
+        var userId = GetCurrentCustomerId();
+        string targetAction = returnAction == "Rewards" ? "Rewards" : "PreorderStatus";
+
+        if (!userId.HasValue)
+        {
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนดำเนินการยกเลิกการแลกของรางวัล";
+            return RedirectToAction("Login", "Account");
+        }
+
+        var redemption = _db.Rewardredemptions
+            .Include(r => r.Reward)
+            .Include(r => r.User)
+            .FirstOrDefault(r => r.RedemptionId == redemptionId && r.UserId == userId.Value);
+
+        if (redemption == null)
+        {
+            TempData["ErrorMessage"] = "ไม่พบรายการจองแลกของรางวัลที่คุณต้องการยกเลิก";
+            return RedirectToAction(targetAction);
+        }
+
+        if (redemption.Status != "PendingPickup")
+        {
+            TempData["ErrorMessage"] = $"ไม่สามารถยกเลิกรายการ #{redemption.RedemptionCode} ได้ เนื่องจากดำเนินการเสร็จสิ้นหรือยกเลิกไปแล้ว";
+            return RedirectToAction(targetAction);
+        }
+
+        // ปรับสถานะเป็นยกเลิก พร้อมคืนแต้มให้สมาชิกและคืนสต็อกของรางวัล
+        redemption.Status = "Cancelled";
+        if (redemption.User != null)
+        {
+            redemption.User.Points += redemption.PointsSpent;
+        }
+        if (redemption.Reward != null)
+        {
+            redemption.Reward.StockQuantity += 1;
+        }
+
+        _db.Systemlogs.Add(new Systemlog
+        {
+            LogCode = "RWD-CANCEL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogLevel = "INFO",
+            Module = "reward.cancel",
+            Message = $"สมาชิกยกเลิกการจองแลกของรางวัล #{redemption.RedemptionCode} ({redemption.Reward?.Title}) คืน {redemption.PointsSpent:N0} แต้ม และคืนสต็อกของรางวัลแล้ว",
+            UserId = userId.Value,
+            Timestamp = DateTime.Now
+        });
+
+        _db.SaveChanges();
+
+        TempData["SuccessMessage"] = $"ยกเลิกการจองแลกของรางวัล #{redemption.RedemptionCode} สำเร็จ ระบบคืน {redemption.PointsSpent:N0} แต้มสะสมและคืนสิทธิ์สต็อกให้เรียบร้อยแล้ว";
+        return RedirectToAction(targetAction);
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
