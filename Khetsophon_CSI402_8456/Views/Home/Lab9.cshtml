@@ -24,45 +24,62 @@
     };
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="max-w-xl mx-auto">
         <!-- การ์ดส่วนหัวแบบฟอร์ม -->
         <div class="mb-6 flex items-center justify-between">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-action="Lab9_1" asp-controller="Home" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-accent transition-colors">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="@pageConfig.Icons.Back"></path>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>@pageConfig.Labels.BackBtn</span>
             </a>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                 ปฏิบัติการที่ 9 : สร้างข้อมูล
             </span>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <!-- หัวข้อการ์ด -->
             <div class="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-r from-primary/5 via-white to-secondary/10">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-4">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-md">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="@pageConfig.Icons.Name"></path>
                         </svg>
                     </div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
+                        @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                         <h1 class="text-xl sm:text-2xl font-bold text-text">@pageConfig.Title</h1>
+                        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                         <p class="text-xs sm:text-sm text-slate-500 mt-1">@pageConfig.Subtitle</p>
                     </div>
                 </div>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="p-6 sm:p-8 space-y-6">
                 <!-- กล่องข้อความแจ้งเตือนสถานะ -->
                 @if (ViewBag.Status != null)
                 {
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="rounded-xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-rose-700 text-sm">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="w-5 h-5 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="@pageConfig.Icons.Alert"></path>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="font-medium">@ViewBag.Status</span>
                     </div>
                 }
@@ -71,50 +88,68 @@
                 <form class="space-y-5" asp-action="Lab9" asp-controller="Home">
                     <!-- รหัสนักศึกษา -->
                     <div>
+                        @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdId</label>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="relative">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="@pageConfig.Icons.Id"></path>
                                 </svg>
                             </div>
+                            @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="text" asp-for="StdId" placeholder="เช่น 6401001" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm text-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                         </div>
                     </div>
 
                     <!-- รหัสผ่าน -->
                     <div>
+                        @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdPassword</label>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="relative">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="@pageConfig.Icons.Lock"></path>
                                 </svg>
                             </div>
+                            @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="password" asp-for="StdPassword" placeholder="กำหนดรหัสผ่าน" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-sm text-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                         </div>
                     </div>
 
+                    @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- ชื่อ -->
                         <div>
+                            @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                             <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdName</label>
+                            @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="text" asp-for="StdName" placeholder="ชื่อจริง" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm text-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                         </div>
 
                         <!-- นามสกุล -->
                         <div>
+                            @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                             <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdLastname</label>
+                            @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="text" asp-for="StdLastname" placeholder="นามสกุล" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm text-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                         </div>
                     </div>
 
                     <!-- ปุ่มส่งข้อมูล -->
                     <div class="pt-3">
+                        @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-accent focus:outline-none focus:ring-4 focus:ring-primary/20 shadow-md hover:shadow-lg transition-all cursor-pointer">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="@pageConfig.Icons.Save"></path>
                             </svg>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span>@pageConfig.Labels.SubmitBtn</span>
                         </button>
                     </div>

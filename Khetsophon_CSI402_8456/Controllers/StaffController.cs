@@ -32,8 +32,8 @@ public class StaffController : Controller
         return role != null && (role.ToLower() == "staff" || role.ToLower() == "owner" || role.ToLower() == "itsupport");
     }
 
-    // Action แสดงรายการสต็อกสินค้าและค้นหาใบจองเบื้องต้นสำหรับพนักงาน พร้อมระบบแบ่งหน้า (GET Method)
-    public IActionResult Index(CounterPreorderViewModel? data, int page = 1, bool? openReceive = null)
+    // Action แสดงรายการสต็อกสินค้าและค้นหาใบจองเบื้องต้นสำหรับพนักงาน พร้อมระบบค้นหา กรอง และแบ่งหน้า (GET Method)
+    public IActionResult Index(CounterPreorderViewModel? data, int page = 1, bool? openReceive = null, string? stockFilter = null, string? search = null, string? category = null)
     {
         // ตรวจสอบสิทธิ์ว่าผู้ใช้ล็อกอินเป็นพนักงานหรือไม่
         if (!IsAuthorizedStaff())
@@ -62,14 +62,94 @@ public class StaffController : Controller
             // แปลงผลลัพธ์เป็น List รายการสินค้า
             .ToList();
 
-        // คำนวณยอดสรุปสต็อกสินค้าทั้งหมดในคลังเพื่อส่งไปยังการ์ดสรุปด้านบนของหน้าจอ
+        // คำนวณยอดสรุปสต็อกสินค้าทั้งหมดในคลังด้วยเกณฑ์เดียวกันทั้งตารางและการ์ดสรุป
         ViewBag.TotalProductCount = allProducts.Count;
-        ViewBag.NormalStockCount = allProducts.Count(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) > (p.Inventory?.SafetyStockLevel ?? 5));
-        ViewBag.LowStockCount = allProducts.Count(p => {
+        // คำนวณจำนวนสินค้าที่มีสต็อกปกติ (พร้อมขายมากกว่าระดับสต็อกปลอดภัย)
+        ViewBag.NormalStockCount = allProducts.Count(p =>
+        {
             var avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
-            return avail > 0 && avail <= (p.Inventory?.SafetyStockLevel ?? 5);
+            var safety = p.Inventory?.SafetyStockLevel ?? 5;
+            return avail > safety;
         });
+        // คำนวณจำนวนสินค้าที่สต็อกใกล้หมด (พร้อมขายมากกว่า 0 แต่ไม่เกินระดับสต็อกปลอดภัย)
+        ViewBag.LowStockCount = allProducts.Count(p =>
+        {
+            var avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
+            var safety = p.Inventory?.SafetyStockLevel ?? 5;
+            return avail > 0 && avail <= safety;
+        });
+        // คำนวณจำนวนสินค้าที่หมดสต็อกชั่วคราว
         ViewBag.OutOfStockCount = allProducts.Count(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= 0);
+
+        // ดึงรายชื่อหมวดหมู่สินค้าทั้งหมดที่ไม่ซ้ำกันเพื่อแสดงในตัวเลือกกรอง
+        ViewBag.AllCategories = allProducts
+            .Select(p => p.Category?.CategoryName ?? "ทั่วไป")
+            .Distinct()
+            .OrderBy(c => c)
+            .ToList();
+
+        // เริ่มต้นการกรองข้อมูลสินค้า
+        var filtered = allProducts.AsEnumerable();
+
+        // ตรวจสอบและกรองตามคำค้นหา (ค้นหาจากชื่อ, SKU, บาร์โค้ด หรือชื่อซีรีส์)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string term = search.Trim().ToLowerInvariant();
+            string termNoHyphen = term.Replace("-", "").Replace("#", "").Replace(" ", "");
+            filtered = filtered.Where(p =>
+                (!string.IsNullOrEmpty(p.Name) && p.Name.ToLowerInvariant().Contains(term)) ||
+                (!string.IsNullOrEmpty(p.Sku) && (p.Sku.ToLowerInvariant().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && p.Sku.Replace("-", "").ToLowerInvariant().Contains(termNoHyphen)))) ||
+                (!string.IsNullOrEmpty(p.Barcode) && (p.Barcode.ToLowerInvariant().Contains(term) || (!string.IsNullOrEmpty(termNoHyphen) && p.Barcode.Replace("-", "").ToLowerInvariant().Contains(termNoHyphen)))) ||
+                (!string.IsNullOrEmpty(p.SeriesName) && p.SeriesName.ToLowerInvariant().Contains(term)));
+        }
+
+        // ปรับแต่งและตรวจสอบค่าตัวกรองหมวดหมู่สินค้า
+        string normalizedCategory = (string.IsNullOrWhiteSpace(category) ||
+            string.Equals(category.Trim(), "all", StringComparison.OrdinalIgnoreCase) ||
+            category.Trim() == "ทุกหมวดหมู่")
+            ? "all"
+            : category.Trim();
+        // หากเลือกหมวดหมู่เฉพาะให้กรองตามหมวดหมู่นั้น
+        if (normalizedCategory != "all")
+        {
+            filtered = filtered.Where(p => string.Equals(p.Category?.CategoryName ?? "ทั่วไป", normalizedCategory, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // ตรวจสอบและกรองตามสถานะสต็อกสินค้า (ปกติ / ใกล้หมด / หมดสต็อก)
+        string normalizedFilter = (stockFilter ?? "all").Trim().ToLowerInvariant();
+        if (normalizedFilter == "normal")
+        {
+            // กรองเฉพาะสินค้าสต็อกปกติ
+            filtered = filtered.Where(p =>
+            {
+                var avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
+                var safety = p.Inventory?.SafetyStockLevel ?? 5;
+                return avail > safety;
+            });
+        }
+        else if (normalizedFilter == "low")
+        {
+            // กรองเฉพาะสินค้าสต็อกใกล้หมด
+            filtered = filtered.Where(p =>
+            {
+                var avail = (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0);
+                var safety = p.Inventory?.SafetyStockLevel ?? 5;
+                return avail > 0 && avail <= safety;
+            });
+        }
+        else if (normalizedFilter == "out")
+        {
+            // กรองเฉพาะสินค้าหมดสต็อก
+            filtered = filtered.Where(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= 0);
+        }
+        else
+        {
+            // ค่าเริ่มต้นแสดงสินค้าทุกระดับสต็อก
+            normalizedFilter = "all";
+        }
+
+        // แปลงผลการกรองเป็นรายการข้อมูล List
+        var filteredList = filtered.ToList();
 
         // ส่งรายชื่อสินค้าทั้งหมดและประวัติการรับเข้าคลังล่าสุดจากฐานข้อมูลจริงไปยังหน้าต่างรับสินค้า
         ViewBag.AllProductsForModal = allProducts.OrderBy(p => p.Name).ToList();
@@ -82,11 +162,15 @@ public class StaffController : Controller
 
         // คำนวณการแบ่งหน้าสำหรับตารางสต็อกสินค้า (หน้าละ 10 รายการ)
         int pageSize = 10;
-        int totalPages = Math.Max(1, (int)Math.Ceiling((double)allProducts.Count / pageSize));
+        int totalPages = Math.Max(1, (int)Math.Ceiling((double)filteredList.Count / pageSize));
         int currentPage = Math.Clamp(page, 1, totalPages);
-        var pagedProducts = allProducts.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
+        var pagedProducts = filteredList.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
-        // ส่งข้อมูลการแบ่งหน้าไปยัง View
+        // ส่งข้อมูลตัวกรองและการแบ่งหน้าไปยัง View
+        ViewBag.SelectedStockFilter = normalizedFilter;
+        ViewBag.SelectedSearch = search?.Trim() ?? string.Empty;
+        ViewBag.SelectedCategory = normalizedCategory;
+        ViewBag.FilteredCount = filteredList.Count;
         ViewBag.CurrentPage = currentPage;
         ViewBag.TotalPages = totalPages;
         ViewBag.PageSize = pageSize;
@@ -181,43 +265,66 @@ public class StaffController : Controller
     // ฟังก์ชันช่วยค้นหาใบสั่งจอง (Preorders) และรายการแลกของรางวัล (Rewardredemptions) ร่วมกันระหว่าง GET และ POST
     private (Preorder? Preorder, Rewardredemption? Redemption) ResolveCounterSearch(string rawQuery)
     {
+        // ตัดเครื่องหมาย # และช่องว่างหัวท้ายออกจากคำค้นหา
         string cleanQuery = rawQuery.Replace("#", "").Trim();
+        // แปลงคำค้นหาเป็นตัวพิมพ์เล็ก
         string lowerQuery = cleanQuery.ToLower();
+        // ปรับแต่งคำค้นหาโดยตัดขีดและช่องว่างออกเพื่อรองรับการพิมพ์แบบไม่มีขีด
         string normalizedQuery = lowerQuery.Replace("-", "").Replace(" ", "");
 
+        // ตรวจสอบว่าคำค้นหาขึ้นต้นด้วยรหัสของรางวัล (RWD) หรือไม่
         bool preferRedemption = normalizedQuery.StartsWith("rwd");
 
+        // หากเป็นรหัสของรางวัล ให้ค้นหาจากตารางของรางวัลก่อน
         if (preferRedemption)
         {
+            // ค้นหาข้อมูลการแลกของรางวัลตามคำค้นหา
             var matchedRedemption = FindRedemptionByQuery(cleanQuery, lowerQuery, normalizedQuery);
+            // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลหรือไม่
             if (matchedRedemption != null)
             {
+                // ส่งผลลัพธ์ของรางวัลไปยัง ViewBag เพื่อแสดงผล
                 ViewBag.SearchResultRedemption = matchedRedemption;
+                // กำหนดข้อความสถานะการค้นหาสำเร็จ
                 ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{matchedRedemption.RedemptionCode} ลูกค้า: {matchedRedemption.User?.FullName ?? matchedRedemption.User?.Email}";
+                // ส่งคืนผลลัพธ์ของรางวัล
                 return (null, matchedRedemption);
             }
         }
 
+        // ค้นหาข้อมูลใบสั่งจองพรีออเดอร์ตามคำค้นหา
         var matchedPreorder = FindPreorderByQuery(cleanQuery, lowerQuery, normalizedQuery);
+        // ตรวจสอบว่าพบข้อมูลใบสั่งจองหรือไม่
         if (matchedPreorder != null)
         {
+            // ส่งผลลัพธ์ใบสั่งจองไปยัง ViewBag เพื่อแสดงผล
             ViewBag.SearchResult = matchedPreorder;
+            // กำหนดข้อความสถานะการค้นหาสำเร็จ
             ViewBag.Status = $"พบข้อมูลใบสั่งจอง #{matchedPreorder.ReservationNumber} ลูกค้า: {matchedPreorder.User?.FullName ?? matchedPreorder.ContactPhone}";
+            // ส่งคืนผลลัพธ์ใบสั่งจอง
             return (matchedPreorder, null);
         }
 
+        // หากยังไม่พบและไม่ได้ค้นหาด้วยรหัสของรางวัลในรอบแรก ให้ลองค้นหาของรางวัลเป็นตัวสำรอง
         if (!preferRedemption)
         {
+            // ค้นหาข้อมูลการแลกของรางวัลตามคำค้นหา
             var matchedRedemption = FindRedemptionByQuery(cleanQuery, lowerQuery, normalizedQuery);
+            // ตรวจสอบว่าพบข้อมูลการแลกของรางวัลหรือไม่
             if (matchedRedemption != null)
             {
+                // ส่งผลลัพธ์ของรางวัลไปยัง ViewBag เพื่อแสดงผล
                 ViewBag.SearchResultRedemption = matchedRedemption;
+                // กำหนดข้อความสถานะการค้นหาสำเร็จ
                 ViewBag.Status = $"พบข้อมูลแลกของรางวัล #{matchedRedemption.RedemptionCode} ลูกค้า: {matchedRedemption.User?.FullName ?? matchedRedemption.User?.Email}";
+                // ส่งคืนผลลัพธ์ของรางวัล
                 return (null, matchedRedemption);
             }
         }
 
+        // กำหนดข้อความแจ้งเตือนกรณีไม่พบข้อมูลทั้งสองตาราง
         ViewBag.Status = $"ไม่พบข้อมูลใบสั่งจองหรือรหัสแลกของรางวัลตามเงื่อนไข \"{rawQuery}\" ในระบบ";
+        // ส่งคืนผลลัพธ์ว่าง
         return (null, null);
     }
 
@@ -271,6 +378,7 @@ public class StaffController : Controller
     // เตรียมข้อมูลทางลัดค้นหาด่วน (พรีออเดอร์ + แลกของรางวัล) เบอร์สมาชิก และรายละเอียดโปรโมชั่น/วันนัดรับ
     private void PopulateCounterRecentData()
     {
+        // ดึงรายการคำสั่งจองพรีออเดอร์ล่าสุด 6 รายการสำหรับแสดงทางลัดค้นหาด่วน
         ViewBag.RecentPreorders = _db.Preorders
             .Include(p => p.Preorderitems).ThenInclude(item => item.Product)
             .Include(p => p.User)
@@ -278,6 +386,7 @@ public class StaffController : Controller
             .Take(6)
             .ToList();
 
+        // ดึงรายการขอแลกของรางวัลล่าสุด 6 รายการสำหรับแสดงทางลัดค้นหาด่วน
         ViewBag.RecentRedemptions = _db.Rewardredemptions
             .Include(r => r.Reward)
             .Include(r => r.User)
@@ -285,20 +394,52 @@ public class StaffController : Controller
             .Take(6)
             .ToList();
 
-        ViewBag.KnownMemberPhones = _db.Users
-            .Where(u => !string.IsNullOrEmpty(u.Phone))
-            .Select(u => u.Phone!.Replace("-", "").Replace(" ", "").Trim().ToLower())
-            .Distinct()
-            .ToList();
-
+        // ดึงบันทึก Log ข้อมูลเพิ่มเติมสำหรับการแลกของรางวัลและโปรโมชั่น
         var rewardLogs = _db.Systemlogs.Where(l => l.Module == "reward.redeem").ToList();
+        // ดึงบันทึก Log ข้อมูลโปรโมชั่นที่ผูกกับคำสั่งจองพรีออเดอร์
         var promoLogs = _db.Systemlogs.Where(l => l.Module == "preorder.promo").ToList();
+        // แปลงข้อมูลเมตาเดตาสำหรับวันนัดรับและเบอร์ติดต่อลงในพจนานุกรม
         ViewBag.RedemptionMetaMap = PromoAndRedemptionHelper.BuildRedemptionMetaMap(rewardLogs);
+        // แปลงข้อมูลโปรโมชั่นส่วนลดลงในพจนานุกรมเพื่อนำไปคำนวณยอดเงินที่เคาน์เตอร์
         ViewBag.PreorderPromoMap = PromoAndRedemptionHelper.BuildPreorderPromoMap(promoLogs);
+    }
+
+    // เมธอดสำหรับคืนสิทธิ์จำนวนการใช้งานโค้ดโปรโมชั่นกรณีคำสั่งจองถูกยกเลิกหรือไม่สำเร็จ
+    private void RestorePromoUsageForPreorder(string reservationNumber)
+    {
+        // ค้นหาบันทึก Log โปรโมชั่นที่มีเลขที่ใบจองตรงกัน
+        var promoLogs = _db.Systemlogs
+            .Where(l => l.Module == "preorder.promo" && l.DetailPayload != null && l.DetailPayload.Contains(reservationNumber))
+            .ToList();
+        // วนลูปตรวจสอบและปรับลดยอดการใช้งานของแต่ละโปรโมชั่นที่บันทึกไว้
+        foreach (var promoLog in promoLogs)
+        {
+            try
+            {
+                // แปลงข้อมูล Payload จาก JSON เป็นอ็อบเจกต์ PreorderPromoPayload
+                var payload = System.Text.Json.JsonSerializer.Deserialize<PreorderPromoPayload>(promoLog.DetailPayload!);
+                // ตรวจสอบว่าหมายเลขใบจองตรงกันทุกประการ
+                if (payload != null && string.Equals(payload.ReservationNumber, reservationNumber, StringComparison.OrdinalIgnoreCase))
+                {
+                    // ค้นหาข้อมูลโปรโมชั่นจากฐานข้อมูลตามโค้ด Voucher
+                    var promo = _db.Promotions.FirstOrDefault(p => p.VoucherCode == payload.VoucherCode);
+                    // ปรับลดยอดการใช้งานปัจจุบันลง 1 ครั้งหากมียอดค้างอยู่
+                    if (promo != null && promo.CurrentUsageCount > 0)
+                    {
+                        promo.CurrentUsageCount -= 1;
+                    }
+                }
+            }
+            catch
+            {
+                // ละเว้นกรณีแปลงข้อมูล Payload ล้มเหลวเพื่อไม่ให้กระทบการทำงานหลัก
+            }
+        }
     }
 
     // Action สำหรับบันทึกการมารับสินค้า ชำระเงิน ตัดสต็อก และสะสมแต้ม (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     // ฟังก์ชัน CompletePickup รับ preorderId (รหัสใบจอง), memberPhone (เบอร์โทรสมาชิก) และ forceWithoutMember (ยืนยันดำเนินการต่อแบบลูกค้าทั่วไปเมื่อไม่พบเบอร์สมาชิก)
     public IActionResult CompletePickup(int? preorderId, string? memberPhone, bool? forceWithoutMember)
     {
@@ -307,7 +448,7 @@ public class StaffController : Controller
         {
             // กำหนดข้อความแจ้งเตือนข้อผิดพลาดกรณีไม่มีสิทธิ์
             TempData["ErrorMessage"] = "ไม่มีสิทธิ์เข้าถึง กรุณาเข้าสู่ระบบด้วยบัญชีพนักงาน";
-            // สั่งเปลี่ยนเส้นทางกลับไปยังหน้าล็อกอิน
+            // เปลี่ยนเส้นทางกลับไปยังหน้าล็อกอิน
             return RedirectToAction("Login", "Account");
         }
 
@@ -320,10 +461,10 @@ public class StaffController : Controller
             return RedirectToAction("CounterPreorder");
         }
 
-        // ค้นหาข้อมูลใบสั่งจองในฐานข้อมูล พร้อมดึงรายการสินค้าที่จองไว้ข้างใน (Preorderitems)
+        // ค้นหาข้อมูลใบสั่งจองในฐานข้อมูล พร้อมดึงรายการสินค้าที่จองไว้ข้างในและชื่อสินค้า (Preorderitems -> Product)
         var preorder = _db.Preorders
             .Include(p => p.Preorderitems)
-            // เลือกแถวที่มี PreorderId ตรงกับค่าที่ส่งเข้ามา
+                .ThenInclude(pi => pi.Product)
             .FirstOrDefault(p => p.PreorderId == preorderId.Value);
 
         // ตรวจสอบว่าพบข้อมูลใบสั่งจองในฐานข้อมูลจริงหรือไม่
@@ -396,80 +537,92 @@ public class StaffController : Controller
             }
         }
 
-        // ปรับเปลี่ยนสถานะใบสั่งจองใน Entity ให้เป็น "Completed"
-        preorder.CurrentStatus = "Completed";
-        // บันทึกวันและเวลาปัจจุบันที่ลูกค้ามารับสินค้าจริง (CompletedAt)
-        preorder.CompletedAt = DateTime.Now;
-
-        // สร้างเลขที่ใบเสร็จรับเงินอัตโนมัติขึ้นต้นด้วย RCP ตามด้วยวันเวลาปัจจุบัน
-        string receiptNo = "RCP" + DateTime.Now.ToString("yyyyMMddHHmmss");
-        // ดึงรหัสพนักงานแคชเชียร์ที่กำลังล็อกอินจาก Session (หากไม่มีให้ใช้รหัสสำรอง 2)
-        int cashierUserId = HttpContext.Session.GetInt32("UserId") ?? 2;
-
-        // สร้างอ็อบเจกต์ Receipt เพื่อเตรียมบันทึกลงตาราง receipts ในฐานข้อมูล
-        var receipt = new Receipt
+        using var transaction = _db.Database.BeginTransaction();
+        try
         {
-            // กำหนดเลขที่ใบเสร็จรับเงิน
-            ReceiptNo = receiptNo,
-            // เชื่อมโยงรหัสใบสั่งจองพรีออเดอร์
-            PreorderId = preorder.PreorderId,
-            // เชื่อมโยงรหัสลูกค้าผู้สั่งจอง
-            CustomerId = preorder.UserId,
-            // บันทึกเบอร์โทรศัพท์ลูกค้าที่มารับสินค้า
-            CustomerPhone = !string.IsNullOrWhiteSpace(memberPhone) ? memberPhone : preorder.ContactPhone,
-            // บันทึกรหัสพนักงานแคชเชียร์ผู้ออกใบเสร็จ
-            CashierUserId = cashierUserId,
-            // กำหนดยอดเงินรวมก่อนหักส่วนลด และส่วนลดจริงจากโปรโมชั่น (ถ้ามี)
-            SubtotalAmount = preorderPromo != null && preorderPromo.OriginalSubtotal > preorder.TotalFinalPrice
-                ? preorderPromo.OriginalSubtotal
-                : preorder.TotalFinalPrice,
-            // กำหนดยอดส่วนลดจริง
-            DiscountAmount = preorderPromo?.DiscountAmount ?? 0.00m,
-            // คำนวณภาษีมูลค่าเพิ่ม 7% จากยอดรวม
-            VatAmount = Math.Round(preorder.TotalFinalPrice * 0.07m, 2),
-            // กำหนดยอดเงินสุทธิที่ลูกค้าต้องชำระจริง
-            NetTotalAmount = preorder.TotalFinalPrice,
-            // บันทึกรหัสบาร์โค้ดใบจองลงในใบเสร็จ
-            BarcodeData = preorder.ReservationNumber,
-            // บันทึกวันและเวลาที่ออกใบเสร็จรับเงิน
-            IssuedAt = DateTime.Now
-        };
-
-        // ออกใบเสร็จจริงลงตาราง receipts ด้วยคำสั่ง _db.Receipts.Add(receipt);
-        _db.Receipts.Add(receipt);
-
-        // วนลูปตัดสต็อกสินค้าทีละรายการตามสินค้าที่อยู่ในใบสั่งจอง
-        foreach (var item in preorder.Preorderitems)
-        {
-            // ค้นหาข้อมูลสต็อกสินค้าในตาราง Inventories ด้วยรหัสสินค้า ProductId
-            var inv = _db.Inventories.FirstOrDefault(i => i.ProductId == item.ProductId);
-
-            // ตรวจสอบว่าพบข้อมูลสต็อกของสินค้านั้นในคลังหรือไม่
-            if (inv != null)
+            // ตรวจสอบสต็อกจริงในคลังก่อนส่งมอบและตัดยอดขาย
+            foreach (var item in preorder.Preorderitems)
             {
-                // Phase 2 (ตัดของจริงออกจากร้าน): หักของจริงออกจากร้าน
-                inv.QuantityOnHand -= item.Quantity;
-                // Phase 2 (ตัดของจริงออกจากร้าน): ปลดภาระยอดจองออก
-                inv.ReservedQuantity -= item.Quantity;
-
-                // ตรวจสอบป้องกันไม่ให้จำนวนสินค้าคงเหลือติดลบในฐานข้อมูล
-                if (inv.QuantityOnHand < 0) inv.QuantityOnHand = 0;
-                // ตรวจสอบป้องกันไม่ให้ยอดจองติดลบในฐานข้อมูล
-                if (inv.ReservedQuantity < 0) inv.ReservedQuantity = 0;
+                var invCheck = _db.Inventories.FirstOrDefault(i => i.ProductId == item.ProductId);
+                if (invCheck == null || invCheck.QuantityOnHand < item.Quantity)
+                {
+                    transaction.Rollback();
+                    TempData["ErrorMessage"] = $"สินค้า \"{item.Product?.Name ?? $"#{item.ProductId}"}\" มีสต็อกคงเหลือในคลังไม่เพียงพอส่งมอบ (คงเหลือ {invCheck?.QuantityOnHand ?? 0} ชิ้น)";
+                    return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
+                }
             }
+
+            // ปรับเปลี่ยนสถานะใบสั่งจองใน Entity ให้เป็น "Completed"
+            preorder.CurrentStatus = "Completed";
+            // บันทึกวันและเวลาปัจจุบันที่ลูกค้ามารับสินค้าจริง (CompletedAt)
+            preorder.CompletedAt = DateTime.Now;
+
+            // สร้างเลขที่ใบเสร็จรับเงินไม่ซ้ำกัน
+            string receiptNo = "RCP" + DateTime.Now.ToString("yyMMddHHmmssfff");
+            int cashierUserId = HttpContext.Session.GetInt32("StaffUserId")
+                ?? HttpContext.Session.GetInt32("OwnerUserId")
+                ?? HttpContext.Session.GetInt32("UserId")
+                ?? 2;
+
+            var receipt = new Receipt
+            {
+                ReceiptNo = receiptNo,
+                PreorderId = preorder.PreorderId,
+                CustomerId = preorder.UserId,
+                CustomerPhone = !string.IsNullOrWhiteSpace(memberPhone) ? memberPhone.Trim() : preorder.ContactPhone,
+                CashierUserId = cashierUserId,
+                SubtotalAmount = preorderPromo != null && preorderPromo.OriginalSubtotal > preorder.TotalFinalPrice
+                    ? preorderPromo.OriginalSubtotal
+                    : preorder.TotalFinalPrice,
+                DiscountAmount = preorderPromo?.DiscountAmount ?? 0.00m,
+                VatAmount = Math.Round(preorder.TotalFinalPrice * 0.07m, 2),
+                NetTotalAmount = preorder.TotalFinalPrice,
+                BarcodeData = preorder.ReservationNumber,
+                IssuedAt = DateTime.Now
+            };
+
+            _db.Receipts.Add(receipt);
+            _db.SaveChanges();
+
+            // วนลูปสร้าง Receiptitems และตัดสต็อกสินค้าทีละรายการตามสินค้าที่อยู่ในใบสั่งจอง (ให้ MonthlyReport และคลังตรงกัน 100%)
+            foreach (var item in preorder.Preorderitems)
+            {
+                _db.Receiptitems.Add(new Receiptitem
+                {
+                    ReceiptId = receipt.ReceiptId,
+                    ProductId = item.ProductId,
+                    ItemDescription = item.Product?.Name ?? $"สินค้า #{item.ProductId}",
+                    Quantity = item.Quantity,
+                    UnitPrice = item.UnitPrice,
+                    LineTotal = item.UnitPrice * item.Quantity
+                });
+
+                var inv = _db.Inventories.FirstOrDefault(i => i.ProductId == item.ProductId);
+                if (inv != null)
+                {
+                    inv.QuantityOnHand = Math.Max(0, inv.QuantityOnHand - item.Quantity);
+                    inv.ReservedQuantity = Math.Max(0, inv.ReservedQuantity - item.Quantity);
+                    inv.UpdatedAt = DateTime.Now;
+                }
+            }
+
+            _db.SaveChanges();
+            transaction.Commit();
+
+            TempData["SuccessMessage"] = $"บันทึกการส่งมอบสินค้าและชำระเงินสำเร็จ! ออกใบเสร็จจริงเลขที่ #{receiptNo}{memberLogMsg}";
+            return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
         }
-
-        // บันทึกการเปลี่ยนแปลงทั้งหมดลง MySQL ด้วย _db.SaveChanges(); เป็นอันปิดยอดเสร็จสมบูรณ์
-        _db.SaveChanges();
-
-        // กำหนดข้อความแจ้งเตือนสำเร็จผ่าน TempData เพื่อแสดงผลให้พนักงานทราบ
-        TempData["SuccessMessage"] = $"บันทึกการส่งมอบสินค้าและชำระเงินสำเร็จ! ออกใบเสร็จจริงเลขที่ #{receiptNo}{memberLogMsg}";
-        // สั่งเปลี่ยนเส้นทางกลับไปยังหน้าเคาน์เตอร์พรีออเดอร์พร้อมแสดงข้อมูลใบสั่งจองที่เพิ่งปิดยอด
-        return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
+        catch (Exception)
+        {
+            transaction.Rollback();
+            TempData["ErrorMessage"] = "เกิดข้อผิดพลาดในการบันทึกส่งมอบสินค้าและออกใบเสร็จ กรุณาลองใหม่อีกครั้ง";
+            return RedirectToAction("CounterPreorder", new { query = preorder.ReservationNumber });
+        }
     }
 
     // Action สำหรับบันทึกลูกค้าไม่มารับสินค้า (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     // ฟังก์ชัน NoShowPreorder รับ preorderId, reason (สาเหตุ) และ remark (หมายเหตุ)
     public IActionResult NoShowPreorder(int? preorderId, string reason, string? remark)
     {
@@ -532,20 +685,16 @@ public class StaffController : Controller
             }
         }
 
+        RestorePromoUsageForPreorder(preorder.ReservationNumber);
+
         // บันทึกประวัติและสาเหตุลงตาราง Systemlogs สำหรับเป็นหลักฐานการตรวจสอบ (Audit Trail)
         _db.Systemlogs.Add(new Systemlog
         {
-            // รหัสโค้ดบันทึกเริ่มต้นด้วย NOSHOW ตามด้วยวันเวลา
-            LogCode = "NOSHOW-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // ระดับความสำคัญของ Log
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("NOSHOW"),
             LogLevel = "Warning",
-            // โมดูลที่เกิดการบันทึก
             Module = "CounterPreorder",
-            // ข้อความรายละเอียดระบุหมายเลขใบจอง สาเหตุ และหมายเหตุเพิ่มเติม
             Message = $"ลูกค้าไม่มารับสินค้า ใบจอง #{preorder.ReservationNumber} สาเหตุ: {reason} | หมายเหตุ: {remark ?? "ไม่มี"}",
-            // รหัสพนักงานผู้ทำรายการ
-            UserId = HttpContext.Session.GetInt32("UserId"),
-            // วันเวลาที่บันทึก
+            UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
             Timestamp = DateTime.Now
         });
 
@@ -560,6 +709,7 @@ public class StaffController : Controller
 
     // Action สำหรับบันทึกลูกค้าปฏิเสธไม่รับสินค้าหน้าร้าน (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     // ฟังก์ชัน RejectPreorder รับ preorderId, reason (เหตุผลการปฏิเสธ) และ remark (หมายเหตุ)
     public IActionResult RejectPreorder(int? preorderId, string reason, string? remark)
     {
@@ -622,20 +772,16 @@ public class StaffController : Controller
             }
         }
 
+        RestorePromoUsageForPreorder(preorder.ReservationNumber);
+
         // บันทึกประวัติและสาเหตุการปฏิเสธลงตาราง Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
-            // รหัสโค้ดบันทึกเริ่มต้นด้วย REJECT ตามด้วยวันเวลา
-            LogCode = "REJECT-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // ระดับความสำคัญของ Log
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("REJECT"),
             LogLevel = "Warning",
-            // โมดูลที่เกิดการบันทึก
             Module = "CounterPreorder",
-            // ข้อความรายละเอียดระบุหมายเลขใบจอง สาเหตุ และรายละเอียดเพิ่มเติม
             Message = $"ลูกค้าไม่รับสินค้า ใบจอง #{preorder.ReservationNumber} สาเหตุ: {reason} | รายละเอียด: {remark ?? "ไม่มี"}",
-            // รหัสพนักงานผู้ทำรายการ
-            UserId = HttpContext.Session.GetInt32("UserId"),
-            // วันเวลาที่บันทึก
+            UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
             Timestamp = DateTime.Now
         });
 
@@ -650,6 +796,7 @@ public class StaffController : Controller
 
     // Action สำหรับบันทึกการส่งมอบของรางวัลให้ลูกค้าที่เคาน์เตอร์ (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     // ฟังก์ชัน CompleteRewardRedemption รับ redemptionId (รหัสรายการแลกของรางวัล)
     public IActionResult CompleteRewardRedemption(long redemptionId)
     {
@@ -694,17 +841,11 @@ public class StaffController : Controller
         // บันทึกประวัติการส่งมอบลงตาราง Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
-            // รหัสโค้ดบันทึกเริ่มต้นด้วย RWD-DELIVER ตามด้วยวันเวลา
-            LogCode = "RWD-DELIVER-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
-            // ระดับความสำคัญของ Log
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("RWD-DLV"),
             LogLevel = "Info",
-            // โมดูลที่เกิดการบันทึก
             Module = "CounterPreorder",
-            // ข้อความรายละเอียดระบุรหัสของรางวัล ชื่อของรางวัล และชื่อลูกค้า
             Message = $"ส่งมอบของรางวัลรหัส #{redemption.RedemptionCode} ({redemption.Reward.Title}) ให้ลูกค้า {redemption.User.FullName ?? redemption.User.Email} เรียบร้อยแล้ว",
-            // รหัสพนักงานผู้ทำรายการ
-            UserId = HttpContext.Session.GetInt32("UserId"),
-            // วันเวลาที่บันทึก
+            UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
             Timestamp = DateTime.Now
         });
 
@@ -719,6 +860,7 @@ public class StaffController : Controller
 
     // Action สำหรับบันทึกลูกค้าไม่มารับของรางวัลตามกำหนด พร้อมคืนแต้มและคืนสต็อก (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult NoShowRewardRedemption(long? redemptionId, string reason, string? remark)
     {
         return CancelRewardRedemptionCore(redemptionId, reason, remark, isNoShow: true);
@@ -726,6 +868,7 @@ public class StaffController : Controller
 
     // Action สำหรับบันทึกลูกค้าปฏิเสธไม่รับของรางวัลหน้าร้าน พร้อมคืนแต้มและคืนสต็อก (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult RejectRewardRedemption(long? redemptionId, string reason, string? remark)
     {
         return CancelRewardRedemptionCore(redemptionId, reason, remark, isNoShow: false);
@@ -775,15 +918,15 @@ public class StaffController : Controller
         }
 
         string actionLabel = isNoShow ? "ลูกค้าไม่มารับของรางวัล" : "ลูกค้าไม่รับของรางวัล";
-        string logPrefix = isNoShow ? "NOSHOW-RWD-" : "REJECT-RWD-";
+        string logPrefix = isNoShow ? "NOSHOW-R" : "REJECT-R";
 
         _db.Systemlogs.Add(new Systemlog
         {
-            LogCode = logPrefix + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode(logPrefix),
             LogLevel = "Warning",
             Module = "CounterPreorder",
             Message = $"{actionLabel} รหัสแลก #{redemption.RedemptionCode} ({redemption.Reward?.Title}) สาเหตุ: {reason} | รายละเอียด: {remark ?? "ไม่มี"} | คืน {redemption.PointsSpent:N0} แต้มและคืนสต็อกแล้ว",
-            UserId = HttpContext.Session.GetInt32("UserId"),
+            UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
             Timestamp = DateTime.Now
         });
 
@@ -812,6 +955,7 @@ public class StaffController : Controller
 
     // Action สำหรับบันทึกการรับสินค้าเข้าสต็อกจริงลงตาราง Inventories และ Systemlogs (POST Method)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult ScanReceive(string? sku, int? quantity, int? currentPage)
     {
         // ตรวจสอบสิทธิ์ว่าผู้ใช้งานเป็นพนักงานหรือไม่
@@ -825,8 +969,6 @@ public class StaffController : Controller
 
         // ตัดช่องว่างหัวท้ายของรหัสสินค้าหรือรหัสบาร์โค้ด
         string cleanSku = (sku ?? "").Trim();
-        // กำหนดจำนวนสินค้าที่รับเข้า หากไม่ระบุให้เริ่มต้นที่ 1 ชิ้น
-        int addQty = (quantity.HasValue && quantity.Value > 0) ? quantity.Value : 1;
 
         // ตรวจสอบว่าพนักงานได้ระบุรหัสสินค้าหรือบาร์โค้ดเข้ามาหรือไม่
         if (string.IsNullOrWhiteSpace(cleanSku))
@@ -834,6 +976,14 @@ public class StaffController : Controller
             TempData["ErrorMessage"] = "กรุณาสแกนบาร์โค้ดหรือเลือกรหัสสินค้าที่ต้องการรับเข้าคลัง";
             return RedirectToAction("Index", new { page = currentPage ?? 1, openReceive = true });
         }
+
+        if (!quantity.HasValue || quantity.Value <= 0)
+        {
+            TempData["ErrorMessage"] = "กรุณาระบุจำนวนสินค้าที่รับเข้าอย่างน้อย 1 ชิ้น";
+            return RedirectToAction("Index", new { page = currentPage ?? 1, openReceive = true });
+        }
+
+        int addQty = quantity.Value;
 
         // ค้นหาข้อมูลสินค้าในตาราง Products ด้วยรหัสสินค้าหรือบาร์โค้ด (รองรับการพิมพ์รหัสแบบไม่ใส่ขีดลบ)
         string normalizedSku = cleanSku.Replace("-", "").Replace("#", "").Replace(" ", "").ToLower();
@@ -877,11 +1027,11 @@ public class StaffController : Controller
             // บันทึกประวัติการรับสินค้าเข้าสต็อกลงในตาราง Systemlogs
             _db.Systemlogs.Add(new Systemlog
             {
-                LogCode = "RESTOCK-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                LogCode = PromoAndRedemptionHelper.GenerateLogCode("RESTOCK"),
                 LogLevel = "INFO",
                 Module = "Inventory",
                 Message = $"รับสินค้า {product.Name} (รหัส: {product.Sku}) จำนวน +{addQty} ชิ้น เข้าสต็อก คงเหลือรวม {inv.QuantityOnHand} ชิ้น",
-                UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("UserId") ?? 2,
+                UserId = HttpContext.Session.GetInt32("StaffUserId") ?? HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId") ?? 2,
                 Timestamp = DateTime.Now
             });
 

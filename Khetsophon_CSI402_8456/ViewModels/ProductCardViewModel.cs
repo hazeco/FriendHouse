@@ -39,11 +39,14 @@ public class ProductCardViewModel
     // จำนวนสต็อกสินค้าคงเหลือที่พร้อมให้สั่งจอง คำนวณจากจำนวนในคลังหักลบยอดจอง
     public int AvailableStock { get; set; }
 
-    // สถานะว่ามีสินค้าคงเหลือพร้อมสั่งจองหรือไม่
-    public bool InStock => AvailableStock > 0;
+    // ระบุว่าเป็นสินค้าเปิดรับสั่งจองล่วงหน้า (Pre-order) หรือสินค้าพร้อมส่ง
+    public bool IsPreorder { get; set; }
 
-    // ข้อความแสดงสถานะสต็อก เช่น มีสินค้าพร้อมส่ง หรือ สินค้าหมดชั่วคราว
-    public string StatusText => InStock ? $"มีสินค้า {AvailableStock} ชิ้น" : "สินค้าหมดชั่วคราว";
+    // สถานะว่ามีสินค้าคงเหลือพร้อมสั่งซื้อหรือไม่
+    public bool InStock => !IsPreorder && AvailableStock > 0;
+
+    // ข้อความแสดงสถานะสต็อก เช่น มีสินค้า หรือ สินค้าหมด
+    public string StatusText => InStock ? $"มีสินค้า {AvailableStock} ชิ้น" : "สินค้าหมด";
 
     // คลาสสีสำหรับ Badge แสดงสถานะสินค้า
     public string BadgeClass => InStock ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800";

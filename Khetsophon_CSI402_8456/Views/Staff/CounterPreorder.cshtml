@@ -6,8 +6,7 @@
     // Top-of-file Media & Content Configuration
     var pageHeader = new {
         Title = "เคาน์เตอร์พรีออเดอร์",
-        Subtitle = "ค้นหาลูกค้าเพื่อเช็คสถานะรับสินค้าที่จองไว้",
-        DefaultSearch = "081-234-5xxx"
+        Subtitle = "ค้นหาลูกค้าเพื่อเช็คสถานะรับสินค้าที่จองไว้"
     };
 
     var preorderResult = ViewBag.SearchResult as Khetsophon_CSI402_8456.Models.Preorder;
@@ -26,8 +25,6 @@
     }
     string currentContactPhone = preorderResult?.ContactPhone ?? preorderResult?.User?.Phone ?? "";
     string? memberNotFoundPhone = TempData["MemberNotFoundPhone"] as string;
-    var knownMemberPhones = ViewBag.KnownMemberPhones as IEnumerable<string> ?? Enumerable.Empty<string>();
-    string knownPhonesJson = System.Text.Json.JsonSerializer.Serialize(knownMemberPhones);
 
     // แปลงสถานะของใบสั่งจองเป็นข้อความภาษาไทยสำหรับการแสดงผล
     string statusBadgeThai = preorderResult?.CurrentStatus switch {
@@ -57,40 +54,52 @@
     }
     else
     {
-        customerDisplay = "คุณสมชาย ใจดี";
+        customerDisplay = "ไม่พบข้อมูลผู้จอง";
     }
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="max-w-3xl mx-auto space-y-6">
     <!-- Header Center -->
     <div class="text-center space-y-1">
+        @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
         <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
+        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
         <p class="text-sm text-gray-500">@pageHeader.Subtitle</p>
     </div>
 
     <!-- Notification Messages (Flash TempData) -->
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-semibold flex items-center gap-3 shadow-xs">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>@TempData["SuccessMessage"]</div>
         </div>
     }
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["ErrorMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-sm font-semibold flex items-center gap-3 shadow-xs">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>@TempData["ErrorMessage"]</div>
         </div>
     }
@@ -99,17 +108,20 @@
     <form asp-controller="Staff" asp-action="CounterPreorder" class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6">
         @* ป้ายข้อความกำกับช่องค้นหา *@
         <label class="text-xs font-bold text-[#050315] block mb-2">ค้นหาด้วยรหัสพรีออเดอร์ / รหัสแลกรางวัล / เบอร์โทร / ชื่อลูกค้า</label>
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-center gap-2.5">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="relative flex-1">
-                @* ไอคอนรูปโทรศัพท์ SVG แสดงด้านหน้าช่องค้นหา *@
+                @* ไอคอนรูปแว่นขยาย SVG แสดงด้านหน้าช่องค้นหา *@
                 <svg class="size-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.68 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.32 1.85.55 2.81.68A2 2 0 0 1 22 16.92z"></path>
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
                 @* กล่องกรอกข้อความค้นหาผูกกับโมเดลฟิลด์ ReservationNumber *@
-                <input asp-for="ReservationNumber" id="searchPreorderInput" type="text" placeholder="พิมพ์เลขใบจอง (เช่น PO20261001, 1001 ไม่ต้องใส่ขีด) รหัสแลกรางวัล หรือเบอร์โทร 0812345678"
+                <input asp-for="ReservationNumber" id="searchPreorderInput" type="text" placeholder="พิมพ์เลขใบจอง (เช่น PO-2026-0001 หรือ 0001) รหัสแลกรางวัล (RWD-2026-...) หรือเบอร์โทร"
                        class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-base font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9] focus:ring-1 focus:ring-[#2F39A9] shadow-2xs" />
             </div>
-            @* ปุ่มกดยืนยันการค้นหาข้อมูลในระบบฐานข้อมูลจริง *@
+            @* ปุ่มกดยืนยันการค้นหาข้อมูลในระบบฐานข้อมูล *@
             <button type="submit" class="bg-[#2F39A9] hover:bg-[#232B80] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-xs flex items-center gap-2 transition-colors cursor-pointer shrink-0">
                 @* ไอคอนรูปแว่นขยาย SVG *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -121,11 +133,13 @@
             </button>
         </div>
         @* ข้อความแนะนำวิธีการค้นหาเพิ่มเติมด้านล่าง *@
-        <p class="text-xs text-gray-400 mt-2.5">พิมพ์รหัสใบจอง รหัสแลกของรางวัล (เช่น RWD123456) ชื่อลูกค้า หรือเบอร์โทร ระบบจะค้นหาและแสดงรายละเอียดจากฐานข้อมูลทันที</p>
+        <p class="text-xs text-gray-400 mt-2.5">พิมพ์รหัสใบจอง รหัสแลกของรางวัล (เช่น RWD-2026-...) ชื่อลูกค้า หรือเบอร์โทร ระบบจะค้นหาและแสดงรายละเอียดให้ทันที</p>
     </form>
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (ViewBag.Status != null)
     {
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="p-4 rounded-xl text-sm font-semibold @(preorderResult != null || redemptionResult != null ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-amber-50 text-amber-800 border border-amber-200")">
             @ViewBag.Status
         </div>
@@ -145,46 +159,73 @@
             _ => "รอรับของรางวัล"
         };
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border-2 border-primary/25 shadow-xs p-6 space-y-5">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between flex-wrap gap-2">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>พบรายการจองแลกของรางวัลในระบบ</span>
                 </div>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs font-bold px-3.5 py-1.5 rounded-full @redeemBadgeClass shadow-xs">
                     @redeemBadgeText
                 </span>
             </div>
 
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-4 p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                 <img src="@Url.Content(!string.IsNullOrEmpty(redemptionResult.Reward?.ImageUrl) ? redemptionResult.Reward.ImageUrl : "~/media/images/tanjiro_kamado.png")" alt="@redemptionResult.Reward?.Title" class="size-16 rounded-xl object-cover border border-amber-200 shrink-0 bg-white" />
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex-1 min-w-0">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-xs font-bold text-amber-800">@(redemptionResult.Reward?.Brand ?? "FriendHouse Exclusive")</span>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h3 class="text-sm font-bold text-[#050315] truncate">@(redemptionResult.Reward?.Title ?? "ของรางวัล")</h3>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs font-semibold text-primary mt-1">ใช้แต้มแลก: @redemptionResult.PointsSpent.ToString("N0") แต้ม (ชำระด้วยแต้มแล้ว ไม่ต้องชำระเงิน)</div>
                 </div>
             </div>
 
+            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-2 border-t border-gray-100">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">รหัสแลกของรางวัล</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-base font-black font-mono text-primary mt-0.5">@redemptionResult.RedemptionCode</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">ชื่อลูกค้า / เบอร์ติดต่อรับของ</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@(redemptionResult.User?.FullName ?? redemptionResult.User?.Email) (@(activeRedemptionMeta?.ContactPhone ?? redemptionResult.User?.Phone ?? "ไม่มีเบอร์"))</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">วันที่ทำรายการจองแลก</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@redemptionResult.RedeemedAt.ToString("dd MMM yyyy HH:mm น.")</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">กำหนดนัดรับ / สถานะการส่งมอบ</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                         @if (!string.IsNullOrEmpty(activeRedemptionMeta?.PickupDate))
                         {
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-primary">นัดรับ @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatPickupDateThai(activeRedemptionMeta.PickupDate) · </span>
                         }
                         @(redemptionResult.CompletedAt.HasValue ? $"ส่งมอบเมื่อ {redemptionResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : redemptionResult.Status == "Cancelled" ? "ยกเลิกและคืนแต้มสะสมแล้ว" : "ยังไม่ได้ส่งมอบ")
@@ -195,37 +236,54 @@
             <!-- สถานะและแถบปุ่มดำเนินการ 3 ปุ่มสำหรับสินค้าแลกแต้ม -->
             @if (redemptionResult.Status == "Completed")
             {
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             <h4 class="text-sm font-extrabold text-emerald-950">ของรางวัลชิ้นนี้ส่งมอบให้ลูกค้าเรียบร้อยแล้ว</h4>
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                             <p class="text-xs text-emerald-700 mt-0.5">
                                 @(redemptionResult.CompletedAt.HasValue ? $"บันทึกส่งมอบเมื่อ: {redemptionResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : "รายการนี้ปิดการส่งมอบเรียบร้อยแล้ว")
                             </p>
                         </div>
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shrink-0 shadow-xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ส่งมอบแล้ว</span>
                     </span>
                 </div>
             }
             else if (redemptionResult.Status == "Cancelled")
             {
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="rounded-2xl border border-rose-200 bg-rose-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             <h4 class="text-sm font-extrabold text-rose-950">รายการแลกของรางวัลนี้ถูกยกเลิกแล้ว</h4>
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                             <p class="text-xs text-rose-700 mt-0.5">ลูกค้าไม่รับสินค้าหรือไม่ได้มารับตามกำหนด ระบบได้คืน @redemptionResult.PointsSpent.ToString("N0") แต้มสะสมและคืนสต็อกของรางวัลเรียบร้อยแล้ว</p>
                         </div>
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0 shadow-xs">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ยกเลิก / คืนแต้มแล้ว</span>
                     </span>
                 </div>
@@ -234,46 +292,62 @@
             {
                 @* แถวปุ่มดำเนินการทั้ง 3 ปุ่ม เรียงจากซ้ายไปขวา: ไม่รับสินค้า, ไม่มารับสินค้า, มารับแล้ว / ส่งมอบของรางวัล *@
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3 border-t border-gray-100">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="openRedeemRejectModal()" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ไม่รับสินค้า</span>
                     </button>
 
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="openRedeemNoShowModal()" class="w-full sm:w-auto px-4 py-3 rounded-xl border border-[#FCA5A5] bg-white hover:bg-red-50 text-[#DC2626] font-bold text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ไม่มารับสินค้า</span>
                     </button>
 
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="openRedeemCompleteModal()" class="w-full sm:flex-1 py-3 px-6 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>มารับแล้ว / ส่งมอบของรางวัล</span>
                     </button>
                 </div>
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="space-y-1.5 text-xs text-gray-400 pt-1">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-start gap-1.5">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>เมื่อกด "มารับแล้ว / ส่งมอบของรางวัล" ระบบจะปิดรายการส่งมอบให้ลูกค้าทันที (ไม่ต้องชำระเงินหรือกรอกเบอร์สะสมแต้ม)</span>
                     </div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-start gap-1.5">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>เมื่อกด "ไม่รับสินค้า" หรือ "ไม่มารับสินค้า" ระบบจะบันทึกสาเหตุและคืนแต้มสะสมพร้อมคืนสต็อกของรางวัลให้ลูกค้าอัตโนมัติ</span>
                     </div>
                 </div>
@@ -284,13 +358,17 @@
     <!-- 2. การแสดงรายการพรีออเดอร์ -->
     @if (preorderResult != null)
     {
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
             <!-- Top Status Header -->
             <div class="flex items-center justify-between flex-wrap gap-2">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5 text-[#16A34A]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>พบรายการพรีออเดอร์ในระบบ</span>
                 </div>
                 @{
@@ -301,6 +379,7 @@
                         _ => "bg-[#2F39A9] text-white"
                     };
                 }
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs font-bold px-3.5 py-1.5 rounded-full @topBadgeClass shadow-xs">
                     @statusBadgeThai
                 </span>
@@ -308,22 +387,31 @@
 
             <!-- Product Items List Block -->
             <div class="space-y-3">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (preorderResult.Preorderitems != null && preorderResult.Preorderitems.Any())
                 {
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">
                         รายการสินค้าที่สั่งจอง (@preorderResult.Preorderitems.Sum(pi => pi.Quantity) ชิ้น)
                     </div>
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var item in preorderResult.Preorderitems)
                     {
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="size-14 rounded-xl overflow-hidden bg-white border border-slate-200 shrink-0 flex items-center justify-center">
+                                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                                 @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
                                 {
+                                    @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                                     <img src="@Url.Content(item.Product.ImageUrl)" alt="@item.Product.Name" class="size-full object-cover" />
                                 }
                                 else
                                 {
+                                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                     <div class="size-full bg-[#BAF2FF]/40 text-[#2F39A9] flex items-center justify-center">
+                                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                         <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <rect x="2" y="2" width="20" height="20" rx="5"></rect>
                                             <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -331,31 +419,43 @@
                                     </div>
                                 }
                             </div>
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex-1 min-w-0">
+                                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                                 <h3 class="text-sm font-bold text-[#050315] truncate">@(item.Product?.Name ?? "สินค้าพรีออเดอร์")</h3>
+                                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                                 <p class="text-xs text-gray-500 mt-0.5">จำนวนที่จอง: @item.Quantity ชิ้น · ราคาต่อหน่วย: ฿@item.UnitPrice.ToString("N0")</p>
                             </div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="text-right">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="text-sm font-extrabold text-[#2F39A9]">฿@((item.UnitPrice * item.Quantity).ToString("N0"))</span>
                             </div>
                         </div>
                     }
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex flex-wrap justify-between items-center gap-2 text-xs font-bold text-gray-700 px-1 pt-1">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>จำนวนสินค้ารวมทั้งหมด: @(preorderResult.Preorderitems.Sum(pi => pi.Quantity)) ชิ้น</span>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="text-right">
+                            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                             @if (activePreorderPromo != null)
                             {
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-[11px] font-bold text-emerald-700 mb-0.5">
                                     ใช้คูปอง @activePreorderPromo.VoucherCode
                                     @(activePreorderPromo.DiscountAmount > 0m ? $" (ลด -฿{activePreorderPromo.DiscountAmount:N0})" : activePreorderPromo.IsDoublePoints ? " (รับแต้มสะสม x2)" : "")
                                 </div>
                             }
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-sm font-extrabold text-[#2F39A9]">ยอดชำระสุทธิ: ฿@preorderResult.TotalFinalPrice.ToString("N0")</span>
                         </div>
                     </div>
                 }
                 else
                 {
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center text-xs font-semibold text-slate-500">
                         ไม่มีรายการสินค้าในคำสั่งจองนี้
                     </div>
@@ -364,20 +464,32 @@
 
             <!-- Details Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-2 border-t border-gray-100">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">รหัสพรีออเดอร์ / เบอร์โทร</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.ReservationNumber · @preorderResult.ContactPhone</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">ชื่อลูกค้า / ข้อมูลผู้จอง</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@customerDisplay</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">วันที่สั่งจอง</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.CreatedAt.ToString("dd MMM yyyy")</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs text-gray-400 font-medium">กำหนดมารับภายใน</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-sm font-bold text-[#050315] mt-0.5">@preorderResult.EstimatedPickupDate.ToString("dd MMM yyyy")</div>
                 </div>
             </div>
@@ -387,23 +499,31 @@
             {
                 <!-- ป้องกันการกดซ้ำ: ออเดอร์ที่ Completed จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-11 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="20 6 9 17 4 12"></polyline>
                             </svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             <h4 class="text-sm font-extrabold text-emerald-950">รายการนี้ส่งมอบและชำระเงินเสร็จสิ้นแล้ว</h4>
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                             <p class="text-xs text-emerald-700 mt-0.5">
                                 @(preorderResult.CompletedAt.HasValue ? $"บันทึกส่งมอบเมื่อ: {preorderResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : "ออเดอร์นี้ถูกปิดยอดเรียบร้อยแล้ว ไม่สามารถดำเนินการซ้ำได้เพื่อป้องกันการปั๊มแต้ม")
                             </p>
                         </div>
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold shrink-0 shadow-xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ปิดยอดสมบูรณ์แล้ว</span>
                     </span>
                 </div>
@@ -412,19 +532,26 @@
             {
                 <!-- ออเดอร์ที่ Cancelled จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
                 <div class="rounded-2xl border border-rose-200 bg-rose-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-11 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
                             </svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             <h4 class="text-sm font-extrabold text-rose-950">รายการนี้ถูกยกเลิกแล้ว</h4>
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                             <p class="text-xs text-rose-700 mt-0.5">ลูกค้าไม่รับสินค้าหรือไม่ได้มารับสินค้าตามกำหนด และระบบได้คืนสต็อกเรียบร้อยแล้ว</p>
                         </div>
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0 shadow-xs">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ยกเลิกรายการแล้ว</span>
                     </span>
                 </div>
@@ -441,6 +568,7 @@
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ไม่รับสินค้า</span>
                     </button>
 
@@ -451,6 +579,7 @@
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ไม่มารับสินค้า</span>
                     </button>
 
@@ -460,28 +589,9 @@
                         <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>มารับแล้ว / ชำระเงินแล้ว</span>
                     </button>
-                </div>
-
-                @* คำชี้แจงขั้นตอนการทำงานใต้ปุ่มทั้ง 3 *@
-                <div class="space-y-1.5 text-xs text-gray-400 pt-1">
-                    <div class="flex items-start gap-1.5">
-                        <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        <span>เมื่อกด "มารับแล้ว" สถานะพรีออเดอร์ของลูกค้าจะถูกปิดโดยอัตโนมัติ และต้องกรอกเบอร์ลูกค้าเพื่อสะสมแต้ม แต่หากไม่เป็นสมาชิกกดปุ่มไม่ได้เป็นสมาชิก</span>
-                    </div>
-                    <div class="flex items-start gap-1.5">
-                        <svg class="size-3.5 text-gray-400 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                        <span>เมื่อกด "ไม่รับสินค้า" ระบบจะให้กรอกสาเหตุว่าทำไมถึงไม่รับ</span>
-                    </div>
                 </div>
             }
         </div>
@@ -490,13 +600,17 @@
     {
         <!-- กล่องกรณีค้นหาไม่พบ หรือยังไม่ได้ค้นหา -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-10 text-center space-y-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
             </div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h3 class="text-base font-bold text-[#050315]">ไม่พบข้อมูลคำสั่งจองพรีออเดอร์</h3>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-gray-500 max-w-md mx-auto">
                 กรุณาตรวจสอบหมายเลขใบสั่งจองหรือเบอร์โทรศัพท์ของลูกค้า แล้วกดปุ่มค้นหาใหม่อีกครั้ง
             </p>
@@ -505,9 +619,12 @@
 
     <!-- Recent Searches Card (ทางลัดค้นหาด่วนทั้งใบจองพรีออเดอร์และรายการแลกของรางวัล) -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
-            <h4 class="text-xs font-bold text-gray-400 mb-2.5">ใบจองพรีออเดอร์ล่าสุดในระบบฐานข้อมูลจริง (คลิกเพื่อค้นหาทันที)</h4>
+            <h4 class="text-xs font-bold text-gray-400 mb-2.5">ใบจองพรีออเดอร์ล่าสุด (คลิกเพื่อค้นหาทันที)</h4>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 flex-wrap">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (ViewBag.RecentPreorders is IEnumerable<Khetsophon_CSI402_8456.Models.Preorder> recentList && recentList.Any())
                 {
                     foreach (var ro in recentList)
@@ -519,6 +636,7 @@
                             "Cancelled" => "border-rose-200 bg-rose-50/70 text-rose-800 hover:bg-rose-100",
                             _ => "border-blue-200 bg-blue-50/70 text-[#2F39A9] hover:bg-blue-100"
                         };
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-controller="Staff" asp-action="CounterPreorder" asp-route-query="@ro.ReservationNumber"
                            class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-full border @badgeColor transition-colors">
                             @ro.ReservationNumber (@pName ฿@ro.TotalFinalPrice.ToString("N0"))
@@ -527,14 +645,18 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-xs text-gray-400">ยังไม่มีประวัติการจองในระบบ</span>
                 }
             </div>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="pt-3 border-t border-gray-100">
             <h4 class="text-xs font-bold text-gray-400 mb-2.5">รายการจองแลกของรางวัลด้วยแต้มล่าสุด (คลิกเพื่อค้นหาทันที)</h4>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 flex-wrap">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (ViewBag.RecentRedemptions is IEnumerable<Khetsophon_CSI402_8456.Models.Rewardredemption> recentRedemptions && recentRedemptions.Any())
                 {
                     foreach (var rdm in recentRedemptions)
@@ -546,6 +668,7 @@
                             "Cancelled" => "border-rose-200 bg-rose-50/70 text-rose-800 hover:bg-rose-100",
                             _ => "border-amber-200 bg-amber-50/70 text-amber-800 hover:bg-amber-100"
                         };
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-controller="Staff" asp-action="CounterPreorder" asp-route-query="@rdm.RedemptionCode"
                            class="inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-full border @rBadgeColor transition-colors">
                             @rdm.RedemptionCode (@rTitle · @rdm.PointsSpent.ToString("N0") แต้ม)
@@ -554,6 +677,7 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-xs text-gray-400">ยังไม่มีประวัติการแลกของรางวัลในระบบ</span>
                 }
             </div>
@@ -566,9 +690,13 @@
 {
     @* 1. หน้าต่างป๊อปอัปสะสมแต้มสมาชิก เปิดขึ้นหลังจากกดปุ่ม "มารับแล้ว / ชำระเงินแล้ว" *@
     <div id="memberPointsModal" class="fixed inset-0 z-50 @(string.IsNullOrEmpty(memberNotFoundPhone) ? "hidden" : "") bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-center space-y-1">
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-lg font-bold text-[#050315]">สะสมแต้มสมาชิก</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs text-gray-500">กรอกหมายเลขโทรศัพท์ลูกค้า เพื่อนำยอดคำสั่งซื้อ ฿@preorderResult.TotalFinalPrice.ToString("N0") ไปสะสมแต้มเข้าบัญชีสมาชิก</p>
             </div>
 
@@ -579,33 +707,44 @@
                 @* ตัวแปรซ่อนเก็บสถานะยืนยันดำเนินการต่อแบบลูกค้าทั่วไปเมื่อไม่พบเบอร์สมาชิก *@
                 <input type="hidden" name="forceWithoutMember" id="forceWithoutMemberInput" value="false" />
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">หมายเลขโทรศัพท์สมาชิก</label>
+                    @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                     <input type="text" name="memberPhone" id="memberPhoneInput" placeholder="ตัวอย่าง 081-234-5678 หรือ 0812345678" value="@(memberNotFoundPhone ?? currentContactPhone)"
                            class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]" />
                 </div>
 
                 @* กล่องแจ้งเตือนเมื่อกรอกเบอร์โทรศัพท์ที่ไม่พบในระบบสมาชิก *@
                 <div id="memberNotFoundWarning" class="@(string.IsNullOrEmpty(memberNotFoundPhone) ? "hidden" : "") p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-2.5">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="font-bold flex items-center gap-1.5">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ไม่พบเบอร์สมาชิกในระบบ</span>
                     </div>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-amber-700">ท่านต้องการดำเนินการต่อแบบลูกค้าทั่วไปโดยไม่สะสมแต้ม หรือต้องการแก้ไขหมายเลขโทรศัพท์?</p>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2 pt-1">
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="confirmContinueWithoutMember()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 px-3 rounded-lg font-bold text-xs cursor-pointer">
                             ดำเนินการต่อแบบทั่วไป
                         </button>
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="focusEditMemberPhone()" class="bg-white border border-amber-300 text-amber-900 py-2 px-3 rounded-lg font-semibold text-xs cursor-pointer">
                             แก้ไขเบอร์
                         </button>
                     </div>
                 </div>
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="space-y-2 pt-1">
                     @* ปุ่มยืนยันรับสินค้าและสะสมแต้ม *@
                     <button type="submit" class="w-full bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm shadow-xs cursor-pointer">
@@ -626,28 +765,40 @@
 
     @* 2. หน้าต่างป๊อปอัปยืนยันกรณีลูกค้าไม่มารับสินค้า เปิดขึ้นเมื่อกดปุ่ม "ไม่มารับสินค้า" *@
     <div id="confirmNoShowModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-3">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="size-10 rounded-full bg-red-100 text-[#DC2626] flex items-center justify-center shrink-0">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h3 class="text-base font-bold text-[#050315]">คุณแน่ใจหรือไม่ว่าลูกค้าไม่มารับสินค้า</h3>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs font-mono text-gray-400">รหัสใบจอง @preorderResult.ReservationNumber</p>
                 </div>
             </div>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-gray-500 leading-relaxed">
                 ระบบจะเปลี่ยนสถานะเป็นยกเลิกรายการเนื่องจากไม่มารับสินค้า และปลดรายการจองออกจากระบบ พร้อมปล่อยสินค้ากลับสู่สต็อกเพื่อให้ลูกค้าท่านอื่นสามารถซื้อได้
             </p>
 
             @* ฟอร์มส่งข้อมูลบันทึกกรณีลูกค้าไม่มารับสินค้าไปยัง StaffController แอ็กชัน NoShowPreorder *@
             <form id="noShowPreorderForm" asp-controller="Staff" asp-action="NoShowPreorder" onsubmit="return validateNoShowForm(event)" class="space-y-3 pt-1">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="preorderId" value="@preorderResult.PreorderId" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">เลือกสาเหตุที่ไม่มารับ</label>
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="reason" id="noShowReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
                         <option value="">เลือกสาเหตุ...</option>
                         <option value="ไม่มารับสินค้าตามกำหนด">ไม่มารับสินค้าตามกำหนด</option>
@@ -655,19 +806,25 @@
                         <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div id="noShowRemarkContainer" class="hidden">
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">
                         ข้อความเพิ่มเติม <span class="text-rose-500">* จำเป็นต้องระบุเมื่อเลือกสาเหตุอื่นๆ</span>
                     </label>
                     <textarea name="remark" id="noShowReasonRemark" rows="2" placeholder="ระบุเหตุผลหรือบันทึกของเจ้าหน้าที่..."
                               class="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
                 </div>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p id="noShowValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2.5 pt-2">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
                         ยืนยัน
                     </button>
@@ -678,17 +835,25 @@
 
     @* 3. หน้าต่างป๊อปอัปบันทึกเหตุผลกรณีลูกค้าไม่รับสินค้า เปิดขึ้นเมื่อกดปุ่ม "ไม่รับสินค้า" *@
     <div id="rejectReasonModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base font-bold text-[#050315]">เหตุผลการปฏิเสธรับสินค้า</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs font-mono text-gray-400">รหัสใบจอง @preorderResult.ReservationNumber</p>
             </div>
 
             @* ฟอร์มส่งข้อมูลบันทึกเหตุผลที่ลูกค้าปฏิเสธไม่รับสินค้าไปยัง StaffController แอ็กชัน RejectPreorder *@
             <form id="rejectPreorderForm" asp-controller="Staff" asp-action="RejectPreorder" onsubmit="return validateRejectForm(event)" class="space-y-3">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="preorderId" value="@preorderResult.PreorderId" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">เลือกเหตุผล</label>
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="reason" id="rejectReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
                         <option value="">เลือกเหตุผล...</option>
                         <option value="บรรจุภัณฑ์ชำรุดเสียหาย">บรรจุภัณฑ์ชำรุดเสียหาย</option>
@@ -697,19 +862,25 @@
                         <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div id="rejectRemarkContainer" class="hidden">
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">
                         ข้อความเพิ่มเติม <span class="text-rose-500">* จำเป็นต้องระบุเมื่อเลือกเหตุผลอื่นๆ</span>
                     </label>
                     <textarea name="remark" id="rejectReasonRemark" rows="3" placeholder="โปรดระบุเหตุผลเฉพาะหรือหมายเหตุจากเจ้าหน้าที่ที่นี่..."
                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
                 </div>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p id="rejectValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2.5 pt-2">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
                         บันทึก
                     </button>
@@ -724,29 +895,43 @@
 {
     @* 1. หน้าต่างป๊อปอัปยืนยันการส่งมอบของรางวัล ("มารับแล้ว / ส่งมอบของรางวัล") *@
     <div id="redeemCompleteModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-3">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="size-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h3 class="text-base font-bold text-[#050315]">ยืนยันส่งมอบของรางวัลให้ลูกค้า</h3>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs font-mono text-primary font-bold">@redemptionResult.RedemptionCode</p>
                 </div>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-1 text-xs">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="font-bold text-[#050315]">@(redemptionResult.Reward?.Title ?? "ของรางวัล")</div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-slate-600">ลูกค้า: @(redemptionResult.User?.FullName ?? redemptionResult.User?.Email)</div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-emerald-700 font-bold">ชำระด้วยแต้มสะสมแล้ว (@redemptionResult.PointsSpent.ToString("N0") แต้ม) · ไม่มีค่าใช้จ่ายเพิ่มเติม</div>
             </div>
 
             @* ฟอร์มส่งมอบของรางวัลไปยัง StaffController แอ็กชัน CompleteRewardRedemption *@
             <form asp-controller="Staff" asp-action="CompleteRewardRedemption" class="flex items-center gap-2.5 pt-1">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="redemptionId" value="@redemptionResult.RedemptionId" />
+                @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                 <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
                     ยกเลิก
                 </button>
+                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                 <button type="submit" class="flex-1 bg-[#16A34A] hover:bg-[#15803D] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
                     ยืนยันส่งมอบของรางวัล
                 </button>
@@ -756,28 +941,40 @@
 
     @* 2. หน้าต่างป๊อปอัปยืนยันกรณีลูกค้าไม่มารับของรางวัล ("ไม่มารับสินค้า") *@
     <div id="redeemNoShowModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-3">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="size-10 rounded-full bg-red-100 text-[#DC2626] flex items-center justify-center shrink-0">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                     </svg>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h3 class="text-base font-bold text-[#050315]">คุณแน่ใจหรือไม่ว่าลูกค้าไม่มารับของรางวัล</h3>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs font-mono text-gray-400">รหัสแลกรางวัล @redemptionResult.RedemptionCode</p>
                 </div>
             </div>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-gray-500 leading-relaxed">
                 ระบบจะปรับสถานะเป็นยกเลิก คืนแต้มสะสมจำนวน @redemptionResult.PointsSpent.ToString("N0") แต้มกลับเข้าบัญชีลูกค้า และคืนสต็อกของรางวัลกลับสู่คลังทันที
             </p>
 
             @* ฟอร์มบันทึกกรณีลูกค้าไม่มารับของรางวัล ส่งไปยัง StaffController แอ็กชัน NoShowRewardRedemption *@
             <form id="redeemNoShowForm" asp-controller="Staff" asp-action="NoShowRewardRedemption" onsubmit="return validateRedeemNoShowForm(event)" class="space-y-3 pt-1">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="redemptionId" value="@redemptionResult.RedemptionId" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">เลือกสาเหตุที่ไม่มารับ</label>
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="reason" id="redeemNoShowReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
                         <option value="">เลือกสาเหตุ...</option>
                         <option value="ไม่มารับของรางวัลตามกำหนด">ไม่มารับของรางวัลตามกำหนด</option>
@@ -785,19 +982,25 @@
                         <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div id="redeemNoShowRemarkContainer" class="hidden">
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">
                         ข้อความเพิ่มเติม <span class="text-rose-500">* จำเป็นต้องระบุเมื่อเลือกสาเหตุอื่นๆ</span>
                     </label>
                     <textarea name="remark" id="redeemNoShowReasonRemark" rows="2" placeholder="ระบุเหตุผลหรือบันทึกของเจ้าหน้าที่..."
                               class="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
                 </div>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p id="redeemNoShowValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2.5 pt-2">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
                         ยืนยันและคืนแต้ม
                     </button>
@@ -808,20 +1011,29 @@
 
     @* 3. หน้าต่างป๊อปอัปบันทึกเหตุผลกรณีลูกค้าไม่รับของรางวัล ("ไม่รับสินค้า") *@
     <div id="redeemRejectModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base font-bold text-[#050315]">เหตุผลการปฏิเสธรับของรางวัล</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs font-mono text-gray-400">รหัสแลกรางวัล @redemptionResult.RedemptionCode</p>
             </div>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-gray-500 leading-relaxed">
                 เมื่อบันทึกการไม่รับสินค้า ระบบจะคืน @redemptionResult.PointsSpent.ToString("N0") แต้มสะสมให้ลูกค้าและคืนสต็อกของรางวัลกลับเข้าสู่ระบบ
             </p>
 
             @* ฟอร์มบันทึกเหตุผลลูกค้าไม่รับของรางวัล ส่งไปยัง StaffController แอ็กชัน RejectRewardRedemption *@
             <form id="redeemRejectForm" asp-controller="Staff" asp-action="RejectRewardRedemption" onsubmit="return validateRedeemRejectForm(event)" class="space-y-3">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="redemptionId" value="@redemptionResult.RedemptionId" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">เลือกเหตุผล</label>
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="reason" id="redeemRejectReasonSelect" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]">
                         <option value="">เลือกเหตุผล...</option>
                         <option value="ของรางวัลชำรุดเสียหาย">ของรางวัลชำรุดเสียหาย</option>
@@ -830,19 +1042,25 @@
                         <option value="อื่นๆ">อื่นๆ</option>
                     </select>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div id="redeemRejectRemarkContainer" class="hidden">
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1">
                         ข้อความเพิ่มเติม <span class="text-rose-500">* จำเป็นต้องระบุเมื่อเลือกเหตุผลอื่นๆ</span>
                     </label>
                     <textarea name="remark" id="redeemRejectReasonRemark" rows="3" placeholder="โปรดระบุเหตุผลเฉพาะหรือหมายเหตุจากเจ้าหน้าที่ที่นี่..."
                               class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-[#2F39A9]"></textarea>
                 </div>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p id="redeemRejectValidationMsg" class="hidden text-xs text-rose-500 font-semibold"></p>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2.5 pt-2">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-sm cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#232B80] text-white py-2.5 rounded-xl font-bold text-sm cursor-pointer shadow-xs">
                         บันทึกและคืนแต้ม
                     </button>
@@ -853,14 +1071,16 @@
 }
 
 @section Scripts {
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
-        // รายการเบอร์โทรศัพท์สมาชิกในระบบฐานข้อมูลสำหรับตรวจสอบก่อนส่งฟอร์ม
-        const knownMemberPhones = @Html.Raw(knownPhonesJson);
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const defaultOrderPhone = '@Html.Raw(currentContactPhone)';
 
         // ฟังก์ชันกลางสำหรับผูกการแสดง/ซ่อนช่องหมายเหตุเมื่อเลือกเหตุผล "อื่นๆ"
         function bindRemarkToggle(selectId, containerId) {
+            // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
             document.getElementById(selectId)?.addEventListener('change', function () {
+                // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                 const container = document.getElementById(containerId);
                 container?.classList.toggle('hidden', this.value !== 'อื่นๆ');
             });
@@ -868,27 +1088,37 @@
 
         // ฟังก์ชันกลางสำหรับตรวจสอบความครบถ้วนของฟอร์มระบุเหตุผล/สาเหตุ
         function validateReasonModalForm(e, selectId, remarkId, msgId, emptyPrompt) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const select = document.getElementById(selectId);
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const remark = document.getElementById(remarkId);
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const msg = document.getElementById(msgId);
 
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (!select || !select.value) {
                 e.preventDefault();
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (msg) {
                     msg.innerText = emptyPrompt;
                     msg.classList.remove('hidden');
                 }
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                 return false;
             }
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (select.value === 'อื่นๆ' && (!remark || !remark.value.trim())) {
                 e.preventDefault();
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (msg) {
                     msg.innerText = 'กรุณาระบุข้อความเพิ่มเติมสำหรับสาเหตุอื่นๆ';
                     msg.classList.remove('hidden');
                 }
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                 return false;
             }
             msg?.classList.add('hidden');
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return true;
         }
 
@@ -900,49 +1130,39 @@
         // ซ่อนกล่องเตือนเมื่อพนักงานเริ่มแก้ไขเบอร์โทรศัพท์ในช่องกรอก
         document.getElementById('memberPhoneInput')?.addEventListener('input', function () {
             document.getElementById('memberNotFoundWarning')?.classList.add('hidden');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const forceInput = document.getElementById('forceWithoutMemberInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (forceInput) forceInput.value = 'false';
         });
 
         // ฟังก์ชันเปิดหน้าต่างสะสมแต้มสมาชิกเมื่อกดปุ่ม "มารับแล้ว / ชำระเงินแล้ว"
         function openMemberPointsModal() {
             document.getElementById('memberNotFoundWarning')?.classList.add('hidden');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const forceInput = document.getElementById('forceWithoutMemberInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (forceInput) forceInput.value = 'false';
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const inputEl = document.getElementById('memberPhoneInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (inputEl && !inputEl.value) {
                 inputEl.value = defaultOrderPhone;
             }
             document.getElementById('memberPointsModal')?.classList.remove('hidden');
         }
 
-        // ฟังก์ชันตรวจสอบเบอร์โทรศัพท์สมาชิกก่อนส่งฟอร์มยืนยันรับสินค้า
-        function handleCompletePickupSubmit(e) {
-            const phoneInput = document.getElementById('memberPhoneInput');
-            const forceInput = document.getElementById('forceWithoutMemberInput');
-            const warningEl = document.getElementById('memberNotFoundWarning');
-
-            const rawPhone = (phoneInput?.value || '').trim();
-            const cleanPhone = rawPhone.replace(/-/g, '').replace(/\s+/g, '').toLowerCase();
-
-            // หากไม่ได้กรอกเบอร์โทร หรือยืนยันข้ามการสะสมแต้มแล้ว ให้ส่งฟอร์มได้ทันที
-            if (!cleanPhone || forceInput?.value === 'true') {
-                return true;
-            }
-
-            // ตรวจสอบว่ามีเบอร์โทรศัพท์นี้ในรายชื่อสมาชิกหรือไม่
-            if (Array.isArray(knownMemberPhones) && !knownMemberPhones.includes(cleanPhone)) {
-                e.preventDefault();
-                warningEl?.classList.remove('hidden');
-                return false;
-            }
-
+        // ตรวจสอบความครบถ้วนก่อนส่งฟอร์มรับสินค้า (ระบบตรวจสอบสิทธิ์สมาชิกฝั่งเซิร์ฟเวอร์โดยไม่เปิดเผยรายการเบอร์โทร)
+        function handleCompletePickupSubmit() {
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return true;
         }
 
         // ฟังก์ชันเมื่อพนักงานกด "ดำเนินการต่อแบบทั่วไป" หลังจากไม่พบเบอร์สมาชิก
         function confirmContinueWithoutMember() {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const forceInput = document.getElementById('forceWithoutMemberInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (forceInput) forceInput.value = 'true';
             document.getElementById('completePickupForm')?.submit();
         }
@@ -950,7 +1170,9 @@
         // ฟังก์ชันเมื่อพนักงานกด "แก้ไขเบอร์" เพื่อกลับไปแก้หมายเลขโทรศัพท์สมาชิก
         function focusEditMemberPhone() {
             document.getElementById('memberNotFoundWarning')?.classList.add('hidden');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const phoneInput = document.getElementById('memberPhoneInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (phoneInput) {
                 phoneInput.focus();
                 phoneInput.select();
@@ -959,9 +1181,13 @@
 
         // ฟังก์ชันเมื่อพนักงานกดปุ่ม "ไม่ได้เป็นสมาชิก / ข้าม"
         function skipPointsAndSubmit() {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const phoneInput = document.getElementById('memberPhoneInput');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const forceInput = document.getElementById('forceWithoutMemberInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (phoneInput) phoneInput.value = '';
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (forceInput) forceInput.value = 'true';
             document.getElementById('completePickupForm')?.submit();
         }
@@ -974,6 +1200,7 @@
 
         // ฟังก์ชันตรวจสอบความครบถ้วนก่อนส่งฟอร์มลูกค้าไม่มารับสินค้า
         function validateNoShowForm(e) {
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return validateReasonModalForm(e, 'noShowReasonSelect', 'noShowReasonRemark', 'noShowValidationMsg', 'กรุณาเลือกสาเหตุที่ไม่มารับสินค้า');
         }
 
@@ -985,6 +1212,7 @@
 
         // ฟังก์ชันตรวจสอบความครบถ้วนก่อนส่งฟอร์มลูกค้าไม่รับสินค้า
         function validateRejectForm(e) {
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return validateReasonModalForm(e, 'rejectReasonSelect', 'rejectReasonRemark', 'rejectValidationMsg', 'กรุณาเลือกเหตุผลการปฏิเสธรับสินค้า');
         }
 
@@ -993,21 +1221,27 @@
             document.getElementById('redeemCompleteModal')?.classList.remove('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function openRedeemNoShowModal() {
             document.getElementById('redeemNoShowValidationMsg')?.classList.add('hidden');
             document.getElementById('redeemNoShowModal')?.classList.remove('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function validateRedeemNoShowForm(e) {
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return validateReasonModalForm(e, 'redeemNoShowReasonSelect', 'redeemNoShowReasonRemark', 'redeemNoShowValidationMsg', 'กรุณาเลือกสาเหตุที่ไม่มารับของรางวัล');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function openRedeemRejectModal() {
             document.getElementById('redeemRejectValidationMsg')?.classList.add('hidden');
             document.getElementById('redeemRejectModal')?.classList.remove('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function validateRedeemRejectForm(e) {
+            // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
             return validateReasonModalForm(e, 'redeemRejectReasonSelect', 'redeemRejectReasonRemark', 'redeemRejectValidationMsg', 'กรุณาเลือกเหตุผลการปฏิเสธรับของรางวัล');
         }
 

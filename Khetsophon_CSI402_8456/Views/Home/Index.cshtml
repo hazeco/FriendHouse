@@ -1,16 +1,20 @@
 @model Khetsophon_CSI402_8456.ViewModels.HomeIndexViewModel
 @{
+    // กำหนดชื่อหัวข้อของหน้าแรก
     ViewData["Title"] = "หน้าแรก — FriendHouse";
 
+    // ดึงข้อมูลสินค้าแนะนำประจำหน้าแรก (Hero Product)
     var hero = Model?.HeroProduct;
+    // กำหนดรหัสสินค้าประจำหน้าแรก
     var heroProductId = hero?.ProductId ?? 1;
 
-    // Top-of-file Media and Content Configuration
+    // การกำหนดค่าสื่อ รูปภาพ และโมเดล 3 มิติไว้ที่ส่วนบนสุดของไฟล์
     var pageMedia = new {
         NarutoModelUrl = !string.IsNullOrEmpty(hero?.Model3DPath) ? hero.Model3DPath : ((string?)ViewBag.HeroModel3D ?? "~/media/models/naruto_kyubi_sage.glb"),
         NarutoFallbackImg = !string.IsNullOrEmpty(hero?.FallbackImageUrl) ? hero.FallbackImageUrl : "~/media/images/naruto_hero_fallback.png"
     };
 
+    // การกำหนดข้อความเนื้อหาหลักของ Hero Section
     var heroContent = new {
         Badge = hero?.BadgeText ?? "ฟิกเกอร์คอลเลกชัน · มีสินค้า",
         TitlePrefix = hero?.Name ?? ((string?)ViewBag.HeroName ?? "นารูโตะ อุซึมากิ"),
@@ -29,180 +33,249 @@
             }
     };
 
-    var trustItems = new[] {
-        new {
-            Title = "รับที่หน้าร้านเมื่อของมาถึง",
-            SvgPath = "M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8h4.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h4"
-        },
-        new {
-            Title = "รับประกันของแท้ทุกชิ้น",
-            SvgPath = "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-        },
-        new {
-            Title = "สะสมแต้มทุกการซื้อ",
-            SvgPath = "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-        },
-        new {
-            Title = "จองก่อนมีสิทธิ์ก่อน",
-            SvgPath = "M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-        }
-    };
+    // ตรวจสอบสถานะสต็อกพร้อมขายของสินค้า Hero
+    var heroInStock = hero?.InStock ?? true;
 
-    var promoCards = new[] {
-        new {
-            Tag = "ล้างสต๊อก",
-            Title = "ล้างสต๊อกส่งท้ายปี",
-            Desc = "ลด 20–50% เฉพาะสินค้าค้างสต็อกนาน",
-            BgColor = "bg-white border-slate-200/80",
-            BadgeColor = "bg-rose-100 text-rose-600",
-            IconColor = "text-rose-600",
-            SvgPath = "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-        },
-        new {
-            Tag = "1 แถม 1",
-            Title = "ซื้อ 1 ชิ้น แถม 1 ชิ้น",
-            Desc = "เฉพาะสินค้าที่กำหนด ระยะเวลาจำกัด",
-            BgColor = "bg-white border-slate-200/80",
-            BadgeColor = "bg-secondary/30 text-primary",
-            IconColor = "text-primary",
-            SvgPath = "M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-        },
-        new {
-            Tag = "ซื้อคู่",
-            Title = "จับคู่ซื้อเป็นเซ็ต",
-            Desc = "ซื้อเป็นชุดในราคาพิเศษกว่าซื้อแยก",
-            BgColor = "bg-white border-slate-200/80",
-            BadgeColor = "bg-accent/10 text-accent",
-            IconColor = "text-accent",
-            SvgPath = "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-        },
-        new {
-            Tag = "แลกแต้ม",
-            Title = "สะสมแต้มแลกรางวัล",
-            Desc = "ใช้แต้มแลกสินค้าหรือส่วนลดพิเศษ",
-            BgColor = "bg-white border-slate-200/80",
-            BadgeColor = "bg-amber-100 text-amber-700",
-            IconColor = "text-amber-600",
-            SvgPath = "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-        },
-        new {
-            Tag = "พรีออเดอร์",
-            Title = "จองสินค้าล่วงหน้า",
-            Desc = "จองสินค้าก่อนใคร รับ+ชำระที่หน้าร้าน",
-            BgColor = "bg-white border-slate-200/80",
-            BadgeColor = "bg-primary/10 text-primary",
-            IconColor = "text-primary",
-            SvgPath = "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        }
-    };
+    // จัดเตรียมข้อมูลการ์ดโปรโมชั่นที่ดึงมาจากฐานข้อมูลจริง
+    var promoCards = (Model?.Promotions != null && Model.Promotions.Any())
+        ? Model.Promotions.Select(p =>
+        {
+            // ปรับรูปแบบชนิดโปรโมชั่นให้เป็นตัวพิมพ์เล็ก
+            string pType = (p.PromoType ?? "percent").Trim().ToLowerInvariant();
+            // เลือกคลาสสีป้ายกำกับตามประเภทโปรโมชั่น
+            string badgeClass = pType switch
+            {
+                "bogo" => "bg-secondary/30 text-primary",
+                "bundle" => "bg-accent/10 text-accent",
+                "double_points" => "bg-amber-100 text-amber-700",
+                "fixed" => "bg-emerald-100 text-emerald-700",
+                _ => "bg-rose-100 text-rose-600"
+            };
+            // เลือกคลาสสีไอคอนตามประเภทโปรโมชั่น
+            string iconColor = pType switch
+            {
+                "bogo" => "text-primary",
+                "bundle" => "text-accent",
+                "double_points" => "text-amber-600",
+                "fixed" => "text-emerald-600",
+                _ => "text-rose-600"
+            };
+            // กำหนดพาธ SVG สำหรับไอคอนแต่ละประเภทโปรโมชั่น
+            string svgPath = pType switch
+            {
+                "bogo" => "M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7",
+                "bundle" => "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4",
+                "double_points" => "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z",
+                _ => "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+            };
+            // ส่งคืนออบเจกต์การ์ดโปรโมชั่นพร้อมแสดงผล
+            return new {
+                // ป้ายแท็กโปรโมชั่น
+                Tag = p.Tag,
+                // ชื่อโปรโมชั่น
+                Title = p.Title,
+                // คำอธิบายโปรโมชั่น
+                Desc = p.Description,
+                // โค้ดส่วนลด
+                Code = p.Code,
+                // ขอบเขตสินค้าที่ร่วมรายการ
+                Scope = string.IsNullOrWhiteSpace(p.ApplicableScope) ? "all" : p.ApplicableScope,
+                // ข้อความวันหมดอายุ
+                ExpiryText = p.ExpiryText,
+                // สีพื้นหลังของการ์ด
+                BgColor = "bg-white border-slate-200/80",
+                // สีป้ายกำกับ
+                BadgeColor = badgeClass,
+                // สีไอคอน
+                IconColor = iconColor,
+                // พาธไอคอน SVG
+                SvgPath = svgPath
+            };
+        }).ToArray()
+        : Array.Empty<dynamic>();
 
+    // จัดเตรียมรายการสินค้าแนะนำพิเศษ 8 รายการแรก
     var featuredProducts = (Model?.FeaturedProducts != null && Model.FeaturedProducts.Any())
         ? Model.FeaturedProducts.Take(8).Select(p => new {
             Id = p.ProductId,
             Title = p.Name,
             Series = !string.IsNullOrEmpty(p.SeriesName) ? p.SeriesName : (!string.IsNullOrEmpty(p.CategoryName) ? p.CategoryName : "ฟิกเกอร์สะสม"),
             Price = p.PriceFormatted,
-            Badge = p.InStock ? "มีสินค้า" : "เปิดสั่งจอง",
-            BadgeClass = p.InStock ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
-            HasDetail = true,
+            InStock = p.InStock,
+            IsPreorder = p.IsPreorder,
+            Badge = p.StatusText,
+            BadgeClass = p.BadgeClass,
             ImageUrl = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png"
         }).ToArray()
         : Array.Empty<dynamic>();
 }
 
+@* กรอบคอนเทนเนอร์หลักของหน้าแรก *@
 <div class="space-y-12 pb-16 bg-white">
-    <!-- HERO SECTION WITH 3D MODEL -->
+    @* ตรวจสอบและแสดงข้อความแจ้งเตือนผลการทำงานจาก TempData *@
+    @if (TempData["SuccessMessage"] != null || TempData["ErrorMessage"] != null)
+    {
+        @* กรอบจำกัดความกว้างของข้อความแจ้งเตือน *@
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6">
+            @* กล่องข้อความสีเขียวแจ้งเตือนสำเร็จ *@
+            @if (TempData["SuccessMessage"] != null)
+            {
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                    <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+            }
+            @* กล่องข้อความสีแดงแจ้งเตือนข้อผิดพลาด *@
+            @if (TempData["ErrorMessage"] != null)
+            {
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                    <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                    <span>@TempData["ErrorMessage"]</span>
+                </div>
+            }
+        </div>
+    }
+
+    @* ส่วนจัดแสดงสินค้าไฮไลต์พร้อมโมเดล 3 มิติ (Hero Section) *@
     <section id="hero" class="relative overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16 lg:pt-14 lg:pb-20">
+        @* กรอบจัดกึ่งกลางเนื้อหา Hero Section *@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            @* โครงสร้างกริด 2 คอลัมน์ (ซ้ายข้อความและสเปก / ขวาโมเดล 3D) *@
             <div class="grid grid-cols-1 items-center gap-8 lg:grid-cols-12 lg:gap-12">
-                <!-- Left: Hero Text & Specs -->
+                @* คอลัมน์ซ้าย: ข้อความแนะนำ สเปกสินค้า และปุ่มดำเนินการ *@
                 <div class="order-2 lg:order-1 lg:col-span-7 flex flex-col justify-center">
-                    <!-- Eyebrow Badge -->
-                    <!-- Eyebrow Badge (มีสินค้า) -->
-                    <div class="inline-flex items-center gap-2 self-start rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold tracking-wide text-emerald-800 mb-4 shadow-xs">
-                        <span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    @* ป้ายกำกับสถานะสินค้าเด่น *@
+                    <div class="inline-flex items-center gap-2 self-start rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold tracking-wide text-emerald-800 mb-4">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                        <span class="size-2 rounded-full bg-emerald-500"></span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>@heroContent.Badge</span>
                     </div>
 
-                    <!-- Main Heading -->
+                    @* หัวข้อใหญ่ของสินค้าไฮไลต์ประจำหน้าแรก *@
                     <h1 class="text-3xl font-extrabold tracking-tight text-text sm:text-4xl lg:text-5xl leading-tight">
                         @heroContent.TitlePrefix<br />
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-primary">@heroContent.TitleHighlight</span>
                     </h1>
 
-                    <!-- Description -->
+                    @* คำอธิบายรายละเอียดสินค้าและงานปั้น *@
                     <p class="mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-slate-600">
                         @heroContent.Description
                     </p>
 
-                    <!-- Specifications Grid -->
+                    @* ตารางการ์ดสเปกเชิงเทคนิค (น้ำหนัก, วัสดุ, ความสูง, สเกล) *@
                     <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl">
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var spec in heroContent.Specs)
                         {
-                            <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs text-center transition-all hover:border-primary/30">
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-xs text-center">
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-base font-bold text-text">@spec.Value</div>
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">@spec.Label</div>
                             </div>
                         }
                     </div>
 
-                    <!-- Pricing & CTA Buttons (Responsive stacked/inline buttons) -->
+                    @* แถบแสดงราคาและปุ่มดำเนินการสั่งซื้อ / ใส่ตะกร้า *@
                     <div class="mt-8 flex flex-col sm:flex-row sm:items-center gap-4">
+                        @* บล็อกแสดงราคา *@
                         <div class="mr-2">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">@heroContent.PriceLabel</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-3xl font-extrabold text-primary">@heroContent.Price</span>
                         </div>
 
+                        @* กลุ่มปุ่มกดสั่งซื้อและเพิ่มลงในตะกร้า *@
                         <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                            <!-- Button 1 (Left): ใส่ตะกร้า -->
-                            @* ฟอร์มส่งข้อมูลเพิ่มสินค้าไฮไลท์ลงในตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
+                            @* ฟอร์มเพิ่มสินค้าลงในตะกร้าแล้วคงอยู่หน้าเดิม (ไม่ใส่ method attribute) *@
                             <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
+                                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                                 <input type="hidden" name="productId" value="@heroProductId" />
+                                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                                 <input type="hidden" name="quantity" value="1" />
+                                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                 <button type="submit"
                                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-white px-5 py-3.5 text-sm font-bold text-primary shadow-xs transition-all hover:bg-primary/5 cursor-pointer w-full sm:w-auto">
+                                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                     <svg class="size-4.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="9" cy="21" r="1"></circle>
                                         <circle cx="20" cy="21" r="1"></circle>
                                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                                     </svg>
+                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                     <span>ใส่ตะกร้า</span>
                                 </button>
                             </form>
 
-                            <!-- Button 2 (Right): สั่งจองสินค้านี้ -->
+                            @* ตรวจสอบว่าสินค้ามีพร้อมส่งหรือไม่เพื่อแสดงปุ่มซื้อตอนนี้หรือปุ่มพรีออเดอร์ *@
+                            @if (heroInStock)
+                            {
+                                @* ฟอร์มสั่งซื้อทันทีและนำทางไปยังหน้าตะกร้า (ไม่ใส่ method attribute) *@
+                                <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="productId" value="@heroProductId" />
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="quantity" value="1" />
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="goToCart" value="true" />
+                                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
+                                    <button type="submit"
+                                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-accent/90 cursor-pointer w-full sm:w-auto">
+                                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                                        <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
+                                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                        </svg>
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                        <span>ซื้อตอนนี้</span>
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                @* ลิงก์นำทางไปสั่งจองล่วงหน้าที่หน้ารายละเอียดสินค้า *@
+                                <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@heroProductId"
+                                   class="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-accent/90 cursor-pointer w-full sm:w-auto">
+                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                    <span>สั่งจองล่วงหน้า</span>
+                                </a>
+                            }
+
+                            @* ลิงก์ไปดูรายละเอียดสินค้าฉบับเต็ม *@
                             <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@heroProductId"
-                               class="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto">
-                                <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
-                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                </svg>
-                                <span>สั่งจองสินค้านี้</span>
+                               class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-xs font-bold text-slate-700 hover:border-primary/40 hover:text-primary transition-colors w-full sm:w-auto">
+                                ดูรายละเอียด
                             </a>
                         </div>
                     </div>
 
-                    <!-- Trust Note -->
+                    @* ข้อความแจ้งเตือนเงื่อนไขการรับสินค้าหน้าร้าน *@
                     <div class="mt-5 flex items-center gap-2 text-xs text-slate-500 font-medium">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>@heroContent.Notice</span>
                     </div>
                 </div>
 
-                <!-- Right: 3D Model Viewer Container -->
+                @* คอลัมน์ขวา: กรอบแสดงโมเดล 3 มิติแบบ Interactive หมุนดูรอบทิศทาง *@
                 <div class="order-1 lg:order-2 lg:col-span-5 flex justify-center">
-                    <div class="relative w-full max-w-[500px] h-[340px] sm:h-[480px] lg:h-[620px] rounded-3xl p-2 sm:p-3">
-                        <!-- Glow Backdrop -->
-                        <div class="absolute inset-4 rounded-full bg-gradient-to-tr from-secondary/40 via-accent/15 to-transparent blur-2xl pointer-events-none"></div>
-
-                        <!-- 3D Model Badge -->
-                        <div class="absolute top-6 right-6 z-20 flex items-center gap-1.5 rounded-full bg-primary/90 backdrop-blur-md px-3 py-1.5 text-xs font-bold text-white shadow-md">
-                            <span>3D · ลากเพื่อหมุน</span>
-                        </div>
-
-                        <!-- Model-Viewer Element -->
-                        <div class="relative z-10 w-full h-full rounded-2xl overflow-hidden flex items-center justify-center">
+                    @* กรอบการ์ดบรรจุโมเดล 3 มิติ *@
+                    <div class="relative w-full max-w-[500px] h-[340px] sm:h-[460px] lg:h-[580px] rounded-3xl border border-slate-200/80 bg-white p-2 sm:p-3">
+                        @* กรอบภายในสำหรับครอบองค์ประกอบ model-viewer *@
+                        <div class="relative z-10 w-full h-full rounded-2xl overflow-hidden flex items-center justify-center bg-white">
+                            @* คอมโพเนนต์แสดงผลโมเดล 3D (.glb) รองรับการหมุน ซูม และแสงเงา *@
                             <model-viewer
                                 id="narutoModelViewer"
                                 src="@Url.Content(pageMedia.NarutoModelUrl)"
@@ -212,8 +285,8 @@
                                 auto-rotate-delay="800"
                                 rotation-per-second="20deg"
                                 interaction-prompt="none"
-                                shadow-intensity="1.2"
-                                exposure="1.1"
+                                shadow-intensity="1"
+                                exposure="1.05"
                                 camera-orbit="0deg 75deg 105%"
                                 field-of-view="30deg"
                                 loading="eager"
@@ -221,23 +294,20 @@
                                 class="w-full h-full cursor-grab active:cursor-grabbing">
                             </model-viewer>
 
-                            <!-- Drag / Zoom Hint Pill -->
-                            <div class="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/95 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-md backdrop-blur-sm whitespace-nowrap">
+                            @* ป้ายแนะนำการหมุนและซูมโมเดล 3 มิติ *@
+                            <div class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-xs whitespace-nowrap">
+                                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M8 7l-5 5 5 5M16 7l5 5-5 5"></path>
                                 </svg>
-                                <span>ลาก / บีบซูมเพื่อดูรอบตัว</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span>ลาก / ซูมเพื่อหมุนดูโมเดล 3D</span>
                             </div>
 
-                            <!-- Fallback Container if WebGL is unavailable -->
-                            <div id="narutoFallback" class="hidden absolute inset-0 z-10 flex-col items-center justify-center p-6 text-center bg-slate-50/90 rounded-2xl">
-                                <div class="size-16 rounded-2xl bg-secondary/30 flex items-center justify-center mb-3">
-                                    <svg class="size-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                        <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
-                                    </svg>
-                                </div>
-                                <h4 class="font-bold text-text text-base">โมเดล 3D นารูโตะ อุซึมากิ</h4>
-                                <p class="text-xs text-slate-500 mt-1 max-w-xs">สามารถดูและหมุนโมเดลบนเบราว์เซอร์ที่รองรับ WebGL</p>
+                            @* กรอบรูปภาพสำรองแสดงผลกรณีอุปกรณ์ไม่รองรับการแสดงผล 3D (WebGL) *@
+                            <div id="narutoFallback" class="hidden absolute inset-0 z-10 flex items-center justify-center p-4 bg-white rounded-2xl">
+                                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                                <img src="@Url.Content(pageMedia.NarutoFallbackImg)" alt="@heroContent.TitlePrefix" class="size-full object-contain" />
                             </div>
                         </div>
                     </div>
@@ -246,82 +316,107 @@
         </div>
     </section>
 
-    <!-- TRUST STRIP -->
-    <div class="flex border-y border-slate-200/80 bg-white/60 backdrop-blur-xs py-4">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                @foreach (var item in trustItems)
-                {
-                    <div class="flex items-center gap-3">
-                        <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-primary">
-                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="@item.SvgPath"></path>
-                            </svg>
-                        </div>
-                        <span class="text-xs sm:text-sm font-semibold text-slate-700 leading-snug">@item.Title</span>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- PROMOTIONS SECTION -->
+    @* ส่วนแสดงแคมเปญโปรโมชั่นที่เปิดใช้งานอยู่จริงในร้าน *@
     <section id="promotions" class="scroll-mt-24 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
+        @* แถบหัวเรื่องส่วนโปรโมชั่นพร้อมลิงก์ดูทั้งหมด *@
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+            @* ข้อความหัวข้อและคำอธิบาย *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-text">โปรโมชั่นตอนนี้</h2>
-                <p class="text-xs sm:text-sm text-slate-500 mt-1">5 สิทธิพิเศษเงื่อนไขคุ้มค่า — สำหรับสมาชิก FriendHouse</p>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">แคมเปญส่วนลดและสิทธิพิเศษที่เปิดใช้งานจริงในร้าน FriendHouse</p>
             </div>
+            @* ลิงก์ไปยังหน้ารายการโปรโมชั่นทั้งหมด *@
             <a asp-controller="Home" asp-action="Promotion" class="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline self-start sm:self-auto">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>ดูโปรโมชั่นทั้งหมด</span>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                 </svg>
             </a>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            @foreach (var promo in promoCards)
-            {
-                <div class="group rounded-2xl border @promo.BgColor p-4.5 shadow-xs transition-all hover:-translate-y-1 hover:shadow-md hover:border-primary/40 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between gap-2 mb-3">
-                            <span class="rounded-lg @promo.BadgeColor px-2.5 py-1 text-[11px] font-bold">@promo.Tag</span>
-                            <div class="flex size-7 items-center justify-center rounded-lg bg-slate-100 shadow-xs @promo.IconColor">
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="@promo.SvgPath"></path>
-                                </svg>
+        @* ตรวจสอบว่ามีรายการการ์ดโปรโมชั่นหรือไม่ *@
+        @if (promoCards.Length > 0)
+        {
+            @* กริดแสดงการ์ดโปรโมชั่น 4 คอลัมน์บนเดสก์ท็อป *@
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+                @foreach (var promo in promoCards)
+                {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                    <a asp-controller="Home" asp-action="Collection" asp-route-promoCode="@promo.Code" asp-route-promoScope="@promo.Scope"
+                       class="group rounded-2xl border @promo.BgColor p-4.5 transition-colors hover:border-primary/40 flex flex-col justify-between cursor-pointer">
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div>
+                            @* แถบป้ายกำกับและไอคอนประเภทโปรโมชั่น *@
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="rounded-lg @promo.BadgeColor px-2.5 py-1 text-[11px] font-bold">@promo.Tag</span>
+                                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                                <div class="flex size-7 items-center justify-center rounded-lg bg-slate-100 shadow-xs @promo.IconColor">
+                                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="@promo.SvgPath"></path>
+                                    </svg>
+                                </div>
                             </div>
+                            @* ชื่อโปรโมชั่นและคำอธิบาย *@
+                            <h3 class="text-sm font-bold text-text group-hover:text-primary transition-colors">@promo.Title</h3>
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">@promo.Desc</p>
                         </div>
-                        <h3 class="text-sm font-bold text-text group-hover:text-primary transition-colors">@promo.Title</h3>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">@promo.Desc</p>
-                    </div>
-                </div>
-            }
-        </div>
+                        @* แถบล่างแสดงรหัสคูปองและวันหมดเขต *@
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px]">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">@promo.Code</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="text-slate-400">@promo.ExpiryText</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            @* กล่องข้อความกรณีไม่มีโปรโมชั่นเปิดใช้งาน *@
+            <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-6 text-center text-xs text-slate-500">
+                ขณะนี้ยังไม่มีโปรโมชั่นที่เปิดใช้งาน สามารถกดดูโปรโมชั่นหรือกิจกรรมสะสมแต้มได้ที่หน้าโปรโมชั่น
+            </div>
+        }
     </section>
 
-    <!-- FEATURED PRODUCTS SECTION -->
+    @* ส่วนแสดงสินค้าและฟิกเกอร์แนะนำยอดนิยม *@
     <section id="collection" class="scroll-mt-24 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
+        @* แถบหัวเรื่องสินค้าแนะนำและตัวกรองนำทาง *@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            @* ข้อความหัวเรื่องและคำอธิบาย *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-text">สินค้าและฟิกเกอร์แนะนำ</h2>
-                <p class="text-xs sm:text-sm text-slate-500 mt-1">สินค้าพรีออเดอร์และของสะสมยอดนิยมประจำสัปดาห์</p>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">สินค้าพร้อมส่งและของสะสมลิขสิทธิ์แท้ยอดนิยม</p>
             </div>
 
-            <!-- Filter Pills -->
+            @* ปุ่มตัวกรองนำทางไปยังหมวดหมู่รวมสินค้า *@
             <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                <button type="button" class="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-xs cursor-pointer">
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Home" asp-action="Collection"
+                   class="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-xs whitespace-nowrap">
                     ทั้งหมด
-                </button>
-                <button type="button" class="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
-                    มีสินค้า
-                </button>
-                <button type="button" class="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer">
-                    สั่งจองสินค้านี้
-                </button>
-                <a asp-controller="Home" asp-action="Collection" class="ml-2 hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                </a>
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Home" asp-action="Collection" asp-route-status="มีสินค้า"
+                   class="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap">
+                    มีสินค้าพร้อมส่ง
+                </a>
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Home" asp-action="Collection" class="ml-2 hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline whitespace-nowrap">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>ดูคอลเลกชันทั้งหมด</span>
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
@@ -329,63 +424,112 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        @* กริดแสดงการ์ดสินค้า 4 คอลัมน์บนเดสก์ท็อป *@
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var prod in featuredProducts)
             {
-                <div class="group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                <div class="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors hover:border-primary/40">
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
-                        <!-- Real Image Box with Badge (Full edge-to-edge, borderless inside container) -->
-                        <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id" class="relative block aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
-                            <span class="absolute top-3 left-3 z-10 rounded-md @prod.BadgeClass px-2.5 py-1 text-[10px] font-bold shadow-xs backdrop-blur-xs">
-                                @prod.Badge
-                            </span>
-
-                            <img src="@Url.Content(prod.ImageUrl)" alt="@prod.Title"
-                                 class="size-full object-cover"
+                        @* รูปสินค้าเต็มกรอบครึ่งบนการ์ด สัดส่วน 1:1 *@
+                        <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id"
+                           class="block aspect-square w-full bg-white border-b border-slate-100 overflow-hidden">
+                            @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                            <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(prod.ImageUrl))" alt="@prod.Title"
+                                 class="size-full object-cover object-top"
                                  loading="lazy" />
                         </a>
 
-                        <!-- Product Info -->
-                        <div class="mt-4">
-                            <span class="text-[11px] font-medium text-slate-400">@prod.Series</span>
+                        @* ข้อมูลรายละเอียดสินค้า (ซีรีส์, ป้ายสถานะ, และชื่อ) *@
+                        <div class="px-4 pt-3.5 space-y-1.5">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                            <div class="flex items-center justify-between gap-2">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="text-[11px] font-medium text-slate-500 truncate">@prod.Series</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="shrink-0 rounded-md @prod.BadgeClass px-2 py-0.5 text-[10px] font-bold">
+                                    @prod.Badge
+                                </span>
+                            </div>
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                             <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id" class="block">
-                                <h3 class="mt-1 text-sm font-bold text-text leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
+                                <h3 class="text-sm font-bold text-text leading-snug group-hover:text-primary transition-colors line-clamp-2">
                                     @prod.Title
                                 </h3>
                             </a>
                         </div>
                     </div>
 
-                    <!-- 2 Buttons Row (Cart + Action) -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 space-y-3">
+                    @* ส่วนล่างของการ์ดแสดงราคาและปุ่มดำเนินการ *@
+                    <div class="px-4 pb-4 mt-3 pt-3 border-t border-slate-100 space-y-3">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-xs text-slate-400">ราคา</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-lg font-extrabold text-primary">@prod.Price</span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
-                            <!-- Button 1: ตะกร้า -->
-                            @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้า ไปยัง HomeController แอ็กชัน AddToCart *@
-                            <form asp-controller="Home" asp-action="AddToCart" class="w-full">
-                                <input type="hidden" name="productId" value="@prod.Id" />
-                                <input type="hidden" name="quantity" value="1" />
-                                <button type="submit"
-                                   class="w-full flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
-                                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="9" cy="21" r="1"></circle>
-                                        <circle cx="20" cy="21" r="1"></circle>
-                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                    </svg>
-                                    <span>ตะกร้า</span>
-                                </button>
-                            </form>
+                        @* ตรวจสอบว่าสินค้ามีสต็อกหรือไม่ *@
+                        @if (prod.InStock)
+                        {
+                            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
+                            <div class="grid grid-cols-2 gap-2">
+                                @* ฟอร์มเพิ่มสินค้าลงตะกร้า (ไม่ใส่ method attribute) *@
+                                <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="productId" value="@prod.Id" />
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="quantity" value="1" />
+                                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
+                                    <button type="submit"
+                                       class="w-full flex items-center justify-center gap-1.5 rounded-xl border border-primary/25 bg-primary/5 py-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
+                                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <circle cx="9" cy="21" r="1"></circle>
+                                            <circle cx="20" cy="21" r="1"></circle>
+                                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                        </svg>
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                        <span>ตะกร้า</span>
+                                    </button>
+                                </form>
 
-                            <!-- Button 2: สั่งจองสินค้านี้ -->
-                            <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id"
-                               class="flex items-center justify-center rounded-xl bg-accent py-2.5 text-xs font-bold text-white shadow-xs transition-opacity hover:opacity-90 cursor-pointer">
-                                สั่งจองสินค้านี้
-                            </a>
-                        </div>
+                                @* ฟอร์มสั่งซื้อทันทีเพื่อไปหน้าตะกร้า (ไม่ใส่ method attribute) *@
+                                <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="productId" value="@prod.Id" />
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="quantity" value="1" />
+                                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+                                    <input type="hidden" name="goToCart" value="true" />
+                                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
+                                    <button type="submit"
+                                       class="w-full flex items-center justify-center rounded-xl bg-accent py-2.5 text-xs font-bold text-white transition-opacity hover:opacity-90 cursor-pointer">
+                                        ซื้อตอนนี้
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
+                            <div class="grid grid-cols-2 gap-2">
+                                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                                <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id"
+                                   class="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                                    ดูรายละเอียด
+                                </a>
+                                @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
+                                <button type="button" disabled
+                                        class="rounded-xl bg-slate-100 py-2.5 text-xs font-bold text-slate-400 cursor-not-allowed">
+                                    สินค้าหมด
+                                </button>
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -393,18 +537,27 @@
     </section>
 </div>
 
+@* สคริปต์จาวาสคริปต์ควบคุมการเลื่อนหน้าและการตรวจสอบการรองรับ 3D *@
 @section Scripts {
+@* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
 <script>
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     document.addEventListener('DOMContentLoaded', function () {
-        // Smooth slide scroll handler for any anchor linking to on-page hash
+        // จัดการการเลื่อนหน้าจออย่างนุ่มนวลเมื่อคลิกลิงก์สมอ (Anchor)
         document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+            // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
             anchor.addEventListener('click', function (e) {
+                // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                 var targetId = this.getAttribute('href');
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (targetId && targetId !== '#') {
+                    // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                     var targetEl = document.querySelector(targetId);
+                    // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                     if (targetEl) {
                         e.preventDefault();
                         targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                         if (history.pushState) {
                             history.pushState(null, null, targetId);
                         }
@@ -413,9 +566,11 @@
             });
         });
 
-        // Check if page loaded with a hash and smooth scroll to it
+        // ตรวจสอบว่าหน้าเว็บเปิดมาพร้อมกับแฮชหรือไม่ เพื่อเลื่อนไปยังเป้าหมาย
         if (window.location.hash) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             var initialTarget = document.querySelector(window.location.hash);
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (initialTarget) {
                 setTimeout(function () {
                     initialTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -423,24 +578,32 @@
             }
         }
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var viewer = document.getElementById('narutoModelViewer');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var fallback = document.getElementById('narutoFallback');
 
+        // ฟังก์ชันตรวจสอบการรองรับ WebGL ของเบราว์เซอร์
         function hasWebGL() {
             try {
+                // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                 var canvas = document.createElement('canvas');
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                 return !!(window.WebGLRenderingContext &&
                     (canvas.getContext('webgl') || canvas.getContext('experimental-webgl') || canvas.getContext('webgl2')));
             } catch (e) {
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                 return false;
             }
         }
 
+        // หากเบราว์เซอร์ไม่รองรับ WebGL ให้สลับไปแสดงรูปภาพสำรองทันที
         if (!hasWebGL() && fallback && viewer) {
             viewer.classList.add('hidden');
             fallback.classList.remove('hidden');
             fallback.classList.add('flex');
         } else if (viewer && fallback) {
+            // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
             viewer.addEventListener('error', function () {
                 viewer.classList.add('hidden');
                 fallback.classList.remove('hidden');

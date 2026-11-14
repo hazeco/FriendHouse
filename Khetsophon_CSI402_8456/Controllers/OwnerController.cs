@@ -66,17 +66,99 @@ public class OwnerController : Controller
     [HttpGet]
     public IActionResult AddPromotion()
     {
+        // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
+        // ส่งมุมมองหน้าสร้างโปรโมชั่นใหม่
         return View();
+    }
+
+    // ฟังก์ชันช่วยตรวจสอบและปรับแต่งค่าโปรโมชั่นให้ถูกต้องตามกฎธุรกิจ
+    private string? ValidateAndNormalizePromotion(Promotion data, int? ignorePromotionId = null)
+    {
+        // ตรวจสอบว่ามีการระบุชื่อโปรโมชั่นหรือไม่
+        if (string.IsNullOrWhiteSpace(data.Name))
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีไม่ระบุชื่อ
+            return "กรุณาระบุชื่อโปรโมชั่นให้ครบถ้วน";
+        }
+        // ตัดช่องว่างส่วนเกินของชื่อโปรโมชั่น
+        data.Name = data.Name.Trim();
+
+        // ตรวจสอบว่ามีการระบุรหัสคูปองหรือไม่ หากไม่มีให้สุ่มรหัสอัตโนมัติ
+        if (string.IsNullOrWhiteSpace(data.VoucherCode))
+        {
+            // กำหนดรหัสคูปองอัตโนมัติขึ้นต้นด้วย FH- ตามด้วยปีเดือนวันเวลา
+            data.VoucherCode = "FH-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        }
+        // ปรับแต่งรหัสคูปองเป็นตัวพิมพ์ใหญ่และตัดช่องว่าง
+        data.VoucherCode = PromoAndRedemptionHelper.NormalizeCode(data.VoucherCode);
+
+        // ตรวจสอบว่ารหัสคูปองซ้ำกับโปรโมชั่นอื่นในฐานข้อมูลหรือไม่
+        bool duplicateCode = _db.Promotions.Any(p =>
+            p.PromotionId != (ignorePromotionId ?? 0) &&
+            p.VoucherCode.ToUpper() == data.VoucherCode);
+        // หากพบรหัสซ้ำให้แจ้งเตือน
+        if (duplicateCode)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีรหัสคูปองซ้ำ
+            return $"รหัสคูปอง \"{data.VoucherCode}\" มีอยู่ในระบบแล้ว กรุณาใช้รหัสอื่น";
+        }
+
+        // ปรับแต่งประเภทโปรโมชั่นเป็นตัวพิมพ์เล็ก (ค่าเริ่มต้นคือ percent)
+        data.PromoType = string.IsNullOrWhiteSpace(data.PromoType) ? "percent" : data.PromoType.Trim().ToLowerInvariant();
+        // ปรับแต่งขอบเขตสินค้าเป็นตัวพิมพ์เล็ก (ค่าเริ่มต้นคือ all)
+        data.ApplicableScope = string.IsNullOrWhiteSpace(data.ApplicableScope) ? "all" : data.ApplicableScope.Trim().ToLowerInvariant();
+
+        // ตรวจสอบว่ามูลค่าส่วนลดไม่ติดลบ
+        if (data.DiscountValue < 0)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีส่วนลดติดลบ
+            return "มูลค่าส่วนลดต้องไม่น้อยกว่า 0";
+        }
+        // ตรวจสอบว่ากรณีส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%
+        if ((data.PromoType == "percent" || data.PromoType == "percentage") && data.DiscountValue > 100)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีส่วนลดเกินร้อยละ 100
+            return "ส่วนลดแบบเปอร์เซ็นต์ต้องไม่เกิน 100%";
+        }
+        // ตรวจสอบว่ายอดสั่งซื้อขั้นต่ำไม่ติดลบ
+        if (data.MinimumSpend.HasValue && data.MinimumSpend.Value < 0)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณียอดขั้นต่ำติดลบ
+            return "ยอดสั่งซื้อขั้นต่ำต้องไม่ติดลบ";
+        }
+        // ตรวจสอบจำนวนสิทธิ์การใช้งานสูงสุด
+        if (data.UsageLimit.HasValue && data.UsageLimit.Value < 1)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีจำนวนสิทธิ์น้อยกว่า 1
+            return "จำนวนสิทธิ์การใช้งานสูงสุดต้องอย่างน้อย 1 สิทธิ์ (หรือเว้นว่างหากไม่จำกัด)";
+        }
+
+        // ปรับแต่งวันที่เริ่มต้นตามปฏิทินสากล
+        data.StartDate = PromoAndRedemptionHelper.NormalizeGregorianDate(data.StartDate);
+        // ปรับแต่งวันที่สิ้นสุดตามปฏิทินสากล
+        data.EndDate = PromoAndRedemptionHelper.NormalizeGregorianDate(data.EndDate);
+        // ตรวจสอบว่าวันสิ้นสุดต้องไม่เกิดขึ้นก่อนวันเริ่มต้น
+        if (data.EndDate < data.StartDate)
+        {
+            // คืนค่าข้อความแจ้งเตือนกรณีช่วงวันที่ไม่ถูกต้อง
+            return "วันสิ้นสุดโปรโมชั่นต้องไม่ก่อนวันเริ่มต้น";
+        }
+
+        // คืนค่าว่างกรณีข้อมูลผ่านการตรวจสอบทั้งหมด
+        return null;
     }
 
     // CREATE: บันทึกโปรโมชั่นใหม่ลงในฐานข้อมูลจริง
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult AddPromotion(Promotion? data)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
@@ -88,48 +170,40 @@ public class OwnerController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ตรวจสอบว่ามีการส่งข้อมูลโปรโมชั่นใหม่และระบุชื่อโปรโมชั่นเข้ามาหรือไม่
-        if (data != null && !string.IsNullOrEmpty(data.Name))
+        // ตรวจสอบว่ามีข้อมูลส่งมาจากแบบฟอร์มหรือไม่
+        if (data == null)
         {
-            // กรณีไม่ได้ระบุรหัสคูปอง ให้สร้างรหัสคูปองอัตโนมัติตามวันและเวลาปัจจุบัน
-            if (string.IsNullOrEmpty(data.VoucherCode))
-            {
-                // กำหนดรหัสคูปองขึ้นต้นด้วย FH ตามด้วยวันเวลา
-                data.VoucherCode = "FH-" + DateTime.Now.ToString("yyyyMMddHHmmss");
-            }
-
-            // กรณีไม่ได้ระบุประเภทโปรโมชั่น ให้กำหนดค่าเริ่มต้นเป็นส่วนลดเปอร์เซ็นต์
-            if (string.IsNullOrEmpty(data.PromoType))
-            {
-                // กำหนดประเภทโปรโมชั่นเริ่มต้น
-                data.PromoType = "percent";
-            }
-
-            // กรณีไม่ได้ระบุขอบเขตสินค้าที่ร่วมรายการ ให้กำหนดค่าเริ่มต้นเป็นสินค้าทั้งหมด
-            if (string.IsNullOrEmpty(data.ApplicableScope))
-            {
-                // กำหนดขอบเขตสินค้าเริ่มต้น
-                data.ApplicableScope = "all";
-            }
-
-            // กำหนดจำนวนครั้งที่ถูกใช้งานเริ่มต้นเป็นศูนย์
-            data.CurrentUsageCount = 0;
-            // กำหนดสถานะเปิดใช้งานโปรโมชั่นเริ่มต้นเป็นเปิดใช้งาน
-            data.IsActive = data.IsActive ?? true;
-
-            // เพิ่มข้อมูลโปรโมชั่นใหม่ลงในชุดข้อมูลโปรโมชั่น
-            _db.Promotions.Add(data);
-            // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
-            _db.SaveChanges();
-
-            // กำหนดข้อความแจ้งเตือนผลสำเร็จพร้อมชื่อโปรโมชั่นที่เพิ่ม
-            TempData["SuccessMessage"] = "เพิ่มโปรโมชั่นใหม่ \"" + data.Name + "\" เรียบร้อยแล้ว";
-            // เปลี่ยนเส้นทางกลับไปยังหน้ารายการโปรโมชั่นทั้งหมด
-            return RedirectToAction("Promotions");
+            // กำหนดข้อความแจ้งเตือนกรณีไม่พบข้อมูล
+            TempData["ErrorMessage"] = "ไม่พบข้อมูลโปรโมชั่นที่ส่งมา";
+            // ส่งกลับไปยังหน้าแบบฟอร์มเดิม
+            return View(data);
         }
 
-        TempData["ErrorMessage"] = "กรุณาระบุชื่อโปรโมชั่นให้ครบถ้วน";
-        return View(data);
+        // ตรวจสอบความถูกต้องของข้อมูลโปรโมชั่น
+        string? validationError = ValidateAndNormalizePromotion(data);
+        // ตรวจสอบว่ามีข้อผิดพลาดหรือไม่
+        if (!string.IsNullOrEmpty(validationError))
+        {
+            // กำหนดข้อความแจ้งเตือนตามข้อผิดพลาดที่พบ
+            TempData["ErrorMessage"] = validationError;
+            // ส่งกลับไปยังหน้าแบบฟอร์มเดิมพร้อมข้อมูลเดิม
+            return View(data);
+        }
+
+        // กำหนดจำนวนครั้งที่ถูกใช้งานเริ่มต้นเป็นศูนย์
+        data.CurrentUsageCount = 0;
+        // กำหนดสถานะเปิดใช้งานเริ่มต้น
+        data.IsActive = data.IsActive ?? false;
+
+        // เพิ่มโปรโมชั่นใหม่ลงในบริบทฐานข้อมูล
+        _db.Promotions.Add(data);
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
+        _db.SaveChanges();
+
+        // บันทึกข้อความแจ้งเตือนผลสำเร็จ
+        TempData["SuccessMessage"] = "เพิ่มโปรโมชั่นใหม่ \"" + data.Name + "\" เรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการโปรโมชั่นทั้งหมด
+        return RedirectToAction("Promotions");
     }
 
     // READ: แสดงหน้าแบบฟอร์มแก้ไขข้อมูลโปรโมชั่นตามรหัสโปรโมชั่นที่ระบุ
@@ -160,6 +234,7 @@ public class OwnerController : Controller
 
     // UPDATE: บันทึกข้อมูลการแก้ไขโปรโมชั่นลงในฐานข้อมูลจริง
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult EditPromotion(Promotion data)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
@@ -176,96 +251,125 @@ public class OwnerController : Controller
         // ตรวจสอบว่าพบข้อมูลโปรโมชั่นในฐานข้อมูลหรือไม่
         if (promo != null)
         {
+            // ตรวจสอบความถูกต้องของข้อมูลโปรโมชั่นที่ส่งมาแก้ไข
+            string? validationError = ValidateAndNormalizePromotion(data, promo.PromotionId);
+            // ตรวจสอบว่ามีข้อผิดพลาดหรือไม่
+            if (!string.IsNullOrEmpty(validationError))
+            {
+                // กำหนดข้อความแจ้งเตือนข้อผิดพลาด
+                TempData["ErrorMessage"] = validationError;
+                // ส่งกลับไปยังหน้าแบบฟอร์มเดิมพร้อมข้อมูล
+                return View(data);
+            }
+
             // อัปเดตชื่อโปรโมชั่น
             promo.Name = data.Name;
-            // อัปเดตรหัสคูปองโปรโมชั่น
+            // อัปเดตรหัสคูปอง
             promo.VoucherCode = data.VoucherCode;
             // อัปเดตประเภทโปรโมชั่น
             promo.PromoType = data.PromoType;
             // อัปเดตมูลค่าส่วนลด
             promo.DiscountValue = data.DiscountValue;
-            // อัปเดตยอดซื้อขั้นต่ำ
+            // อัปเดตยอดสั่งซื้อขั้นต่ำ
             promo.MinimumSpend = data.MinimumSpend;
-            // อัปเดตขอบเขตสินค้าที่ร่วมรายการ
-            promo.ApplicableScope = data.ApplicableScope ?? "all";
-            // อัปเดตวันที่เริ่มต้นโปรโมชั่น
+            // อัปเดตขอบเขตสินค้า
+            promo.ApplicableScope = data.ApplicableScope;
+            // อัปเดตวันที่เริ่มต้น
             promo.StartDate = data.StartDate;
-            // อัปเดตวันที่สิ้นสุดโปรโมชั่น
+            // อัปเดตวันที่สิ้นสุด
             promo.EndDate = data.EndDate;
-            // อัปเดตจำนวนสิทธิ์การใช้งานสูงสุด
+            // อัปเดตจำนวนสิทธิ์สูงสุด
             promo.UsageLimit = data.UsageLimit;
-            // อัปเดตสถานะการเปิดหรือปิดใช้งานโปรโมชั่น
-            promo.IsActive = data.IsActive;
+            // อัปเดตสถานะเปิดใช้งาน
+            promo.IsActive = data.IsActive ?? false;
 
-            // บันทึกการแก้ไขลงฐานข้อมูลจริง
+            // บันทึกการเปลี่ยนแปลงลงในฐานข้อมูลจริง
             _db.SaveChanges();
 
-            // กำหนดข้อความแจ้งเตือนผลการแก้ไขสำเร็จผ่าน TempData
+            // กำหนดข้อความแจ้งเตือนความสำเร็จ
             TempData["SuccessMessage"] = $"บันทึกการแก้ไขโปรโมชั่น \"{promo.Name}\" เรียบร้อยแล้ว";
-            // เปลี่ยนเส้นทางกลับไปยังหน้ารายการโปรโมชั่นทั้งหมด
+            // เปลี่ยนเส้นทางกลับไปหน้ารายการโปรโมชั่นทั้งหมด
             return RedirectToAction("Promotions");
         }
 
-        // กรณีไม่พบโปรโมชั่นที่ต้องการแก้ไข ให้แจ้งเตือนข้อผิดพลาด
+        // กำหนดข้อความแจ้งเตือนกรณีไม่พบข้อมูลโปรโมชั่น
         TempData["ErrorMessage"] = "ไม่พบข้อมูลโปรโมชั่นที่ต้องการแก้ไข";
-        // เปลี่ยนเส้นทางกลับไปยังหน้ารายการโปรโมชั่นทั้งหมด
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการโปรโมชั่น
         return RedirectToAction("Promotions");
     }
 
-    // UPDATE: สลับสถานะเปิดหรือปิดการใช้งานโปรโมชั่นในฐานข้อมูล
+    // UPDATE: สลับสถานะเปิดหรือปิดการใช้งานโปรโมชั่นในฐานข้อมูลแบบ Post-Redirect-Get (ไม่ใช้ AJAX)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult TogglePromotion(int id)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
-            // ส่งผลลัพธ์แจ้งว่าไม่มีสิทธิ์เข้าถึง
-            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
+            return RedirectToAction("Login", "Account");
         }
 
-        // ค้นหาโปรโมชั่นตามรหัสที่ระบุจากตารางโปรโมชั่นในฐานข้อมูล
+        // ค้นหาโปรโมชั่นตามรหัสในฐานข้อมูล
         var promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id);
-        // ตรวจสอบว่าพบข้อมูลโปรโมชั่นหรือไม่
+        // ตรวจสอบว่าพบโปรโมชั่นหรือไม่
         if (promo != null)
         {
-            // สลับค่าสถานะการเปิดใช้งานเป็นค่าตรงกันข้าม
+            // สลับสถานะเปิดใช้งานเป็นตรงกันข้าม
             promo.IsActive = !(promo.IsActive ?? false);
-            // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
+            // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
             _db.SaveChanges();
-            // ส่งผลลัพธ์สถานะใหม่กลับไปยังหน้าเว็บ
-            return Json(new { success = true, isActive = promo.IsActive });
+            // กำหนดข้อความป้ายสถานะภาษาไทย
+            string statusLabel = promo.IsActive == true ? "เปิดใช้งาน" : "ปิดใช้งาน";
+            // บันทึกข้อความแจ้งเตือนผลลัพธ์
+            TempData["SuccessMessage"] = $"อัปเดตสถานะโปรโมชั่น \"{promo.Name}\" เป็น {statusLabel} เรียบร้อยแล้ว";
+        }
+        else
+        {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่พบโปรโมชั่น
+            TempData["ErrorMessage"] = "ไม่พบโปรโมชั่นที่ต้องการเปลี่ยนสถานะ";
         }
 
-        // กรณีไม่พบโปรโมชั่นในฐานข้อมูล
-        return Json(new { success = false, message = "ไม่พบโปรโมชั่น" });
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการโปรโมชั่น
+        return RedirectToAction("Promotions");
     }
 
-    // DELETE: ปิดการใช้งานโปรโมชั่นเพื่อรักษาประวัติการใช้งานเดิมในฐานข้อมูล
+    // DELETE: ปิดการใช้งานโปรโมชั่นเพื่อรักษาประวัติการใช้งานเดิมในฐานข้อมูลแบบ Post-Redirect-Get (ไม่ใช้ AJAX)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult DeletePromotion(int id)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
-            // ส่งผลลัพธ์แจ้งว่าไม่มีสิทธิ์เข้าถึง
-            return Json(new { success = false, message = "ไม่มีสิทธิ์เข้าถึง" });
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
+            return RedirectToAction("Login", "Account");
         }
 
-        // ค้นหาโปรโมชั่นตามรหัสที่ระบุจากตารางโปรโมชั่นในฐานข้อมูล
+        // ค้นหาโปรโมชั่นจากรหัสในฐานข้อมูล
         var promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id);
-        // ตรวจสอบว่าพบโปรโมชั่นหรือไม่
+        // ตรวจสอบว่าพบข้อมูลหรือไม่
         if (promo != null)
         {
-            // ปรับสถานะเป็นปิดการใช้งานเพื่อรักษาข้อมูลอ้างอิงในระบบ
+            // ปรับสถานะเป็นปิดใช้งานเพื่อรักษาประวัติการขายเดิม
             promo.IsActive = false;
-            // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
+            // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
             _db.SaveChanges();
-            // ส่งผลลัพธ์แจ้งการลบโปรโมชั่นสำเร็จ
-            return Json(new { success = true, message = $"ลบโปรโมชั่น {promo.Name} เรียบร้อยแล้ว" });
+            // แจ้งเตือนข้อความสำเร็จ
+            TempData["SuccessMessage"] = $"ปิดการใช้งานโปรโมชั่น \"{promo.Name}\" เรียบร้อยแล้ว (คงประวัติเดิมไว้)";
+        }
+        else
+        {
+            // แจ้งเตือนกรณีไม่พบข้อมูล
+            TempData["ErrorMessage"] = "ไม่พบโปรโมชั่นที่ต้องการลบ";
         }
 
-        // กรณีไม่พบโปรโมชั่นที่ต้องการลบ
-        return Json(new { success = false, message = "ไม่พบโปรโมชั่นที่ต้องการลบ" });
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการโปรโมชั่น
+        return RedirectToAction("Promotions");
     }
 
     // READ: แสดงหน้ารายงานสรุปยอดขายประจำเดือนสำหรับเจ้าของร้าน โดยดึงตัวเลขจริงจากฐานข้อมูลชุดเดียวกับฝ่ายบัญชี
@@ -345,44 +449,68 @@ public class OwnerController : Controller
             .ToList();
     }
 
-    // ฟังก์ชันช่วยอัปโหลดและบันทึกไฟล์รูปภาพสินค้าหรือของรางวัลลงโฟลเดอร์ wwwroot/media/images
-    private string SaveUploadedMediaImage(IFormFile? imageFile, string? fallbackUrl)
+    // ฟังก์ชันช่วยอัปโหลดและบันทึกไฟล์รูปภาพสินค้าหรือของรางวัล (ต้นฉบับ + ภาพการ์ด 1:1 _card.png)
+    private string SaveUploadedMediaImage(IFormFile? imageFile, string? fallbackUrl, IFormFile? thumbFile = null)
     {
-        // ตรวจสอบว่ามีการแนบไฟล์รูปภาพขนาดมากกว่าศูนย์เข้ามาหรือไม่
+        var imagesDir = Path.Combine(_env.WebRootPath, "media", "images");
+        Directory.CreateDirectory(imagesDir);
+        var targetOriginalUrl = string.IsNullOrWhiteSpace(fallbackUrl)
+            ? "/media/images/tanjiro_kamado.png"
+            : fallbackUrl.Trim();
+
+        // กรณีมีการอัปโหลดไฟล์ต้นฉบับใหม่ ให้บันทึกทั้งไฟล์ต้นฉบับและไฟล์การ์ด 1:1 คู่กัน
         if (imageFile != null && imageFile.Length > 0)
         {
-            // อ่านนามสกุลไฟล์เดิมและตรวจสอบความปลอดภัยเบื้องต้น
             var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
             if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".webp")
             {
                 ext = ".png";
             }
 
-            // สร้างโฟลเดอร์เป้าหมายหากยังไม่มีอยู่จริง
-            var imagesDir = Path.Combine(_env.WebRootPath, "media", "images");
-            Directory.CreateDirectory(imagesDir);
-
-            // ตั้งชื่อไฟล์ให้สะอาดและไม่ซ้ำซ้อนโดยอิงจากชื่อเดิมหรือเวลาปัจจุบัน
             var rawName = Path.GetFileNameWithoutExtension(imageFile.FileName)
                 .Trim()
                 .ToLowerInvariant()
                 .Replace(" ", "_");
             var safePrefix = string.IsNullOrWhiteSpace(rawName) ? "product" : rawName;
-            var fileName = $"{safePrefix}_{DateTime.Now:yyyyMMddHHmmss}{ext}";
+            var baseName = $"{safePrefix}_{DateTime.Now:yyyyMMddHHmmss}";
+            var fileName = $"{baseName}{ext}";
             var fullPath = Path.Combine(imagesDir, fileName);
 
-            // คัดลอกข้อมูลไฟล์ลงดิสก์ในโฟลเดอร์สื่อกลางของโปรเจกต์
             using (var stream = new FileStream(fullPath, FileMode.Create))
             {
                 imageFile.CopyTo(stream);
             }
 
-            // คืนค่าเส้นทางเว็บสำหรับเก็บลงฐานข้อมูล
+            // บันทึกไฟล์เวอร์ชันการ์ด 1:1 คู่กันหากผู้ใช้ปรับกรอบภาพจากตัวครอปมาด้วย
+            if (thumbFile != null && thumbFile.Length > 0)
+            {
+                var cardFileName = $"{baseName}_card.png";
+                var cardFullPath = Path.Combine(imagesDir, cardFileName);
+                using var thumbStream = new FileStream(cardFullPath, FileMode.Create);
+                thumbFile.CopyTo(thumbStream);
+            }
+
             return "/media/images/" + fileName;
         }
 
-        // กรณีไม่ได้อัปโหลดไฟล์ใหม่ ให้ใช้เส้นทางรูปภาพเดิมหรือรูปภาพตัวอย่างมาตรฐาน
-        return string.IsNullOrWhiteSpace(fallbackUrl) ? "/media/images/tanjiro_kamado.png" : fallbackUrl.Trim();
+        // กรณีแก้ไขสินค้าเดิมและปรับกรอบภาพใหม่โดยไม่ได้อัปโหลดไฟล์ต้นฉบับทับ
+        if (thumbFile != null && thumbFile.Length > 0 && targetOriginalUrl.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase))
+        {
+            var relFileName = Path.GetFileName(targetOriginalUrl.Split('?', '#')[0]);
+            var relBase = Path.GetFileNameWithoutExtension(relFileName);
+            if (!string.IsNullOrWhiteSpace(relBase))
+            {
+                if (relBase.EndsWith("_card", StringComparison.OrdinalIgnoreCase))
+                {
+                    relBase = relBase[..^5];
+                }
+                var cardFullPath = Path.Combine(imagesDir, $"{relBase}_card.png");
+                using var thumbStream = new FileStream(cardFullPath, FileMode.Create);
+                thumbFile.CopyTo(thumbStream);
+            }
+        }
+
+        return targetOriginalUrl;
     }
 
     // READ: แสดงหน้าจัดการสินค้าและของแลกแต้มสำหรับเจ้าของร้าน พร้อมค้นหา กรอง และแบ่งหน้า
@@ -448,13 +576,13 @@ public class OwnerController : Controller
                 filteredProducts = filteredProducts.Where(p => p.CategoryId == catId);
             }
 
-            // กรองตามรูปแบบการจำหน่าย (เปิดขายปกติ พรีออเดอร์ หรือซ่อนจากหน้าร้าน)
+            // กรองตามสถานะสินค้า (วางขายปกติ สินค้าหมดสต็อก หรือซ่อนจากหน้าร้าน)
             if (!string.IsNullOrWhiteSpace(saleModeFilter) && saleModeFilter != "all")
             {
                 filteredProducts = saleModeFilter switch
                 {
-                    "sale" => filteredProducts.Where(p => p.IsActive == true && !p.IsPreorder),
-                    "preorder" => filteredProducts.Where(p => p.IsActive == true && p.IsPreorder),
+                    "sale" => filteredProducts.Where(p => p.IsActive == true && !p.IsPreorder && p.Inventory != null && (p.Inventory.QuantityOnHand - p.Inventory.ReservedQuantity) > 0),
+                    "outofstock" => filteredProducts.Where(p => p.IsActive == true && (p.IsPreorder || p.Inventory == null || (p.Inventory.QuantityOnHand - p.Inventory.ReservedQuantity) <= 0)),
                     "hidden" => filteredProducts.Where(p => p.IsActive != true),
                     _ => filteredProducts
                 };
@@ -507,22 +635,39 @@ public class OwnerController : Controller
         // ประกอบข้อมูลทั้งหมดลงใน OwnerCatalogViewModel เพื่อส่งไปยังหน้าแสดงผล
         var vm = new OwnerCatalogViewModel
         {
+            // กำหนดแท็บที่กำลังเปิดใช้งานอยู่ (สินค้าขาย หรือ ของแลกแต้ม)
             ActiveTab = activeTab,
+            // กำหนดคำค้นหาปัจจุบัน
             SearchQuery = searchQuery,
+            // กำหนดตัวกรองหมวดหมู่สินค้า
             CategoryFilter = categoryFilter ?? "all",
+            // กำหนดตัวกรองรูปแบบการขาย (ทั้งหมด / เปิดขาย / ซ่อนขาย)
             SaleModeFilter = saleModeFilter ?? "all",
+            // รายการสินค้าในหน้านี้ที่ผ่านการแบ่งหน้า
             Products = pagedProducts,
+            // รายการของรางวัลในหน้านี้ที่ผ่านการแบ่งหน้า
             Rewards = pagedRewards,
+            // รายชื่อหมวดหมู่สินค้าทั้งหมดสำหรับกล่องตัวเลือก
             AllCategories = categories,
+            // รายการไฟล์รูปภาพสินค้าที่พร้อมให้เลือกในระบบ
             AvailableImages = GetAvailableProductImages(),
+            // รายการชื่อของรางวัลที่มีอยู่เพื่อตรวจสอบความสัมพันธ์
             LinkedRewardTitles = linkedTitles,
+            // จำนวนสินค้าทั้งหมดในระบบ
             TotalProducts = allProducts.Count,
-            ActiveSaleProducts = allProducts.Count(p => p.IsActive == true),
-            PreorderProducts = allProducts.Count(p => p.IsActive == true && p.IsPreorder),
+            // จำนวนสินค้าที่เปิดวางขายหน้าร้านและมีสต็อกพร้อมขาย
+            ActiveSaleProducts = allProducts.Count(p => p.IsActive == true && !p.IsPreorder && p.Inventory != null && (p.Inventory.QuantityOnHand - p.Inventory.ReservedQuantity) > 0),
+            // จำนวนสินค้าหมดสต็อกหรือปิดวางขาย
+            PreorderProducts = allProducts.Count(p => p.IsActive == true && (p.IsPreorder || p.Inventory == null || (p.Inventory.QuantityOnHand - p.Inventory.ReservedQuantity) <= 0)),
+            // จำนวนของรางวัลทั้งหมดในระบบ
             TotalRewards = allRewards.Count,
+            // จำนวนของรางวัลที่เปิดให้แลกแต้ม
             ActiveRewards = allRewards.Count(r => r.IsAvailable == true),
+            // จำนวนรายการทั้งหมดตามเงื่อนไขตัวกรอง
             TotalCount = totalCount,
+            // หมายเลขหน้าปัจจุบัน
             CurrentPage = currentPage,
+            // จำนวนรายการต่อหน้า
             PageSize = pageSize
         };
 
@@ -532,6 +677,7 @@ public class OwnerController : Controller
 
     // CREATE: เพิ่มสินค้าใหม่เข้าสู่ตาราง Products และ Inventory (และสร้างเป็นของแลกแต้มได้ทันทีหากเลือก)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult CreateProduct(
         string sku,
         string? barcode,
@@ -552,6 +698,7 @@ public class OwnerController : Controller
         string? storageLocation,
         string? imageUrl,
         IFormFile? imageFile,
+        IFormFile? thumbFile,
         bool alsoAsReward,
         int? rewardPointsRequired,
         int? rewardStockQuantity)
@@ -579,28 +726,45 @@ public class OwnerController : Controller
             return RedirectToAction("Catalog", new { tab = "products" });
         }
 
-        // บันทึกรูปภาพที่อัปโหลดหรือใช้รูปภาพที่เลือกจากคลังสื่อของร้าน
-        string finalImageUrl = SaveUploadedMediaImage(imageFile, imageUrl);
+        // บันทึกรูปภาพต้นฉบับและภาพการ์ด 1:1 (ถ้ามี)
+        string finalImageUrl = SaveUploadedMediaImage(imageFile, imageUrl, thumbFile);
 
         // สร้างอ็อบเจกต์สินค้าใหม่สำหรับบันทึกลงตาราง Products
         var product = new Product
         {
+            // กำหนดรหัส SKU สินค้า
             Sku = cleanSku,
+            // กำหนดรหัสบาร์โค้ด
             Barcode = string.IsNullOrWhiteSpace(barcode) ? cleanSku : barcode.Trim(),
+            // กำหนดชื่อสินค้าฟิกเกอร์
             Name = cleanName,
+            // กำหนดรหัสหมวดหมู่สินค้า
             CategoryId = categoryId > 0 ? categoryId : (_db.Categories.Select(c => c.CategoryId).FirstOrDefault()),
+            // กำหนดชื่อซีรีส์หรืออนิเมะ
             SeriesName = string.IsNullOrWhiteSpace(seriesName) ? "ทั่วไป" : seriesName.Trim(),
+            // กำหนดแบรนด์ผู้ผลิต
             BrandName = string.IsNullOrWhiteSpace(brandName) ? "FriendHouse Select" : brandName.Trim(),
+            // กำหนดอัตราส่วนสเกล
             Scale = string.IsNullOrWhiteSpace(scale) ? "มาตรฐาน" : scale.Trim(),
+            // กำหนดความสูงในหน่วยเซนติเมตร
             HeightCm = heightCm,
+            // กำหนดชนิดวัสดุที่ใช้ผลิต
             Material = string.IsNullOrWhiteSpace(material) ? "PVC / ABS" : material.Trim(),
+            // กำหนดราคาขายปลีก
             RetailPrice = Math.Max(0, retailPrice),
-            PreorderPrice = preorderPrice,
-            ExpectedArrival = string.IsNullOrWhiteSpace(expectedArrival) ? null : expectedArrival.Trim(),
-            IsPreorder = isPreorder,
+            // ราคาพรีออเดอร์
+            PreorderPrice = null,
+            // กำหนดการประมาณการของเข้า
+            ExpectedArrival = null,
+            // สถานะสินค้าพรีออเดอร์
+            IsPreorder = false,
+            // สถานะเปิดใช้งานการขาย
             IsActive = isActive,
+            // ที่อยู่พาธไฟล์รูปภาพ
             ImageUrl = finalImageUrl,
+            // สถานะเป็นสินค้าเด่นบนแบนเนอร์
             IsFeaturedHero = false,
+            // บันทึกวันเวลาที่สร้างรายการ
             CreatedAt = DateTime.Now
         };
 
@@ -611,12 +775,19 @@ public class OwnerController : Controller
         // สร้างข้อมูลสต็อกสินค้าในตาราง Inventories เชื่อมโยงกับสินค้าใหม่
         var inventory = new Inventory
         {
+            // ผูกรหัสสินค้าที่เพิ่งสร้าง
             ProductId = product.ProductId,
+            // จำนวนสต็อกเริ่มต้นในคลัง
             QuantityOnHand = Math.Max(0, initialStock),
+            // ยอดที่ถูกจองแล้วเริ่มต้นเป็น 0
             ReservedQuantity = 0,
+            // ระดับสต็อกปลอดภัย
             SafetyStockLevel = Math.Max(1, safetyStockLevel),
+            // ตำแหน่งจัดเก็บสินค้าในร้าน
             StorageLocation = string.IsNullOrWhiteSpace(storageLocation) ? "โซน A-01" : storageLocation.Trim(),
+            // วันเวลาที่เติมสต็อกล่าสุด
             LastRestockedAt = initialStock > 0 ? DateTime.Now : null,
+            // วันเวลาที่อัปเดตข้อมูลล่าสุด
             UpdatedAt = DateTime.Now
         };
         _db.Inventories.Add(inventory);
@@ -630,14 +801,23 @@ public class OwnerController : Controller
             {
                 _db.Rewards.Add(new Reward
                 {
+                    // กำหนดรหัสของรางวัล
                     RewardCode = rewardCode,
+                    // กำหนดชื่อของรางวัล
                     Title = product.Name,
+                    // กำหนดแบรนด์ผู้ผลิต
                     Brand = product.BrandName,
+                    // กำหนดแท็กหมวดหมู่ของรางวัล
                     CategoryTag = catName,
+                    // จำนวนแต้มที่ต้องใช้ในการแลก
                     PointsRequired = Math.Max(100, rewardPointsRequired ?? 1500),
+                    // จำนวนสต็อกสำหรับแลกแต้ม
                     StockQuantity = Math.Max(1, rewardStockQuantity ?? 5),
+                    // รูปภาพของรางวัล
                     ImageUrl = finalImageUrl,
+                    // สถานะเปิดให้แลก
                     IsAvailable = true,
+                    // บันทึกวันเวลาที่สร้าง
                     CreatedAt = DateTime.Now
                 });
             }
@@ -646,11 +826,17 @@ public class OwnerController : Controller
         // บันทึกประวัติการเพิ่มสินค้าลงในตาราง Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
-            LogCode = "PRD-ADD-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            // รหัสบันทึกกิจกรรม
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("PRD-ADD"),
+            // ระดับความสำคัญของบันทึก
             LogLevel = "INFO",
+            // โมดูลที่เกี่ยวข้อง
             Module = "OwnerCatalog",
+            // ข้อความรายละเอียดกิจกรรม
             Message = $"เจ้าของร้านเพิ่มสินค้าใหม่ \"{product.Name}\" (SKU: {product.Sku}) ราคา ฿{product.RetailPrice:N0} จำนวนเริ่มต้น {inventory.QuantityOnHand} ชิ้น",
+            // รหัสผู้ใช้งานที่ทำรายการ
             UserId = HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
+            // วันเวลาที่เกิดกิจกรรม
             Timestamp = DateTime.Now
         });
 
@@ -662,6 +848,7 @@ public class OwnerController : Controller
 
     // UPDATE: แก้ไขข้อมูลสินค้า รูปภาพ ราคา สต็อก และสถานะการขายในฐานข้อมูลจริง
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult EditProduct(
         int productId,
         string sku,
@@ -682,7 +869,8 @@ public class OwnerController : Controller
         int safetyStockLevel,
         string? storageLocation,
         string? imageUrl,
-        IFormFile? imageFile)
+        IFormFile? imageFile,
+        IFormFile? thumbFile)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
@@ -719,11 +907,11 @@ public class OwnerController : Controller
         product.HeightCm = heightCm;
         product.Material = string.IsNullOrWhiteSpace(material) ? null : material.Trim();
         product.RetailPrice = Math.Max(0, retailPrice);
-        product.PreorderPrice = preorderPrice;
-        product.ExpectedArrival = string.IsNullOrWhiteSpace(expectedArrival) ? null : expectedArrival.Trim();
-        product.IsPreorder = isPreorder;
+        product.PreorderPrice = null;
+        product.ExpectedArrival = null;
+        product.IsPreorder = false;
         product.IsActive = isActive;
-        product.ImageUrl = SaveUploadedMediaImage(imageFile, string.IsNullOrWhiteSpace(imageUrl) ? product.ImageUrl : imageUrl);
+        product.ImageUrl = SaveUploadedMediaImage(imageFile, string.IsNullOrWhiteSpace(imageUrl) ? product.ImageUrl : imageUrl, thumbFile);
 
         // อัปเดตข้อมูลคลังสินค้าหรือสร้างใหม่หากยังไม่เคยมีข้อมูลในตาราง Inventories
         if (product.Inventory == null)
@@ -752,7 +940,7 @@ public class OwnerController : Controller
         // บันทึกประวัติการแก้ไขสินค้าลงตาราง Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
-            LogCode = "PRD-EDIT-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("PRD-EDIT"),
             LogLevel = "INFO",
             Module = "OwnerCatalog",
             Message = $"เจ้าของร้านแก้ไขข้อมูลสินค้า \"{product.Name}\" (SKU: {product.Sku})",
@@ -768,47 +956,51 @@ public class OwnerController : Controller
 
     // UPDATE: สลับสถานะการวางขายหรือพรีออเดอร์ของสินค้าจากหน้าตารางทันที
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult ToggleProductSaleStatus(int productId, string mode, int page = 1)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
-        // ค้นหาสินค้าที่ต้องการปรับสถานะ
+        // ค้นหาสินค้าที่ต้องการปรับสถานะในฐานข้อมูล
         var product = _db.Products.FirstOrDefault(p => p.ProductId == productId);
+        // ตรวจสอบว่าพบข้อมูลสินค้าหรือไม่
         if (product == null)
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่พบสินค้า
             TempData["ErrorMessage"] = "ไม่พบข้อมูลสินค้าที่ต้องการปรับสถานะ";
+            // เปลี่ยนเส้นทางกลับไปหน้าแคตตาล็อก
             return RedirectToAction("Catalog", new { tab = "products", page });
         }
 
-        // สลับสถานะตามโหมดที่เลือก (สลับวางขายหน้าร้าน หรือ สลับโหมดพรีออเดอร์)
-        if (string.Equals(mode, "preorder", StringComparison.OrdinalIgnoreCase))
-        {
-            product.IsPreorder = !product.IsPreorder;
-            TempData["SuccessMessage"] = $"ปรับสถานะ \"{product.Name}\" เป็น " + (product.IsPreorder ? "สินค้าพรีออเดอร์" : "สินค้าพร้อมส่งปกติ");
-        }
-        else
-        {
-            product.IsActive = !(product.IsActive ?? true);
-            TempData["SuccessMessage"] = $"ปรับสถานะ \"{product.Name}\" เป็น " + (product.IsActive == true ? "เปิดวางขายหน้าร้าน" : "ซ่อนจากหน้าขายชั่วคราว");
-        }
+        // สลับสถานะเปิดวางขายหน้าร้านหรือซ่อนจากหน้าขายชั่วคราว
+        product.IsActive = !(product.IsActive ?? true);
+        // กำหนดข้อความแจ้งเตือนการเปลี่ยนสถานะ
+        TempData["SuccessMessage"] = $"ปรับสถานะ \"{product.Name}\" เป็น " + (product.IsActive == true ? "เปิดวางขายหน้าร้าน" : "ซ่อนจากหน้าขายชั่วคราว");
 
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการสินค้า
         return RedirectToAction("Catalog", new { tab = "products", page });
     }
 
     // CREATE / UPDATE: นำสินค้าจากคลังมากำหนดเป็นของแลกแต้ม (เลือกได้ว่าจะซ่อนจากการขายหน้าร้านหรือเปิดควบคู่กัน)
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult ConvertProductToReward(int productId, int pointsRequired, int rewardStock, bool hideFromSale)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
@@ -817,25 +1009,36 @@ public class OwnerController : Controller
             .Include(p => p.Category)
             .FirstOrDefault(p => p.ProductId == productId);
 
+        // ตรวจสอบว่าพบสินค้าหรือไม่
         if (product == null)
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่พบสินค้า
             TempData["ErrorMessage"] = "ไม่พบสินค้าที่ต้องการกำหนดเป็นของแลกแต้ม";
+            // เปลี่ยนเส้นทางกลับไปหน้ารายการสินค้า
             return RedirectToAction("Catalog", new { tab = "products" });
         }
 
-        // ตรวจสอบว่ามีรายการของรางวัลสำหรับสินค้านี้อยู่แล้วหรือไม่เพื่ออัปเดตหรือสร้างใหม่
+        // กำหนดรหัสของรางวัลเป้าหมาย
         string targetRewardCode = "RWD-" + product.Sku;
+        // ตรวจสอบว่ามีรายการของรางวัลสำหรับสินค้านี้อยู่แล้วหรือไม่
         var existingReward = _db.Rewards.FirstOrDefault(r => r.RewardCode == targetRewardCode || r.Title == product.Name);
+        // กำหนดแต้มขั้นต่ำ 50 แต้ม
         int validPoints = Math.Max(50, pointsRequired);
+        // กำหนดจำนวนสิทธิ์ขั้นต่ำ 1 ชิ้น
         int validStock = Math.Max(1, rewardStock);
 
+        // ตรวจสอบว่ามีของรางวัลเดิมอยู่แล้วหรือไม่
         if (existingReward != null)
         {
-            // อัปเดตแต้ม จำนวนสิทธิ์ รูปภาพ และเปิดใช้งานของแลกแต้ม
+            // อัปเดตแต้มที่ใช้แลก
             existingReward.PointsRequired = validPoints;
+            // อัปเดตจำนวนคงเหลือ
             existingReward.StockQuantity = validStock;
+            // อัปเดตรูปภาพ
             existingReward.ImageUrl = product.ImageUrl;
+            // อัปเดตแบรนด์
             existingReward.Brand = product.BrandName ?? existingReward.Brand;
+            // เปิดให้แลกแต้ม
             existingReward.IsAvailable = true;
         }
         else
@@ -858,13 +1061,14 @@ public class OwnerController : Controller
         // หากเจ้าของร้านเลือกให้เป็นของไว้แลกแต้มอย่างเดียว ให้ซ่อนสินค้าจากหน้าขายปกติ
         if (hideFromSale)
         {
+            // ปิดสถานะการขายหน้าร้าน
             product.IsActive = false;
         }
 
         // บันทึกประวัติการกำหนดของแลกแต้มลงใน Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
-            LogCode = "RWD-MAP-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("RWD-MAP"),
             LogLevel = "INFO",
             Module = "OwnerCatalog",
             Message = $"กำหนดสินค้า \"{product.Name}\" เป็นของแลกแต้ม ({validPoints:N0} แต้ม จำนวน {validStock} ชิ้น) " + (hideFromSale ? "และปิดการขายหน้าร้าน" : "และเปิดควบคู่หน้าขาย"),
@@ -872,31 +1076,40 @@ public class OwnerController : Controller
             Timestamp = DateTime.Now
         });
 
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
 
+        // แจ้งเตือนข้อความสำเร็จ
         TempData["SuccessMessage"] = hideFromSale
             ? $"ย้าย \"{product.Name}\" ไปเป็นของแลกแต้ม ({validPoints:N0} แต้ม) และปิดการขายหน้าร้านเรียบร้อยแล้ว"
             : $"เปิดให้ \"{product.Name}\" เป็นของแลกแต้ม ({validPoints:N0} แต้ม) ควบคู่กับการขายปกติเรียบร้อยแล้ว";
 
+        // เปลี่ยนเส้นทางไปยังแท็บของรางวัล
         return RedirectToAction("Catalog", new { tab = "rewards" });
     }
 
     // DELETE: ลบสินค้าหรือซ่อนสินค้าอย่างปลอดภัยกรณีมีประวัติคำสั่งซื้อหรือใบเสร็จผูกอยู่
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult DeleteProduct(int productId)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
         // ค้นหาสินค้าพร้อมข้อมูลคลังสินค้า
         var product = _db.Products.Include(p => p.Inventory).FirstOrDefault(p => p.ProductId == productId);
+        // ตรวจสอบว่าพบสินค้าหรือไม่
         if (product == null)
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่พบสินค้า
             TempData["ErrorMessage"] = "ไม่พบสินค้าที่ต้องการลบในระบบ";
+            // เปลี่ยนเส้นทางกลับไปหน้ารายการสินค้า
             return RedirectToAction("Catalog", new { tab = "products" });
         }
 
@@ -905,35 +1118,44 @@ public class OwnerController : Controller
                        || _db.Receiptitems.Any(ri => ri.ProductId == productId)
                        || _db.Cartitems.Any(ci => ci.ProductId == productId);
 
+        // ตรวจสอบเงื่อนไขประวัติการซื้อขาย
         if (hasHistory)
         {
             // กรณีมีประวัติอ้างอิง ให้ปรับสถานะเป็นปิดการขายเพื่อรักษาข้อมูลประวัติการขายเดิมไว้
             product.IsActive = false;
+            // บันทึกกิจกรรมการซ่อนสินค้าลงในบันทึกระบบ
             _db.Systemlogs.Add(new Systemlog
             {
-                LogCode = "PRD-HIDE-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                LogCode = PromoAndRedemptionHelper.GenerateLogCode("PRD-HIDE"),
                 LogLevel = "WARNING",
                 Module = "OwnerCatalog",
                 Message = $"ปิดการวางขายสินค้า \"{product.Name}\" (SKU: {product.Sku}) แทนการลบถาวรเนื่องจากมีประวัติการซื้อขายผูกอยู่",
                 UserId = HttpContext.Session.GetInt32("OwnerUserId") ?? HttpContext.Session.GetInt32("UserId"),
                 Timestamp = DateTime.Now
             });
+            // บันทึกการเปลี่ยนแปลง
             _db.SaveChanges();
+            // กำหนดข้อความแจ้งเตือน
             TempData["SuccessMessage"] = $"ปิดการวางขาย \"{product.Name}\" แล้ว (เก็บประวัติใบสั่งจองและใบเสร็จเดิมไว้ในฐานข้อมูล)";
+            // เปลี่ยนเส้นทางกลับไปหน้ารายการสินค้า
             return RedirectToAction("Catalog", new { tab = "products" });
         }
 
-        // กรณีไม่มีประวัติอ้างอิง ให้ลบข้อมูลสต็อกและลบสินค้าออกจากฐานข้อมูลถาวร
+        // บันทึกชื่อสินค้าไว้สำหรับข้อความแจ้งเตือน
         string deletedName = product.Name;
+        // ลบข้อมูลในตารางสต็อกสินค้าหากมีอยู่
         if (product.Inventory != null)
         {
+            // ลบแถวสต็อกสินค้า
             _db.Inventories.Remove(product.Inventory);
         }
+        // ลบสินค้าออกจากตาราง Products
         _db.Products.Remove(product);
 
+        // บันทึกกิจกรรมการลบสินค้าลงในบันทึกระบบ
         _db.Systemlogs.Add(new Systemlog
         {
-            LogCode = "PRD-DEL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("PRD-DEL"),
             LogLevel = "WARNING",
             Module = "OwnerCatalog",
             Message = $"เจ้าของร้านลบสินค้า \"{deletedName}\" ออกจากฐานข้อมูลถาวร",
@@ -941,13 +1163,17 @@ public class OwnerController : Controller
             Timestamp = DateTime.Now
         });
 
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
         _db.SaveChanges();
+        // กำหนดข้อความแจ้งเตือนสำเร็จ
         TempData["SuccessMessage"] = $"ลบสินค้า \"{deletedName}\" ออกจากฐานข้อมูลเรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปหน้ารายการสินค้า
         return RedirectToAction("Catalog", new { tab = "products" });
     }
 
     // CREATE: เพิ่มรายการของรางวัลแลกแต้มใหม่เข้าสู่ตาราง Rewards โดยตรง
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult CreateReward(
         string rewardCode,
         string title,
@@ -957,26 +1183,37 @@ public class OwnerController : Controller
         int stockQuantity,
         bool isAvailable,
         string? imageUrl,
-        IFormFile? imageFile)
+        IFormFile? imageFile,
+        IFormFile? thumbFile)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
+        // ตัดช่องว่างและปรับแต่งรหัสของรางวัลเป็นตัวพิมพ์ใหญ่
         string cleanCode = (rewardCode ?? "").Trim().ToUpperInvariant();
+        // ตัดช่องว่างชื่อของรางวัล
         string cleanTitle = (title ?? "").Trim();
+        // ตรวจสอบความครบถ้วนของข้อมูล
         if (string.IsNullOrWhiteSpace(cleanCode) || string.IsNullOrWhiteSpace(cleanTitle))
         {
+            // แจ้งเตือนกรณีข้อมูลไม่ครบ
             TempData["ErrorMessage"] = "กรุณาระบุรหัสของรางวัลและชื่อของแลกแต้มให้ครบถ้วน";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards" });
         }
 
+        // ตรวจสอบว่ารหัสของรางวัลซ้ำหรือไม่
         if (_db.Rewards.Any(r => r.RewardCode.ToLower() == cleanCode.ToLower()))
         {
+            // แจ้งเตือนกรณีรหัสซ้ำ
             TempData["ErrorMessage"] = $"รหัสของรางวัล {cleanCode} มีอยู่ในระบบแล้ว";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards" });
         }
 
@@ -989,20 +1226,25 @@ public class OwnerController : Controller
             CategoryTag = string.IsNullOrWhiteSpace(categoryTag) ? "ของสะสมพิเศษ" : categoryTag.Trim(),
             PointsRequired = Math.Max(50, pointsRequired),
             StockQuantity = Math.Max(0, stockQuantity),
-            ImageUrl = SaveUploadedMediaImage(imageFile, imageUrl),
+            ImageUrl = SaveUploadedMediaImage(imageFile, imageUrl, thumbFile),
             IsAvailable = isAvailable,
             CreatedAt = DateTime.Now
         };
 
+        // เพิ่มรายการของรางวัลลงในฐานข้อมูล
         _db.Rewards.Add(reward);
+        // บันทึกการเปลี่ยนแปลง
         _db.SaveChanges();
 
+        // แจ้งเตือนข้อความสำเร็จ
         TempData["SuccessMessage"] = $"เพิ่มของแลกแต้ม \"{reward.Title}\" ({reward.PointsRequired:N0} แต้ม) เรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
         return RedirectToAction("Catalog", new { tab = "rewards" });
     }
 
     // UPDATE: แก้ไขข้อมูลของแลกแต้ม แต้มที่ใช้ และจำนวนสิทธิ์คงเหลือในตาราง Rewards
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult EditReward(
         int rewardId,
         string rewardCode,
@@ -1013,94 +1255,153 @@ public class OwnerController : Controller
         int stockQuantity,
         bool isAvailable,
         string? imageUrl,
-        IFormFile? imageFile)
+        IFormFile? imageFile,
+        IFormFile? thumbFile)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
+        // ค้นหาของรางวัลตามรหัสในฐานข้อมูล
         var reward = _db.Rewards.FirstOrDefault(r => r.RewardId == rewardId);
+        // ตรวจสอบว่าพบของรางวัลหรือไม่
         if (reward == null)
         {
+            // แจ้งเตือนกรณีไม่พบของรางวัล
             TempData["ErrorMessage"] = "ไม่พบรายการของรางวัลที่ต้องการแก้ไข";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards" });
         }
 
-        reward.RewardCode = string.IsNullOrWhiteSpace(rewardCode) ? reward.RewardCode : rewardCode.Trim().ToUpperInvariant();
-        reward.Title = string.IsNullOrWhiteSpace(title) ? reward.Title : title.Trim();
-        reward.Brand = string.IsNullOrWhiteSpace(brand) ? null : brand.Trim();
-        reward.CategoryTag = string.IsNullOrWhiteSpace(categoryTag) ? reward.CategoryTag : categoryTag.Trim();
-        reward.PointsRequired = Math.Max(50, pointsRequired);
-        reward.StockQuantity = Math.Max(0, stockQuantity);
-        reward.IsAvailable = isAvailable;
-        reward.ImageUrl = SaveUploadedMediaImage(imageFile, string.IsNullOrWhiteSpace(imageUrl) ? reward.ImageUrl : imageUrl);
+        // กำหนดรหัสของรางวัลใหม่
+        string nextCode = string.IsNullOrWhiteSpace(rewardCode) ? reward.RewardCode : rewardCode.Trim().ToUpperInvariant();
+        // ตรวจสอบว่ารหัสซ้ำกับรายการอื่นหรือไม่
+        if (!string.Equals(nextCode, reward.RewardCode, StringComparison.OrdinalIgnoreCase) &&
+            _db.Rewards.Any(r => r.RewardId != rewardId && r.RewardCode.ToLower() == nextCode.ToLower()))
+        {
+            // แจ้งเตือนกรณีรหัสซ้ำ
+            TempData["ErrorMessage"] = $"รหัสของรางวัล {nextCode} มีอยู่ในระบบแล้ว";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
+            return RedirectToAction("Catalog", new { tab = "rewards" });
+        }
 
+        // อัปเดตรหัสของรางวัล
+        reward.RewardCode = nextCode;
+        // อัปเดตชื่อของรางวัล
+        reward.Title = string.IsNullOrWhiteSpace(title) ? reward.Title : title.Trim();
+        // อัปเดตแบรนด์
+        reward.Brand = string.IsNullOrWhiteSpace(brand) ? null : brand.Trim();
+        // อัปเดตหมวดหมู่
+        reward.CategoryTag = string.IsNullOrWhiteSpace(categoryTag) ? reward.CategoryTag : categoryTag.Trim();
+        // อัปเดตแต้มที่ใช้แลก
+        reward.PointsRequired = Math.Max(50, pointsRequired);
+        // อัปเดตจำนวนสต็อกคงเหลือ
+        reward.StockQuantity = Math.Max(0, stockQuantity);
+        // อัปเดตสถานะการแลกแต้ม
+        reward.IsAvailable = isAvailable;
+        // อัปเดตรูปภาพ
+        reward.ImageUrl = SaveUploadedMediaImage(imageFile, string.IsNullOrWhiteSpace(imageUrl) ? reward.ImageUrl : imageUrl, thumbFile);
+
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
 
+        // แจ้งเตือนข้อความสำเร็จ
         TempData["SuccessMessage"] = $"บันทึกการแก้ไขของแลกแต้ม \"{reward.Title}\" เรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
         return RedirectToAction("Catalog", new { tab = "rewards" });
     }
 
     // UPDATE: เปิดหรือปิดสถานะการแลกแต้มของรายการรางวัลทันที
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult ToggleRewardAvailability(int rewardId, int page = 1)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
+        // ค้นหาของรางวัลตามรหัสในฐานข้อมูล
         var reward = _db.Rewards.FirstOrDefault(r => r.RewardId == rewardId);
+        // ตรวจสอบว่าพบของรางวัลหรือไม่
         if (reward == null)
         {
+            // แจ้งเตือนกรณีไม่พบของรางวัล
             TempData["ErrorMessage"] = "ไม่พบรายการของรางวัลในระบบ";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards", page });
         }
 
+        // สลับสถานะเปิดหรือปิดสิทธิ์แลกแต้ม
         reward.IsAvailable = !(reward.IsAvailable ?? true);
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูล
         _db.SaveChanges();
 
+        // แจ้งเตือนข้อความสำเร็จ
         TempData["SuccessMessage"] = $"ปรับสถานะของรางวัล \"{reward.Title}\" เป็น " + (reward.IsAvailable == true ? "เปิดให้ลูกค้าแลกแต้ม" : "ปิดชั่วคราว");
+        // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
         return RedirectToAction("Catalog", new { tab = "rewards", page });
     }
 
     // DELETE: ลบของแลกแต้มหรือปิดสิทธิ์กรณีมีประวัติลูกค้าแลกไปแล้ว
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult DeleteReward(int rewardId)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของเจ้าของร้าน
         if (!IsAuthorizedOwner())
         {
+            // กำหนดข้อความแจ้งเตือนกรณีไม่มีสิทธิ์เข้าถึง
             TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีเจ้าของร้าน";
+            // สั่งเปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบ
             return RedirectToAction("Login", "Account");
         }
 
+        // ค้นหาของรางวัลตามรหัสในฐานข้อมูล
         var reward = _db.Rewards.FirstOrDefault(r => r.RewardId == rewardId);
+        // ตรวจสอบว่าพบของรางวัลหรือไม่
         if (reward == null)
         {
+            // แจ้งเตือนกรณีไม่พบของรางวัล
             TempData["ErrorMessage"] = "ไม่พบรายการของรางวัลที่ต้องการลบ";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards" });
         }
 
+        // ตรวจสอบว่ามีประวัติลูกค้าแลกของรางวัลนี้ไปแล้วหรือไม่
         bool hasRedemptions = _db.Rewardredemptions.Any(rr => rr.RewardId == rewardId);
+        // ตรวจสอบผลการค้นหาประวัติ
         if (hasRedemptions)
         {
+            // ปิดสถานะการแลกเพื่อรักษาประวัติข้อมูล
             reward.IsAvailable = false;
+            // บันทึกการเปลี่ยนแปลง
             _db.SaveChanges();
+            // แจ้งเตือนข้อความสำเร็จ
             TempData["SuccessMessage"] = $"ปิดสิทธิ์แลก \"{reward.Title}\" แล้ว (เก็บประวัติการแลกของลูกค้าเดิมไว้ในฐานข้อมูล)";
+            // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
             return RedirectToAction("Catalog", new { tab = "rewards" });
         }
 
+        // บันทึกชื่อของรางวัลสำหรับข้อความแจ้งเตือน
         string title = reward.Title;
+        // ลบรายการของรางวัลออกจากฐานข้อมูล
         _db.Rewards.Remove(reward);
+        // บันทึกการเปลี่ยนแปลงลงฐานข้อมูลจริง
         _db.SaveChanges();
 
+        // แจ้งเตือนข้อความสำเร็จ
         TempData["SuccessMessage"] = $"ลบของแลกแต้ม \"{title}\" ออกจากฐานข้อมูลเรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปแท็บของรางวัล
         return RedirectToAction("Catalog", new { tab = "rewards" });
     }
 }

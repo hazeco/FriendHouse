@@ -55,6 +55,9 @@ public class ProductDetailViewModel
     // จำนวนสินค้าคงเหลือที่พร้อมให้สั่งจอง
     public int AvailableStock { get; set; }
 
+    // ระบุว่าเป็นสินค้าเปิดรับสั่งจองล่วงหน้า (Pre-order) หรือสินค้าพร้อมส่ง
+    public bool IsPreorder { get; set; }
+
     // สถานะว่ามีสินค้าคงเหลือให้สั่งจองหรือไม่
     public bool InStock => AvailableStock > 0;
 
@@ -69,4 +72,7 @@ public class ProductDetailViewModel
 
     // ข้อความแจ้งเตือนเงื่อนไขการรับสินค้าและชำระเงินที่หน้าร้าน
     public string NoticeText { get; set; } = "รับสินค้าและชำระเงินที่หน้าร้าน FriendHouse HQ สาขาสยามสแควร์ โดยไม่ต้องชำระเงินออนไลน์ล่วงหน้า";
+
+    // รายการสินค้าแนะนำเพิ่มเติมที่เกี่ยวข้อง (สินค้าในซีรีส์เดียวกัน หมวดหมู่เดียวกัน หรือสินค้าเข้าใหม่ล่าสุดที่มีในสต็อก สูงสุด 5 รายการ)
+    public List<ProductCardViewModel> RelatedProducts { get; set; } = new();
 }

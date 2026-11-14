@@ -1,17 +1,27 @@
 @{
+    // ดึงตัวเลขแจ้งเตือนรายการเร่งด่วนฝั่งหน้าร้านจาก ViewBag
+    int notifCount = ViewBag.StaffNotificationCount != null ? (int)ViewBag.StaffNotificationCount : 0;
+    int outOfStockCount = ViewBag.StaffOutOfStockCount != null ? (int)ViewBag.StaffOutOfStockCount : 0;
+    int lowStockCount = ViewBag.StaffLowStockCount != null ? (int)ViewBag.StaffLowStockCount : 0;
+    int pendingPreorders = ViewBag.StaffPendingPreorders != null ? (int)ViewBag.StaffPendingPreorders : 0;
+    int pendingRewards = ViewBag.StaffPendingRewards != null ? (int)ViewBag.StaffPendingRewards : 0;
+
+    // กำหนดข้อมูลแบรนด์ ชื่อบทบาทพนักงาน และข้อมูลโปรไฟล์
     var brand = new {
         LogoUrl = "~/logo/logo.png",
         Name = "FriendHouse",
         Subtitle = "ระบบจัดการสต็อก · หน้าร้าน",
-        NotificationCount = 3,
-        UserName = "ณัฐชา ใจดี",
+        NotificationCount = notifCount,
+        UserName = ViewBag.RoleUserName as string ?? "พนักงานหน้าร้าน",
         UserRole = "พนักงาน",
-        UserInitials = "ณช"
+        UserInitials = ViewBag.RoleUserInitials as string ?? "พน"
     };
 
+    // ตรวจสอบชื่อ Controller และ Action ปัจจุบันเพื่อไฮไลต์เมนูที่ใช้งานอยู่
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
+    // ฟังก์ชันคืนค่าคลาส CSS สำหรับปุ่มเมนูนำทางฝั่งพนักงาน
     string NavClass(string action)
     {
         bool isActive = currentAction.Equals(action, StringComparison.OrdinalIgnoreCase);
@@ -21,67 +31,150 @@
     }
 }
 
+<!-- แถบนำทางหลักสีน้ำเงินเข้มสำหรับบทบาทพนักงานหน้าร้าน -->
 <div class="bg-[#2F39A9] text-white">
+    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <!-- Brand & System Role -->
+        <!-- โลโก้ร้านและชื่อระบบจัดการสต็อกหน้าร้าน -->
         <a asp-controller="Staff" asp-action="Index" class="flex items-center gap-3 shrink-0 cursor-pointer">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
+                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                 <img src="@Url.Content(brand.LogoUrl)" alt="@brand.Name" class="size-full object-cover" onerror="this.outerHTML='<span class=\'text-[#2F39A9] font-black text-xs\'>FH</span>'" />
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="font-bold leading-tight text-sm tracking-tight text-white">@brand.Name</div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-[11px] text-white/75 leading-tight">@brand.Subtitle</div>
             </div>
         </a>
 
-        <!-- เมนูหลักฝั่งพนักงาน (รวมรับสินค้าเข้าสต็อกเป็นหน้าต่างจัดการในหน้าสต็อกสินค้าแล้ว) -->
+        <!-- เมนูหลักฝั่งพนักงาน: สต็อกสินค้า และเคาน์เตอร์พรีออเดอร์ -->
         <nav class="hidden md:flex items-center gap-2">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Staff" asp-action="Index" class="@NavClass("Index")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>สต็อกสินค้า</span>
             </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Staff" asp-action="CounterPreorder" class="@NavClass("CounterPreorder")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>เคาน์เตอร์พรีออเดอร์</span>
             </a>
         </nav>
 
-        <!-- Right User & Notifications -->
+        <!-- ส่วนกระดิ่งแจ้งเตือนหน้าร้าน ข้อมูลพนักงาน และปุ่มออกจากระบบ -->
         <div class="flex items-center gap-3.5">
-            <!-- Notification Bell with Red Badge -->
-            <button type="button" class="relative size-9 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/90 hover:text-white transition cursor-pointer" aria-label="การแจ้งเตือน">
-                <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <span class="absolute top-1 right-1 size-4 bg-[#EF4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">@brand.NotificationCount</span>
-            </button>
+            <!-- ดรอปดาวน์กระดิ่งแจ้งเตือนนับจำนวนรายการจริงจากฐานข้อมูล -->
+            <details class="relative">
+                <summary class="list-none [&::-webkit-details-marker]:hidden relative size-9 rounded-xl hover:bg-white/10 flex items-center justify-center text-white/90 hover:text-white transition cursor-pointer" aria-label="การแจ้งเตือนระบบหน้าร้าน">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                    @if (brand.NotificationCount > 0)
+                    {
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                        <span class="absolute top-1 right-1 size-4 bg-[#EF4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-xs">@brand.NotificationCount</span>
+                    }
+                </summary>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                <div class="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white text-[#050315] shadow-xl border border-gray-200 overflow-hidden z-50">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                    <div class="px-4 py-3 bg-[#F8F9FD] border-b border-gray-100 flex items-center justify-between">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                        <span class="text-xs font-bold text-[#050315]">การแจ้งเตือนหน้าร้าน</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                        <span class="text-[11px] font-semibold text-[#2F39A9]">@brand.NotificationCount รายการ</span>
+                    </div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div class="divide-y divide-gray-100 text-xs">
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                        @if (outOfStockCount > 0)
+                        {
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="out" class="flex items-center justify-between px-4 py-3 hover:bg-rose-50/60 transition">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-medium text-rose-700">สินค้าหมดสต็อก</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">@outOfStockCount รายการ</span>
+                            </a>
+                        }
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                        @if (lowStockCount > 0)
+                        {
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="low" class="flex items-center justify-between px-4 py-3 hover:bg-amber-50/60 transition">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-medium text-amber-800">สินค้าใกล้หมดสต็อก</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">@lowStockCount รายการ</span>
+                            </a>
+                        }
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                        @if (pendingPreorders > 0)
+                        {
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                            <a asp-controller="Staff" asp-action="CounterPreorder" class="flex items-center justify-between px-4 py-3 hover:bg-blue-50/60 transition">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-medium text-[#2F39A9]">คำสั่งซื้อ/จองรอดำเนินการ</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-bold px-2 py-0.5 rounded-full bg-blue-100 text-[#2F39A9]">@pendingPreorders รายการ</span>
+                            </a>
+                        }
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                        @if (pendingRewards > 0)
+                        {
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                            <a asp-controller="Staff" asp-action="CounterPreorder" class="flex items-center justify-between px-4 py-3 hover:bg-indigo-50/60 transition">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-medium text-indigo-800">รายการแลกรางวัลรอรับ</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">@pendingRewards รายการ</span>
+                            </a>
+                        }
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                        @if (brand.NotificationCount == 0)
+                        {
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="px-4 py-5 text-center text-gray-500">ไม่มีรายการเร่งด่วนในขณะนี้</div>
+                        }
+                    </div>
+                </div>
+            </details>
 
             <!-- User Info Capsule -->
             <div class="flex items-center gap-2.5">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="size-8 rounded-full bg-white text-[#2F39A9] font-bold text-xs flex items-center justify-center shadow-xs">
                     @brand.UserInitials
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="hidden sm:block text-left">
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs font-bold leading-tight text-white">@brand.UserName</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-[10px] text-white/70 leading-tight">@brand.UserRole</div>
                 </div>
             </div>
 
-            @* ลิงก์ออกจากระบบ สไตล์เดียวกับ Customer พร้อมเอฟเฟกต์ hover สีแดง นำทางไปยัง AccountController แอ็กชัน Logout *@
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Account" asp-action="Logout" asp-route-role="staff"
-               class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer">
+               class="text-xs font-semibold text-white/80 hover:text-red-300 transition-colors cursor-pointer shrink-0">
                 ออกจากระบบ
             </a>
         </div>
     </div>
 
-    <!-- แถบนำทางย่อยสำหรับหน้าจอมือถือ -->
+    <!-- แถบนำทางย่อยสำหรับหน้าจอมือถือ (ไม่ซ้ำปุ่มออกจากระบบ) -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Staff" asp-action="Index" class="@NavClass("Index") text-xs py-1.5 px-3 shrink-0">สต็อกสินค้า</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Staff" asp-action="CounterPreorder" class="@NavClass("CounterPreorder") text-xs py-1.5 px-3 shrink-0">เคาน์เตอร์พรีออเดอร์</a>
-        @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
-        <a asp-controller="Account" asp-action="Logout" asp-route-role="staff"
-           class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
-            ออกจากระบบ
-        </a>
     </div>
 </div>

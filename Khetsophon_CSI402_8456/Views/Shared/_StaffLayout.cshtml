@@ -9,21 +9,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Khetsophon_CSI402_8456.styles.css" asp-append-version="true" />
 </head>
 <body class="min-h-screen flex flex-col bg-[#F8F9FD] text-[#050315] antialiased font-sans">
-    <!-- Staff Header / Navbar -->
+    <!-- แถบนำทางด้านบนสำหรับบทบาทพนักงานหน้าร้าน -->
     <header class="sticky top-0 z-50 w-full shadow-sm">
         @await Component.InvokeAsync("Navbar", new { role = "staff" })
     </header>
 
-    <!-- Main Content Container matching Figma -->
+    <!-- พื้นที่เนื้อหาหลักของระบบจัดการหน้าร้าน -->
     <main role="main" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         @RenderBody()
     </main>
 
+    <!-- สคริปต์พื้นฐานของเว็บไซต์และส่วนสคริปต์เฉพาะหน้า -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-</html>
+</html>

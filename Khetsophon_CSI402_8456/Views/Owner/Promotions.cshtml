@@ -1,11 +1,21 @@
+@using Khetsophon_CSI402_8456.Helpers
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Promotion>
 @{
+    // กำหนดชื่อหัวข้อของหน้าจัดการโปรโมชั่น
     ViewData["Title"] = "จัดการโปรโมชั่น";
+    // กำหนด Layout หลักของฝั่งเจ้าของร้าน
     Layout = "_OwnerLayout";
 
-    var hasDbData = Model != null && Model.Any();
+    // แปลงข้อมูลโปรโมชั่นจาก Model เป็นรายการแบบ List หรือรายการว่างกรณีไม่มีข้อมูล
+    var promoList = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Promotion>();
+    // ตรวจสอบว่ามีข้อมูลโปรโมชั่นในฐานข้อมูลหรือไม่
+    var hasDbData = promoList.Count > 0;
+    // ดึงวันที่ปัจจุบันตามปฏิทินสากลผ่าน Helper
+    var today = PromoAndRedemptionHelper.TodayGregorian();
+    // คำนวณวันหมดเขตใกล้สุดล่วงหน้า 7 วัน
+    var expiringLimit = today.AddDays(7);
 
-    // Top-of-file Media & Content Configuration
+    // กำหนดค่าคอนฟิกข้อความและหัวเรื่องของหน้าเว็บไว้ส่วนบนสุดของไฟล์
     var pageHeader = new {
         Breadcrumb = "โปรโมชั่น",
         Title = "จัดการโปรโมชั่น",
@@ -15,50 +25,68 @@
         CreateController = "Owner"
     };
 
+    // คำนวณค่าสถิติสรุปภาพรวมของโปรโมชั่นทั้งหมดในร้าน
     var stats = new {
-        Total = hasDbData ? Model!.Count() : 0,
-        Active = hasDbData ? Model!.Count(p => p.IsActive == true) : 0,
-        Inactive = hasDbData ? Model!.Count(p => p.IsActive == false) : 0,
-        ExpiringSoon = 1
+        Total = promoList.Count,
+        Active = promoList.Count(p => p.IsActive == true),
+        Inactive = promoList.Count(p => p.IsActive != true),
+        ExpiringSoon = promoList.Count(p =>
+        {
+            if (p.IsActive != true) return false;
+            var end = PromoAndRedemptionHelper.NormalizeGregorianDate(p.EndDate);
+            return end >= today && end <= expiringLimit;
+        })
     };
 }
 
+@* กรอบคอนเทนเนอร์หลักของหน้าจัดการโปรโมชั่น *@
 <div class="space-y-6">
-    <!-- Breadcrumb & Header Row (frame_9_7.png) -->
+    @* แถบนำทางและหัวข้อหน้าเพจ พร้อมปุ่มสร้างโปรโมชั่นใหม่ *@
     <div class="flex items-center justify-between flex-wrap gap-4">
+        @* บล็อกข้อความระบุตำแหน่งหน้าและหัวเรื่องหลัก *@
         <div>
+            @* ข้อความบอกเส้นทางของเมนู *@
             <div class="text-xs text-gray-400 font-medium mb-1">@pageHeader.Breadcrumb</div>
+            @* หัวข้อหลักของหน้าจัดการโปรโมชั่น *@
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
+            @* คำอธิบายการจัดการโปรโมชั่นของร้าน *@
             <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
         </div>
+        @* ปุ่มสร้างโปรโมชั่นใหม่เชื่อมโยงไปยังหน้า AddPromotion *@
         <a asp-controller="@pageHeader.CreateController" asp-action="@pageHeader.CreateAction"
            class="inline-flex items-center gap-2 bg-[#2F39A9] hover:bg-[#242D87] text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer text-sm">
             <span>@pageHeader.CreateButtonText</span>
         </a>
     </div>
 
-    <!-- 4 Stat Cards in a row (frame_9_7.png) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    @* แถบการ์ดสถิติ 4 ช่องสรุปจำนวนโปรโมชั่นในระบบ *@
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        @* การ์ดสรุปจำนวนโปรโมชั่นทั้งหมด *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5">
             <div class="text-xs text-gray-400 font-medium">โปรโมชั่นทั้งหมด</div>
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.Total</div>
         </div>
+        @* การ์ดสรุปจำนวนโปรโมชั่นที่เปิดใช้งานอยู่ *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5">
             <div class="text-xs text-gray-400 font-medium">เปิดใช้งานอยู่</div>
             <div class="text-3xl font-extrabold text-[#2F39A9] mt-1.5">@stats.Active</div>
         </div>
+        @* การ์ดสรุปจำนวนโปรโมชั่นที่ปิดใช้งาน *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5">
             <div class="text-xs text-gray-400 font-medium">ปิดใช้งาน</div>
             <div class="text-3xl font-extrabold text-gray-500 mt-1.5">@stats.Inactive</div>
         </div>
+        @* การ์ดสรุปจำนวนโปรโมชั่นที่ใกล้หมดเขตภายใน 7 วัน *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5">
             <div class="text-xs text-gray-400 font-medium">ใกล้หมดเขต (7 วัน)</div>
             <div class="text-3xl font-extrabold text-[#2F39A9] mt-1.5">@stats.ExpiringSoon</div>
         </div>
     </div>
 
+    @* ตรวจสอบและแสดงข้อความแจ้งเตือนเมื่อการทำงานสำเร็จ *@
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องข้อความสีเขียวแจ้งเตือนการบันทึกสำเร็จ *@
         <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
             <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"></polyline>
@@ -67,66 +95,180 @@
         </div>
     }
 
-    <!-- Table Card (frame_9_7.png) -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+    @* ตรวจสอบและแสดงข้อความแจ้งเตือนข้อผิดพลาด *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        @* กล่องข้อความสีแดงแจ้งเตือนเมื่อเกิดปัญหา *@
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-xs text-rose-800 shadow-xs">
+            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
+    @* การแสดงผลการ์ดโปรโมชั่นบนหน้าจอมือถือ (ซ่อนบนหน้าจอขนาดกลางขึ้นไป) *@
+    <div class="space-y-3 md:hidden">
+        @* ตรวจสอบว่ามีข้อมูลโปรโมชั่นในระบบหรือไม่ *@
+        @if (hasDbData)
+        {
+            @* วนลูปแสดงการ์ดโปรโมชั่นทีละรายการ *@
+            @foreach (var p in promoList)
+            {
+                // ดึงชื่อประเภทโปรโมชั่นภาษาไทย
+                string typeLabel = PromoAndRedemptionHelper.GetPromoTypeThaiLabel(p.PromoType);
+                // ดึงข้อความสรุปสิทธิประโยชน์ของโปรโมชั่น
+                string benefitText = PromoAndRedemptionHelper.FormatPromoBenefitSummary(p);
+                // จัดรูปแบบช่วงวันที่เริ่มต้นและสิ้นสุดเป็นภาษาไทย
+                string dateRangeText = $"{PromoAndRedemptionHelper.FormatThaiDate(p.StartDate)} - {PromoAndRedemptionHelper.FormatThaiDate(p.EndDate)}";
+
+                @* กรอบการ์ดโปรโมชั่นบนมือถือ *@
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-4 space-y-3">
+                    @* ส่วนบนของการ์ดแสดงชื่อและสวิตช์เปิด/ปิด *@
+                    <div class="flex items-start justify-between gap-2">
+                        @* รายละเอียดชื่อและโค้ดโปรโมชั่น *@
+                        <div class="min-w-0">
+                            @* ป้ายกำกับประเภทโปรโมชั่น *@
+                            <span class="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#ECFEFF] text-[#0E7490] border border-[#A5F3FC] mb-1.5">
+                                @typeLabel
+                            </span>
+                            @* ชื่อโปรโมชั่น *@
+                            <h2 class="font-bold text-[#050315] text-sm leading-snug">@p.Name</h2>
+                            @* รหัสเวาเชอร์หรือคูปอง *@
+                            <div class="text-xs text-[#2F39A9] font-mono font-semibold mt-0.5">โค้ด: @p.VoucherCode</div>
+                        </div>
+                        @* แบบฟอร์มสลับสถานะเปิดหรือปิดใช้งานโปรโมชั่น (ไม่ใส่ method attribute) *@
+                        <form asp-controller="Owner" asp-action="TogglePromotion" class="inline-block m-0 shrink-0">
+                            <input type="hidden" name="id" value="@p.PromotionId" />
+                            <label class="inline-flex flex-col items-center cursor-pointer" title="สลับสถานะโปรโมชั่น">
+                                <input type="checkbox" class="sr-only peer" @(p.IsActive == true ? "checked" : "") onchange="this.form.submit()" />
+                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2F39A9]"></div>
+                                <span class="text-[10px] font-medium text-gray-500 mt-1">
+                                    @(p.IsActive == true ? "เปิดใช้งาน" : "ปิดใช้งาน")
+                                </span>
+                            </label>
+                        </form>
+                    </div>
+                    @* กล่องข้อมูลเงื่อนไขและระยะเวลาของโปรโมชั่น *@
+                    <div class="text-xs text-gray-600 bg-[#FBFBFE] rounded-xl p-3 space-y-1 border border-gray-100">
+                        <div>@benefitText · ขั้นต่ำ @((p.MinimumSpend ?? 0m).ToString("N0")) บาท (@PromoAndRedemptionHelper.GetScopeThaiLabel(p.ApplicableScope))</div>
+                        <div class="text-gray-500">ระยะเวลา: @dateRangeText</div>
+                    </div>
+                    @* กลุ่มปุ่มแก้ไขและลบโปรโมชั่น *@
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        @* ปุ่มนำทางไปหน้าแก้ไขโปรโมชั่น *@
+                        <a asp-controller="Owner" asp-action="EditPromotion" asp-route-id="@p.PromotionId"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-xs font-semibold transition">
+                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                            </svg>
+                            <span>แก้ไข</span>
+                        </a>
+                        @* ปุ่มเปิดหน้าต่างยืนยันการลบโปรโมชั่น *@
+                        <button type="button" data-promo-id="@p.PromotionId" data-promo-name="@p.Name" onclick="confirmDeletePromo(this)"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#DC2626] text-xs font-semibold transition cursor-pointer">
+                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>ลบ</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            @* กล่องแสดงข้อความกรณีไม่มีข้อมูลโปรโมชั่นในระบบ *@
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-8 text-center text-xs text-gray-400">
+                ยังไม่มีโปรโมชั่นในระบบ
+            </div>
+        }
+    </div>
+
+    @* การแสดงผลตารางโปรโมชั่นบนหน้าจอเดสก์ท็อป *@
+    <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        @* กรอบเลื่อนแนวนอนของตาราง *@
         <div class="overflow-x-auto">
-            <table class="w-full text-sm min-w-[640px]">
+            @* ตารางรายการโปรโมชั่นทั้งหมดของร้าน *@
+            <table class="w-full text-sm">
+                @* ส่วนหัวของตารางระบุชื่อคอลัมน์ *@
                 <thead>
                     <tr class="border-b border-gray-100 text-left text-xs font-semibold text-gray-400 bg-[#FBFBFE]">
-                        <th class="py-4 px-6 w-36">ประเภท</th>
+                        <th class="py-4 px-6 w-40 whitespace-nowrap">ประเภท</th>
                         <th class="py-4 px-6">ชื่อโปรโมชั่น</th>
                         <th class="py-4 px-6">เงื่อนไข / รหัสคูปอง</th>
-                        <th class="py-4 px-6 text-center w-36">สถานะ</th>
-                        <th class="py-4 px-6 text-center w-24">จัดการ</th>
+                        <th class="py-4 px-6 text-center w-36 whitespace-nowrap">สถานะ</th>
+                        <th class="py-4 px-6 text-center w-28 whitespace-nowrap">จัดการ</th>
                     </tr>
                 </thead>
+                @* ข้อมูลแถวในตาราง *@
                 <tbody class="divide-y divide-gray-100">
+                    @* ตรวจสอบว่ามีข้อมูลโปรโมชั่นหรือไม่ *@
                     @if (hasDbData)
                     {
-                        @foreach (var p in Model!)
+                        @* วนลูปแสดงแถวโปรโมชั่นทีละรายการ *@
+                        @foreach (var p in promoList)
                         {
+                            // ดึงชื่อประเภทโปรโมชั่นภาษาไทย
+                            string typeLabel = PromoAndRedemptionHelper.GetPromoTypeThaiLabel(p.PromoType);
+                            // ดึงข้อความสรุปสิทธิประโยชน์ของโปรโมชั่น
+                            string benefitText = PromoAndRedemptionHelper.FormatPromoBenefitSummary(p);
+                            // จัดรูปแบบช่วงวันที่เริ่มต้นและสิ้นสุดเป็นภาษาไทย
+                            string dateRangeText = $"{PromoAndRedemptionHelper.FormatThaiDate(p.StartDate)} - {PromoAndRedemptionHelper.FormatThaiDate(p.EndDate)}";
+
+                            @* แถวข้อมูลโปรโมชั่น *@
                             <tr class="hover:bg-gray-50/70 transition-colors">
-                                <!-- Type Badge -->
-                                <td class="py-4 px-6">
-                                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-[#ECFEFF] text-[#0E7490] border border-[#A5F3FC]">
-                                        @(p.PromoType == "percent" ? "ส่วนลด %" : "ส่วนลดคงที่")
+                                @* คอลัมน์ป้ายประเภทโปรโมชั่น *@
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-[#ECFEFF] text-[#0E7490] border border-[#A5F3FC] whitespace-nowrap">
+                                        @typeLabel
                                     </span>
                                 </td>
 
-                                <!-- Title & Subtitle -->
+                                @* คอลัมน์ชื่อและรหัสคูปอง *@
                                 <td class="py-4 px-6">
                                     <div class="font-bold text-[#050315] text-sm">@p.Name</div>
                                     <div class="text-xs text-[#2F39A9] font-mono mt-0.5">โค้ด: @p.VoucherCode</div>
                                 </td>
 
-                                <!-- Condition -->
-                                <td class="py-4 px-6 text-xs text-gray-600">
-                                    ลด @(p.DiscountValue?.ToString("N0") ?? "0") @(p.PromoType == "percent" ? "%" : "บาท") (ยอดซื้อขั้นต่ำ @(p.MinimumSpend?.ToString("N0") ?? "0") บาท) · @p.StartDate.ToString("dd/MM/yyyy") - @p.EndDate.ToString("dd/MM/yyyy")
+                                @* คอลัมน์เงื่อนไขและระยะเวลา *@
+                                <td class="py-4 px-6 text-xs text-gray-600 leading-relaxed">
+                                    <div>@benefitText (ยอดซื้อขั้นต่ำ @((p.MinimumSpend ?? 0m).ToString("N0")) บาท)</div>
+                                    <div class="text-gray-400 mt-0.5">@PromoAndRedemptionHelper.GetScopeThaiLabel(p.ApplicableScope) · @dateRangeText</div>
                                 </td>
 
-                                <!-- Toggle Switch (Active/Inactive) -->
-                                <td class="py-4 px-6 text-center">
-                                    <label class="inline-flex flex-col items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer" @(p.IsActive == true ? "checked" : "") onchange="togglePromoStatus(this, @p.PromotionId)" />
-                                        <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2F39A9]"></div>
-                                        <span class="text-[11px] font-medium text-gray-400 mt-1 promo-status-label">
-                                            @(p.IsActive == true ? "เปิดใช้งาน" : "ปิดใช้งาน")
-                                        </span>
-                                    </label>
+                                @* คอลัมน์สวิตช์เปิด/ปิดสถานะโปรโมชั่น (ไม่ใส่ method attribute) *@
+                                <td class="py-4 px-6 text-center whitespace-nowrap">
+                                    <form asp-controller="Owner" asp-action="TogglePromotion" class="inline-block m-0">
+                                        <input type="hidden" name="id" value="@p.PromotionId" />
+                                        <label class="inline-flex flex-col items-center cursor-pointer" title="สลับสถานะเปิดหรือปิดโปรโมชั่น">
+                                            <input type="checkbox" class="sr-only peer" @(p.IsActive == true ? "checked" : "") onchange="this.form.submit()" />
+                                            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2F39A9]"></div>
+                                            <span class="text-[11px] font-medium text-gray-500 mt-1">
+                                                @(p.IsActive == true ? "เปิดใช้งาน" : "ปิดใช้งาน")
+                                            </span>
+                                        </label>
+                                    </form>
                                 </td>
 
-                                <!-- Management: Edit & Delete Buttons -->
-                                <td class="py-4 px-6 text-center">
+                                @* คอลัมน์ปุ่มจัดการแก้ไขและลบ *@
+                                <td class="py-4 px-6 text-center whitespace-nowrap">
                                     <div class="inline-flex items-center gap-1.5">
+                                        @* ปุ่มแก้ไขโปรโมชั่น *@
                                         <a asp-controller="Owner" asp-action="EditPromotion" asp-route-id="@p.PromotionId"
-                                           class="inline-flex size-8 rounded-lg bg-blue-50 hover:bg-blue-100 items-center justify-center text-[#2563EB] shadow-2xs transition-colors cursor-pointer" title="แก้ไขโปรโมชั่น">
+                                           class="inline-flex size-8 rounded-lg bg-blue-50 hover:bg-blue-100 items-center justify-center text-[#2563EB] shadow-2xs transition-colors cursor-pointer" title="แก้ไขโปรโมชั่น" aria-label="แก้ไขโปรโมชั่น @p.Name">
                                             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <path d="M12 20h9"></path>
                                                 <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
                                             </svg>
                                         </a>
-                                        <button type="button" onclick="confirmDeletePromo(@p.PromotionId, '@p.Name')"
-                                                class="inline-flex size-8 rounded-lg bg-red-50 hover:bg-red-100 items-center justify-center text-[#DC2626] shadow-2xs transition-colors cursor-pointer" title="ลบโปรโมชั่น">
+                                        @* ปุ่มลบโปรโมชั่น *@
+                                        <button type="button" data-promo-id="@p.PromotionId" data-promo-name="@p.Name" onclick="confirmDeletePromo(this)"
+                                                class="inline-flex size-8 rounded-lg bg-red-50 hover:bg-red-100 items-center justify-center text-[#DC2626] shadow-2xs transition-colors cursor-pointer" title="ปิดใช้งาน / ลบโปรโมชั่น" aria-label="ลบโปรโมชั่น @p.Name">
                                             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                 <polyline points="3 6 5 6 21 6"></polyline>
                                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -139,6 +281,7 @@
                     }
                     else
                     {
+                        @* แถวกรณีไม่พบข้อมูลโปรโมชั่น *@
                         <tr>
                             <td colspan="5" class="py-8 text-center text-xs text-gray-400">
                                 ยังไม่มีโปรโมชั่นในระบบ
@@ -151,77 +294,62 @@
     </div>
 </div>
 
-<!-- Delete Promotion Modal -->
+@* หน้าต่างป๊อปอัปยืนยันการปิดใช้งานหรือลบโปรโมชั่น *@
 <div id="deletePromoModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 animate-scale-up text-center">
+    @* แบบฟอร์มยืนยันการลบโปรโมชั่น (ไม่ใส่ method attribute) *@
+    <form asp-controller="Owner" asp-action="DeletePromotion" class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 animate-scale-up text-center">
+        @* รหัสไอดีโปรโมชั่นที่ต้องการลบ *@
+        <input type="hidden" name="id" id="deletePromoIdInput" value="" />
+        @* ไอคอนกากบาทสีแดงแสดงความระมัดระวัง *@
         <div class="size-12 rounded-full bg-red-100 text-[#DC2626] mx-auto flex items-center justify-center">
             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
         </div>
+        @* ข้อความสอบถามยืนยันการปิดใช้งาน *@
         <div>
-            <h3 class="text-base font-bold text-[#050315]">ยืนยันการลบโปรโมชั่น</h3>
+            <h3 class="text-base font-bold text-[#050315]">ยืนยันการปิดใช้งานโปรโมชั่น</h3>
             <p class="text-xs font-semibold text-[#2F39A9] mt-1" id="deletePromoNameText"></p>
-            <p class="text-xs text-gray-500 mt-2">ระบบจะทำการปิดการใช้งานโปรโมชั่นนี้เพื่อรักษาประวัติข้อมูลการสั่งซื้อเดิม</p>
+            <p class="text-xs text-gray-500 mt-2">ระบบจะปรับสถานะเป็นปิดใช้งานเพื่อรักษาประวัติการสั่งซื้อเดิมไว้ในฐานข้อมูล</p>
         </div>
+        @* แถบปุ่มยกเลิกและปุ่มยืนยัน *@
         <div class="flex items-center gap-2 pt-2">
+            @* ปุ่มกดยกเลิกและปิดหน้าต่าง *@
             <button type="button" onclick="closeDeletePromoModal()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
                 ยกเลิก
             </button>
-            <button type="button" onclick="executeDeletePromo()" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                ยืนยันลบ
+            @* ปุ่มยืนยันการปิดใช้งานโปรโมชั่น *@
+            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
+                ยืนยันปิดใช้งาน
             </button>
         </div>
-    </div>
+    </form>
 </div>
 
+@* ส่วนสคริปต์จาวาสคริปต์สำหรับจัดการเปิดและปิดหน้าต่างป๊อปอัป *@
 @section Scripts {
     <script>
-        let targetPromoId = 0;
-
-        async function togglePromoStatus(input, promoId) {
-            const label = input.parentElement.querySelector('.promo-status-label');
-            if (label) {
-                label.innerText = input.checked ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
-            }
-
-            if (promoId) {
-                const formData = new FormData();
-                formData.append('id', promoId);
-                try {
-                    await fetch('/Owner/TogglePromotion', { method: 'POST', body: formData });
-                } catch (e) { }
-            }
-        }
-
-        function confirmDeletePromo(promoId, promoName) {
-            targetPromoId = promoId;
+        // ฟังก์ชันเปิดหน้าต่างยืนยันการลบโปรโมชั่น พร้อมใส่ค่ารหัสและชื่อโปรโมชั่น
+        function confirmDeletePromo(btn) {
+            // ดึงค่ารหัสโปรโมชั่นจากแอตทริบิวต์ data-promo-id
+            const promoId = btn.getAttribute('data-promo-id') || '';
+            // ดึงชื่อโปรโมชั่นจากแอตทริบิวต์ data-promo-name
+            const promoName = btn.getAttribute('data-promo-name') || '';
+            // กำหนดค่ารหัสโปรโมชั่นลงในอินพุตของฟอร์ม
+            document.getElementById('deletePromoIdInput').value = promoId;
+            // แสดงชื่อโปรโมชั่นในข้อความเตือน
             document.getElementById('deletePromoNameText').innerText = promoName;
+            // เปิดแสดงหน้าต่างป๊อปอัป
             document.getElementById('deletePromoModal').classList.remove('hidden');
         }
 
+        // ฟังก์ชันปิดหน้าต่างยืนยันการลบโปรโมชั่น
         function closeDeletePromoModal() {
+            // ซ่อนหน้าต่างป๊อปอัป
             document.getElementById('deletePromoModal').classList.add('hidden');
-            targetPromoId = 0;
-        }
-
-        async function executeDeletePromo() {
-            if (targetPromoId > 0) {
-                const formData = new FormData();
-                formData.append('id', targetPromoId);
-                try {
-                    const res = await fetch('/Owner/DeletePromotion', { method: 'POST', body: formData });
-                    const data = await res.json();
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert(data.message || 'เกิดข้อผิดพลาดในการลบ');
-                    }
-                } catch (e) {
-                    window.location.reload();
-                }
-            }
+            // ล้างค่ารหัสโปรโมชั่นในอินพุต
+            document.getElementById('deletePromoIdInput').value = '';
         }
     </script>
 }

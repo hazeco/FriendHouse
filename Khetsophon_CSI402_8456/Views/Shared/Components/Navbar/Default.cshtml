@@ -1,103 +1,128 @@
 @model string
 @{
+    // ดึงข้อมูลจำนวนสินค้าในตะกร้า คะแนนสะสม และตัวอักษรย่อโปรไฟล์จาก ViewBag เพื่อแสดงบนแถบนำทาง
     int actualCartCount = ViewBag.CartCount != null ? (int)ViewBag.CartCount : 0;
     int actualPoints = ViewBag.MemberPoints != null ? (int)ViewBag.MemberPoints : 0;
     string avatarLetter = ViewBag.AvatarLetter as string ?? "K";
     string pointsText = $"{actualPoints:N0} แต้ม";
 
+    // รวมค่าตั้งค่าแบรนด์และสถานะตัวเลขสำหรับแถบนำทางไว้ที่ส่วนบนของไฟล์
     var brand = new {
         LogoUrl = "~/logo/logo.png",
         Name = "FriendHouse",
         AriaLabel = "FriendHouse หน้าหลัก",
         Points = pointsText,
-        CartCount = actualCartCount,
-        SearchPlaceholder = "ค้นหาฟิกเกอร์, โมเดล, สินค้าพรีออเดอร์..."
+        CartCount = actualCartCount
     };
 
+    // ตรวจสอบ Controller/Action ปัจจุบันและสถานะการเข้าสู่ระบบของลูกค้า
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "Home";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "Index";
     bool isCustomer = string.Equals(Model, "customer", StringComparison.OrdinalIgnoreCase);
-    bool isHome = currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) &&
-                  (currentAction.Equals("Index", StringComparison.OrdinalIgnoreCase) || currentAction.Equals("Customer", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(currentAction));
-    string homeAction = isCustomer ? "Customer" : "Index";
+
+    // ฟังก์ชันคืนค่าคลาส CSS สำหรับเมนูลิงก์บนหน้าจอเดสก์ท็อปตามหน้าที่กำลังเปิดอยู่
+    string DesktopNavClass(string action)
+    {
+        bool isActive = currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) &&
+                        (currentAction.Equals(action, StringComparison.OrdinalIgnoreCase) ||
+                         (action == "Index" && (currentAction.Equals("Customer", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(currentAction))));
+        return isActive
+            ? "text-sm font-bold text-primary transition-colors whitespace-nowrap cursor-pointer"
+            : "text-sm font-semibold text-slate-700 transition-colors hover:text-primary whitespace-nowrap cursor-pointer";
+    }
+
+    // ฟังก์ชันคืนค่าคลาส CSS สำหรับเมนูลิงก์บนหน้าจอมือถือตามหน้าที่กำลังเปิดอยู่
+    string MobileNavClass(string action)
+    {
+        bool isActive = currentController.Equals("Home", StringComparison.OrdinalIgnoreCase) &&
+                        (currentAction.Equals(action, StringComparison.OrdinalIgnoreCase) ||
+                         (action == "Index" && (currentAction.Equals("Customer", StringComparison.OrdinalIgnoreCase) || string.IsNullOrEmpty(currentAction))));
+        return isActive
+            ? "block rounded-lg bg-primary/10 px-3 py-2 text-sm font-bold text-primary"
+            : "block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-primary";
+    }
 }
 
+<!-- แถบนำทางหลักสำหรับหน้าลูกค้าและผู้เยี่ยมชมทั่วไป (ตรึงไว้ด้านบนสุดของหน้าจอ) -->
 <nav class="border-b border-slate-200/80 bg-white sticky top-0 z-50">
+  @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
   <div class="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-    <!-- Brand Logo & Name -->
+    <!-- โลโก้ร้านและชื่อแบรนด์ FriendHouse -->
     <a class="flex shrink-0 items-center gap-3 text-base font-bold text-text sm:text-lg lg:text-xl"
-       href="@(isHome ? "#hero" : Url.Action(homeAction, "Home") + "#hero")" aria-label="@brand.AriaLabel">
+       asp-controller="Home" asp-action="Index" aria-label="@brand.AriaLabel">
+      @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
       <div class="flex size-10 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-white shadow-xs">
+        @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
         <img src="@Url.Content(brand.LogoUrl)" alt="@brand.Name" class="size-full object-cover" />
       </div>
+      @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
       <div class="flex flex-col leading-none">
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span>@brand.Name</span>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span class="text-[10px] font-normal text-slate-400">ร้านโมเดลและฟิกเกอร์แท้</span>
       </div>
     </a>
 
-    <!-- Center Search Bar (Figma Style) -->
-    <div class="hidden max-w-md flex-1 md:block">
-      @* แบบฟอร์มค้นหาสินค้าสำหรับหน้าจอเดสก์ท็อป นำทางไปยัง HomeController แอ็กชัน Collection *@
-      <form asp-controller="Home" asp-action="Collection" class="w-full">
-        <label class="relative block" aria-label="ค้นหาสินค้า">
-          <svg class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="search" name="searchTerm" value="@Context.Request.Query["searchTerm"]" placeholder="@brand.SearchPlaceholder"
-                 class="w-full rounded-full border border-slate-200 bg-slate-100/80 py-2.5 pl-11 pr-4 text-sm text-text placeholder:text-slate-400 transition-all focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20" />
-        </label>
-      </form>
+    <!-- กลุ่มลิงก์นำทางหลักตรงกลางสำหรับหน้าจอเดสก์ท็อป -->
+    <div class="hidden items-center gap-5 xl:gap-7 lg:flex">
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@DesktopNavClass("Index")" asp-controller="Home" asp-action="Index">หน้าแรก</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@DesktopNavClass("Collection")" asp-controller="Home" asp-action="Collection">คอลเลกชัน</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@DesktopNavClass("Promotion")" asp-controller="Home" asp-action="Promotion">โปรโมชั่น</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@DesktopNavClass("Rewards")" asp-controller="Home" asp-action="Rewards">แลกของรางวัล</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@DesktopNavClass("PreorderStatus")" asp-controller="Home" asp-action="PreorderStatus">สถานะพรีออเดอร์</a>
     </div>
 
-    <!-- Center Navigation Links (Smooth slide to sections on Index) -->
-    <div class="hidden items-center gap-8 lg:flex">
-      <a class="text-sm font-semibold text-slate-700 transition-colors hover:text-primary cursor-pointer"
-         href="@(isHome ? "#hero" : Url.Action(homeAction, "Home") + "#hero")">หน้าแรก</a>
-      <a class="text-sm font-semibold text-slate-700 transition-colors hover:text-primary cursor-pointer"
-         href="@(isHome ? "#promotions" : Url.Action(homeAction, "Home") + "#promotions")">โปรโมชั่น</a>
-      <a class="text-sm font-semibold text-slate-700 transition-colors hover:text-primary cursor-pointer"
-         href="@(isHome ? "#collection" : Url.Action(homeAction, "Home") + "#collection")">คอลเลกชัน</a>
-      <a class="text-sm font-semibold text-slate-700 transition-colors hover:text-primary cursor-pointer"
-         href="@(isHome ? "#footer" : Url.Action(homeAction, "Home") + "#footer")">ติดต่อ</a>
-    </div>
-
-    <!-- Right Actions: Points, Cart, Auth Buttons -->
+    <!-- ส่วนเครื่องมือด้านขวา: แต้มสะสม ตะกร้าสินค้า และปุ่มโปรไฟล์/เข้าสู่ระบบ -->
     <div class="flex items-center gap-2.5 sm:gap-4">
+      @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
       @if (isCustomer)
       {
-        <!-- Member Points Badge (Shown ONLY for logged in customer) -->
+        <!-- ป้ายแสดงแต้มสะสมของสมาชิก (แสดงเฉพาะเมื่อเข้าสู่ระบบเป็นลูกค้าแล้ว) -->
         <a asp-controller="Home" asp-action="Rewards" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/25 text-primary text-xs font-semibold transition-colors hover:bg-secondary/40 cursor-pointer">
+          @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
           <svg class="size-3.5 fill-primary text-primary" viewBox="0 0 24 24">
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
           </svg>
+          @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
           <span>@brand.Points</span>
         </a>
       }
 
-      <!-- Shopping Cart Link -->
+      <!-- ปุ่มลิงก์ไปยังหน้าตะกร้าสินค้าพร้อมตัวเลขแจ้งเตือนจำนวนรายการ -->
       <a asp-controller="Home" asp-action="Cart" class="relative flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:border-primary hover:text-primary hover:bg-slate-50 cursor-pointer" aria-label="ตะกร้าสินค้า">
+        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="9" cy="21" r="1"></circle>
           <circle cx="20" cy="21" r="1"></circle>
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
         </svg>
+        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
         @if (isCustomer && actualCartCount > 0)
         {
-          <!-- Cart Badge: Shown ONLY when logged in and cart has items -->
+          <!-- ตัวเลขจำนวนสินค้าในตะกร้า (แสดงเมื่อเข้าสู่ระบบและมีสินค้าในตะกร้ามากกว่า 0) -->
           <span class="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-xs">@actualCartCount</span>
         }
       </a>
 
-      <!-- Auth Links / Profile -->
+      <!-- ส่วนลิงก์บัญชีผู้ใช้: แสดงปุ่มโปรไฟล์เมื่อเข้าสู่ระบบ หรือปุ่มเข้าสู่ระบบ/ลงทะเบียนสำหรับผู้เยี่ยมชม -->
       @if (isCustomer)
       {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="hidden items-center gap-3 sm:flex">
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a asp-controller="Account" asp-action="Profile" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-bold text-text hover:border-primary transition-colors cursor-pointer">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex size-6 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold">@avatarLetter</div>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>โปรไฟล์ของฉัน</span>
           </a>
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a asp-controller="Account" asp-action="Logout" class="text-xs font-semibold text-slate-400 hover:text-rose-600 transition-colors">
             ออกจากระบบ
           </a>
@@ -105,17 +130,20 @@
       }
       else
       {
-        <!-- Guest Auth Links -->
+        <!-- ปุ่มเข้าสู่ระบบและลงทะเบียนสำหรับผู้เยี่ยมชมทั่วไป -->
         <div class="hidden items-center gap-2 sm:flex">
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="rounded-xl px-3.5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 cursor-pointer"
              asp-controller="Account" asp-action="Login">เข้าสู่ระบบ</a>
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-xs transition-opacity hover:opacity-90 cursor-pointer"
              asp-controller="Account" asp-action="Register">ลงทะเบียน</a>
         </div>
       }
 
-      <!-- Mobile Hamburger Button -->
+      <!-- ปุ่มเปิด/ปิดเมนูแถบนำทางบนหน้าจอมือถือ (Hamburger Menu) -->
       <button id="nav-toggle" type="button" class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-700 lg:hidden cursor-pointer" aria-controls="mobile-menu" aria-expanded="false" aria-label="เปิดเมนู">
+        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -125,54 +153,55 @@
     </div>
   </div>
 
-  <!-- Mobile Menu Dropdown -->
+  <!-- เมนูดรอปดาวน์สำหรับหน้าจอขนาดเล็ก (Mobile Menu) -->
   <div id="mobile-menu" class="hidden border-t border-slate-200 bg-white lg:hidden">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="mx-auto max-w-7xl space-y-2 px-4 py-3 sm:px-6">
-      @* แบบฟอร์มค้นหาสินค้าสำหรับหน้าจอมือถือ นำทางไปยัง HomeController แอ็กชัน Collection *@
-      <form asp-controller="Home" asp-action="Collection" class="w-full md:hidden">
-        <label class="relative block" aria-label="ค้นหา">
-          <svg class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="search" name="searchTerm" value="@Context.Request.Query["searchTerm"]" placeholder="@brand.SearchPlaceholder"
-                 class="w-full rounded-full border border-slate-200 bg-slate-100 py-2 pl-10 pr-4 text-sm text-text placeholder:text-slate-400 transition-colors focus:border-primary focus:bg-white focus:outline-none" />
-        </label>
-      </form>
-
+      @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
       @if (isCustomer)
       {
+        <!-- แสดงยอดแต้มสะสมในเมนูมือถือสำหรับสมาชิก -->
         <div class="flex items-center justify-between rounded-xl bg-secondary/20 p-2.5 text-xs text-primary font-semibold">
+          @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
           <div class="flex items-center gap-1.5">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-3.5 fill-primary text-primary" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
             </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>คะแนนสะสมของคุณ</span>
           </div>
+          @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
           <span class="font-bold">@brand.Points</span>
         </div>
       }
 
-      <a class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:text-primary"
-         href="@(isHome ? "#hero" : Url.Action(homeAction, "Home") + "#hero")">หน้าแรก</a>
-      <a class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:text-primary"
-         href="@(isHome ? "#collection" : Url.Action(homeAction, "Home") + "#collection")">คอลเลกชัน</a>
-      <a class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:text-primary"
-         href="@(isHome ? "#promotions" : Url.Action(homeAction, "Home") + "#promotions")">โปรโมชั่น</a>
-      <a class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:text-primary"
-         asp-controller="Home" asp-action="Rewards">แคตตาล็อกแลกแต้ม</a>
-      <a class="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:text-primary"
-         asp-controller="Home" asp-action="PreorderStatus">สถานะพรีออเดอร์</a>
+      <!-- รายการลิงก์นำทางบนหน้าจอมือถือ -->
+      <a class="@MobileNavClass("Index")" asp-controller="Home" asp-action="Index">หน้าแรก</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@MobileNavClass("Collection")" asp-controller="Home" asp-action="Collection">คอลเลกชัน</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@MobileNavClass("Promotion")" asp-controller="Home" asp-action="Promotion">โปรโมชั่น</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@MobileNavClass("Rewards")" asp-controller="Home" asp-action="Rewards">แลกของรางวัล</a>
+      @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+      <a class="@MobileNavClass("PreorderStatus")" asp-controller="Home" asp-action="PreorderStatus">สถานะพรีออเดอร์</a>
 
+      <!-- ปุ่มจัดการบัญชีผู้ใช้หรือปุ่มเข้าสู่ระบบบนหน้าจอมือถือ -->
       <div class="pt-2 border-t border-slate-100 flex items-center gap-2 sm:hidden">
+        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
         @if (isCustomer)
         {
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="flex-1 rounded-xl bg-primary py-2 text-center text-sm font-semibold text-white" asp-controller="Account" asp-action="Profile">โปรไฟล์ของฉัน</a>
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="rounded-xl border border-slate-200 px-3 py-2 text-center text-xs font-semibold text-slate-500 hover:text-rose-600 hover:border-rose-300 transition-colors" asp-controller="Account" asp-action="Logout">ออกจากระบบ</a>
         }
         else
         {
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="flex-1 rounded-xl border border-primary py-2 text-center text-sm font-semibold text-primary" asp-controller="Account" asp-action="Login">เข้าสู่ระบบ</a>
+          @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
           <a class="flex-1 rounded-xl bg-primary py-2 text-center text-sm font-semibold text-white" asp-controller="Account" asp-action="Register">ลงทะเบียน</a>
         }
       </div>

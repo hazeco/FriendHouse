@@ -1,18 +1,22 @@
+@* นำเข้าเนมสเปซหลักของคอนโทรลเลอร์สำหรับโครงร่างหน้าลูกค้า *@
 @using Khetsophon_CSI402_8456.Controllers
 <!DOCTYPE html>
 <html lang="th" class="scroll-smooth">
 <head>
+    <!-- ตั้งค่าเมตาแท็กการเข้ารหัสและขนาดหน้าจอ Responsive -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Khetsophon_CSI402_8456</title>
+    <!-- โหลดฟอนต์ภาษาไทย Kanit / Noto Sans Thai และโมดูล model-viewer 3D -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js"></script>
+    <!-- โหลดสไตล์ชีตหลักของระบบ -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Khetsophon_CSI402_8456.styles.css" asp-append-version="true" />
 </head>
 @{
+    // ตรวจสอบสิทธิ์บทบาทและรหัสลูกค้าจาก Session เพื่อกำหนดการแสดงผลแถบนำทางหน้าร้าน
     var sessionRole = Context.Session.GetString("Role")?.ToLowerInvariant();
     var customerUserId = Context.Session.GetInt32("CustomerUserId");
     var queryRole = Context.Request.Query["role"].ToString().ToLowerInvariant();
@@ -30,14 +34,18 @@
     }
 }
 <body class="flex min-h-screen flex-col bg-background text-text bg-white">
+    <!-- แถบนำทางส่วนหัวสำหรับหน้าลูกค้าและผู้เยี่ยมชมทั่วไป -->
     <header class="sticky top-0 z-50 w-full bg-white">
         @await Component.InvokeAsync("Navbar", new { role = userRole })
     </header>
+    <!-- พื้นที่แทรกเนื้อหาหลักของแต่ละหน้า -->
     <main role="main" class="flex-1 w-full">
         @RenderBody()
     </main>
+    <!-- แถบส่วนท้ายของเว็บไซต์ (Footer Component) -->
     @await Component.InvokeAsync("Footer")
 
+    <!-- สคริปต์ jQuery และสคริปต์เสริมเฉพาะแต่ละหน้า View -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

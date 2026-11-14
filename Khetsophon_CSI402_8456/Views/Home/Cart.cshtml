@@ -26,32 +26,46 @@
     string storeNoticeDesc = Model?.StoreNoticeDesc ?? "การสั่งจองพรีออเดอร์ไม่ต้องชำระเงินออนไลน์ ชำระยอดเต็มหรือมัดจำเมื่อมารับสินค้าที่สาขา FriendHouse HQ";
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
     <!-- Breadcrumb Navigation -->
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span>/</span>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span class="text-text font-semibold">ตะกร้าสินค้าพรีออเดอร์</span>
     </nav>
 
     <!-- Page Title -->
     <div>
+        @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
         <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">ตะกร้าสั่งจองสินค้าพรีออเดอร์</h1>
+        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
         <p class="text-xs sm:text-sm text-slate-500 mt-1">ตรวจสอบรายการฟิกเกอร์ที่ท่านต้องการสั่งจองล่วงหน้า</p>
     </div>
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["SuccessMessage"]</span>
         </div>
     }
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["ErrorMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["ErrorMessage"]</span>
         </div>
     }
@@ -60,31 +74,41 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <!-- Left Column: Item List -->
         <div class="lg:col-span-8 space-y-4">
-            <!-- Header Bar (Select All & Clear) -->
+            <!-- Header Bar (Item count & Clear) -->
             <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
-                <label class="flex items-center gap-2.5 cursor-pointer text-sm font-semibold text-text">
-                    <input type="checkbox" checked class="size-4.5 rounded-md border-slate-300 text-primary focus:ring-primary" />
-                    <span>เลือกทั้งหมด (@cartItems.Count รายการ / @totalItemCount ชิ้น)</span>
-                </label>
-                @* ฟอร์มส่งข้อมูลล้างสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ClearCart *@
-                <form asp-controller="Home" asp-action="ClearCart" class="inline">
-                    @* ปุ่มกดยืนยันการล้างสินค้าทั้งหมดออกจากตะกร้า *@
-                    <button type="submit" class="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors cursor-pointer">
-                        ล้างตะกร้า
-                    </button>
-                </form>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                <span class="text-sm font-semibold text-text">
+                    รายการสินค้าในตะกร้า (@cartItems.Count รายการ / @totalItemCount ชิ้น)
+                </span>
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                @if (cartItems.Count > 0)
+                {
+                    @* ฟอร์มส่งข้อมูลล้างสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ClearCart *@
+                    <form asp-controller="Home" asp-action="ClearCart" class="inline">
+                        @* ปุ่มกดยืนยันการล้างสินค้าทั้งหมดออกจากตะกร้า *@
+                        <button type="submit" class="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors cursor-pointer">
+                            ล้างตะกร้า
+                        </button>
+                    </form>
+                }
             </div>
 
             <!-- Cart Items Loop -->
             <div class="space-y-4">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (cartItems.Count == 0)
                 {
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="rounded-2xl border border-dashed border-slate-300 p-12 text-center bg-slate-50/50">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-12 mx-auto text-slate-300 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
+                        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                         <p class="text-sm font-bold text-slate-600">ไม่มีสินค้าในตะกร้า</p>
+                        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                         <p class="text-xs text-slate-400 mt-1 mb-4">ยังไม่มีสินค้าในตะกร้าของคุณ ไปเลือกดูฟิกเกอร์ที่คุณสนใจได้เลย</p>
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-primary/90 transition-all cursor-pointer">
                             เลือกดูสินค้าในร้าน
                         </a>
@@ -92,25 +116,24 @@
                 }
                 else
                 {
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var item in cartItems)
                     {
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs transition-all hover:border-primary/30" id="cart-item-row-@item.CartItemId">
-                            <!-- Checkbox -->
-                            <input type="checkbox" checked class="size-4.5 rounded-md border-slate-300 text-primary focus:ring-primary self-center sm:self-auto shrink-0" />
-
-                            <!-- Thumbnail with Real Image -->
-                            <div class="size-20 sm:size-24 shrink-0 rounded-2xl border border-slate-200/80 overflow-hidden bg-slate-100 shadow-xs">
-                                <img src="@Url.Content(item.ImageUrl)" alt="@item.ProductName" class="size-full object-cover" loading="lazy" />
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 transition-colors hover:border-primary/30" id="cart-item-row-@item.CartItemId">
+                            <!-- รูปภาพสินค้าเต็มกรอบ -->
+                            <div class="size-20 sm:size-24 shrink-0 rounded-2xl border border-slate-200/80 overflow-hidden bg-white">
+                                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(item.ImageUrl))" alt="@item.ProductName" class="size-full object-cover object-top" loading="lazy" />
                             </div>
 
                             <!-- Item Details -->
                             <div class="flex-1 min-w-0 space-y-1">
-                                <h3 class="text-sm sm:text-base font-bold text-text leading-snug truncate">
+                                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
+                                <h3 class="text-sm sm:text-base font-bold text-text leading-snug line-clamp-2">
                                     @item.ProductName
                                 </h3>
-                                <span class="inline-block text-[11px] font-semibold text-primary bg-primary/10 rounded-md px-2 py-0.5">
-                                    @item.ScheduleNotice
-                                </span>
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-xs text-slate-500">
                                     ราคาต่อชิ้น: <span class="font-medium text-text">@item.UnitPriceFormatted</span>
                                 </div>
@@ -148,6 +171,7 @@
 
                                 <!-- Total -->
                                 <div class="text-right">
+                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                     <span class="text-base sm:text-lg font-extrabold text-primary">@item.LineTotalFormatted</span>
                                 </div>
 
@@ -172,10 +196,13 @@
 
             <!-- Back to Browsing -->
             <div class="pt-4">
-                <a asp-controller="Home" asp-action="Index" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>เลือกดูสินค้าอื่นเพิ่มเติม</span>
                 </a>
             </div>
@@ -183,40 +210,56 @@
 
         <!-- Right Column: Summary Card -->
         <div class="lg:col-span-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="sticky top-24 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-lg font-bold text-text border-b border-slate-100 pb-3">สรุปคำสั่งจองพรีออเดอร์</h2>
 
                 <!-- Promo Code Section (ใช้กับสินค้าในตะกร้าเท่านั้น) -->
                 @if (cartItems.Count > 0)
                 {
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 space-y-3">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between gap-2">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-xs font-extrabold text-text">โค้ดส่วนลดโปรโมชั่น</span>
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                             <a asp-controller="Home" asp-action="Promotion" class="text-[11px] font-bold text-primary hover:underline">
                                 หาโค้ดเพิ่ม
                             </a>
                         </div>
 
+                        @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
                         <form asp-controller="Home" asp-action="ApplyPromoCode" class="flex items-center gap-2">
+                            @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="text"
                                    name="voucherCode"
                                    value="@appliedPromoCode"
                                    placeholder="กรอกรหัสโค้ด (เช่น WELCOME10)"
                                    class="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold uppercase text-text placeholder:font-sans placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-primary focus:outline-none" />
+                            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                             <button type="submit"
                                     class="shrink-0 rounded-xl bg-primary px-3.5 py-2 text-xs font-bold text-white hover:bg-accent transition-colors cursor-pointer">
                                 ใช้โค้ด
                             </button>
                         </form>
 
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                         @if (!string.IsNullOrEmpty(appliedPromoName) && string.IsNullOrEmpty(promoValidationError))
                         {
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px]">
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="min-w-0">
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="font-extrabold text-emerald-800 truncate">ใช้โค้ด @appliedPromoCode แล้ว</div>
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="text-emerald-700">@promoBenefitSummary</div>
                                 </div>
+                                @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
                                 <form asp-controller="Home" asp-action="RemovePromoCode" class="shrink-0">
+                                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                     <button type="submit" class="rounded-lg border border-emerald-300 bg-white px-2 py-1 font-bold text-rose-600 hover:bg-rose-50 cursor-pointer">
                                         ยกเลิก
                                     </button>
@@ -225,27 +268,41 @@
                         }
                         else if (!string.IsNullOrEmpty(promoValidationError))
                         {
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="font-semibold">@promoValidationError</span>
+                                @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
                                 <form asp-controller="Home" asp-action="RemovePromoCode" class="shrink-0">
+                                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                     <button type="submit" class="font-bold underline cursor-pointer">ล้างโค้ด</button>
                                 </form>
                             </div>
                         }
 
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                         @if (collectedPromos.Any())
                         {
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="space-y-1.5 pt-1 border-t border-slate-200/70">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="text-[11px] font-bold text-slate-500 block">คูปองที่เก็บไว้ของฉัน (คลิกเพื่อใช้งาน):</span>
+                                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                 <div class="flex flex-wrap gap-1.5">
+                                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                                     @foreach (var cp in collectedPromos)
                                     {
+                                        @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
                                         <form asp-controller="Home" asp-action="ApplyPromoCode" class="inline">
+                                            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                                             <input type="hidden" name="voucherCode" value="@cp.VoucherCode" />
+                                            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                             <button type="submit"
                                                     title="@cp.Title (@cp.BenefitLabel)"
                                                     class="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer @(cp.IsApplied ? "border-emerald-400 bg-emerald-100 text-emerald-900" : "border-primary/30 bg-white text-primary hover:bg-primary/5")">
+                                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                                 <span class="font-mono">@cp.VoucherCode</span>
+                                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                                 <span class="text-slate-400 font-normal">· @cp.BenefitLabel</span>
                                             </button>
                                         </form>
@@ -254,6 +311,7 @@
                             </div>
                         }
 
+                        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                         <p class="text-[11px] text-slate-400 leading-relaxed">
                             ใช้ได้เฉพาะสินค้าในตะกร้าเท่านั้น ไม่สามารถใช้ร่วมกับการแลกของรางวัลด้วยแต้มสะสมได้
                         </p>
@@ -262,42 +320,62 @@
 
                 <!-- Subtotals -->
                 <div class="space-y-3 text-sm">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center justify-between text-slate-500">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ยอดรวมสินค้า (@totalItemCount ชิ้น)</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="font-bold text-text">@subtotalFormatted</span>
                     </div>
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                     @if (discountAmount > 0m)
                     {
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between text-emerald-700">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span>ส่วนลดโปรโมชั่น (@appliedPromoCode)</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="font-extrabold">@discountFormatted</span>
                         </div>
                     }
                     else if (isDoublePoints)
                     {
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between text-primary">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span>สิทธิพิเศษ (@appliedPromoCode)</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="font-bold">รับแต้มสะสม x2</span>
                         </div>
                     }
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center justify-between text-slate-500">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ค่าธรรมเนียมบริการ</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="font-bold text-emerald-600">@platformFeeFormatted</span>
                     </div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-base font-bold text-text">ยอดรวมสุทธิที่ต้องชำระหน้าร้าน</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-2xl font-extrabold text-primary">@grandTotalFormatted</span>
                     </div>
                 </div>
 
                 <!-- Store Pickup Notice -->
                 <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3 items-start text-xs text-slate-600">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5 shrink-0 text-primary mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="font-bold text-text block text-xs">@storeNoticeTitle</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="leading-relaxed mt-0.5 block">@storeNoticeDesc</span>
                     </div>
                 </div>
@@ -309,18 +387,23 @@
                     <form asp-controller="Home" asp-action="ConfirmPreorder" class="space-y-3">
                         @* ตัวแปรซ่อนกำหนดสาขาที่รับสินค้า และรหัสโค้ดที่ใช้งานอยู่ *@
                         <input type="hidden" name="pickupBranch" value="FriendHouse HQ สาขาสยามสแควร์" />
+                        @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                         @if (!string.IsNullOrEmpty(appliedPromoName) && string.IsNullOrEmpty(promoValidationError))
                         {
+                            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                             <input type="hidden" name="voucherCode" value="@appliedPromoCode" />
                         }
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             @* ป้ายกำกับช่องเลือกวันที่สะดวกเข้ารับสินค้า *@
                             <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าที่หน้าร้าน</label>
                             @* ช่องเลือกวันที่นัดรับสินค้า พร้อมป้องกันการเลือกวันย้อนหลังด้วย min วันที่ปัจจุบัน *@
-                            <input type="date" id="pickupDate" name="pickupDate" min="@minPickupDate" required autocomplete="off"
+                            <input type="date" id="pickupDate" name="pickupDate" value="@minPickupDate" min="@minPickupDate" required autocomplete="off"
                                    class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
+                            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                             <p class="text-[11px] text-slate-400 mt-1">เลือกวันที่สะดวกรับสินค้าได้ตั้งแต่วันนี้เป็นต้นไป</p>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
                             @* ป้ายกำกับช่องกรอกเบอร์โทรศัพท์ *@
                             <label for="contactPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS / สะสมแต้ม</label>
@@ -337,6 +420,7 @@
                 }
                 else
                 {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                     <a asp-controller="Home" asp-action="Collection"
                        class="block w-full rounded-xl bg-slate-100 py-3.5 text-center text-sm font-bold text-slate-400 cursor-pointer hover:bg-slate-200 transition-colors">
                         เลือกสินค้าก่อนยืนยันการจอง

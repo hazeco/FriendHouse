@@ -15,119 +15,181 @@
     };
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-5">
     <!-- Header: Title, Subtitle, and Export Button (Matching frame_9_25.png) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h1 class="text-xl font-bold text-[#050315] tracking-tight">@pageHeader.Title</h1>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-[13px] text-[#050315]/60 mt-1">@pageHeader.Subtitle</p>
         </div>
-        <button type="button" onclick="openExportReceiptsModal()"
-                class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-[13px] font-medium text-white shadow-xs transition cursor-pointer self-start sm:self-auto">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+        <a asp-controller="Accountant" asp-action="ExportReceiptsCSV"
+           asp-route-searchTerm="@ViewBag.SearchTerm"
+           asp-route-startDate="@ViewBag.StartDate"
+           asp-route-endDate="@ViewBag.EndDate"
+           asp-route-promoFilter="@ViewBag.PromoFilter"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-[13px] font-medium text-white shadow-xs transition cursor-pointer self-start sm:self-auto">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>ส่งออกเป็น Excel</span>
-        </button>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span>ส่งออก .csv</span>
+        </a>
     </div>
 
-    <!-- Filter Bar (Matching frame_9_25.png layout: ตั้งแต่วันที่, ถึงวันที่, ค้นหา, วิธีชำระเงิน) -->
-    <div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
+    <!-- Filter Bar เชื่อมต่อ Controller จริง (ไม่ระบุ method ตามกฎโปรเจกต์) -->
+    <form asp-controller="Accountant" asp-action="Receipts" class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
+        @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
             <!-- Start Date -->
             <div class="lg:col-span-2">
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ตั้งแต่วันที่</label>
-                <div class="relative">
-                    <input type="text" value="01/09/2569" id="filterStartDate"
-                           class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
-                </div>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
+                <input type="date" name="startDate" value="@ViewBag.StartDate"
+                       class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
             </div>
 
             <!-- End Date -->
             <div class="lg:col-span-2">
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ถึงวันที่</label>
-                <div class="relative">
-                    <input type="text" value="09/09/2569" id="filterEndDate"
-                           class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
-                </div>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
+                <input type="date" name="endDate" value="@ViewBag.EndDate"
+                       class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
             </div>
 
             <!-- Search Field -->
-            <div class="lg:col-span-6">
+            <div class="lg:col-span-4">
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ค้นหา</label>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="relative">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </div>
-                    <input type="text" id="receiptSearch" placeholder="เลขที่ใบเสร็จ หรือเบอร์โทรลูกค้า"
+                    @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
+                    <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="เลขที่ใบเสร็จ รหัสบาร์โค้ด หรือเบอร์โทร"
                            class="w-full pl-9 pr-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] placeholder:text-[#050315]/40" />
                 </div>
             </div>
 
             <!-- Promo Filter Dropdown -->
             <div class="lg:col-span-2">
-                <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">โปรโมชั่นที่ใช้</label>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
+                <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ส่วนลด / โปรโมชั่น</label>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="relative">
-                    <select id="promoFilter"
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
+                    <select name="promoFilter"
                             class="w-full appearance-none px-3 py-2 pr-8 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] cursor-pointer">
-                        <option value="">ทั้งหมด</option>
-                        <option value="ซื้อ 1 แถม 1">ซื้อ 1 แถม 1</option>
-                        <option value="พรีออเดอร์">พรีออเดอร์</option>
-                        <option value="ราคาบันเดิล">ราคาบันเดิล</option>
-                        <option value="เคลียร์สต๊อก -30%">เคลียร์สต๊อก -30%</option>
-                        <option value="แลกแต้ม 500 คะแนน">แลกแต้ม 500 คะแนน</option>
-                        <option value="—">ไม่มีโปรโมชั่น</option>
+                        <option value="all" selected="@((ViewBag.PromoFilter ?? "all") == "all")">ทั้งหมด</option>
+                        <option value="discounted" selected="@((ViewBag.PromoFilter ?? "all") == "discounted")">มีส่วนลด / โปรโมชั่น</option>
+                        <option value="regular" selected="@((ViewBag.PromoFilter ?? "all") == "regular")">ราคาปกติ (ไม่มีส่วนลด)</option>
                     </select>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </div>
                 </div>
             </div>
+
+            <!-- Action Buttons -->
+            <div class="lg:col-span-2 flex items-center gap-2">
+                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
+                <button type="submit"
+                        class="flex-1 px-3.5 py-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-[12px] font-bold transition cursor-pointer">
+                    กรอง
+                </button>
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Accountant" asp-action="Receipts"
+                   class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-[12px] font-medium transition">
+                    ล้าง
+                </a>
+            </div>
         </div>
-    </div>
+    </form>
 
     <!-- Receipts Table (Matching frame_9_25.png) -->
     <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="overflow-x-auto">
+            @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
             <table class="w-full text-left min-w-[720px]" id="receiptsTable">
+                @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                 <thead>
+                    @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                     <tr class="border-b border-slate-100 text-[10px] font-medium text-slate-400">
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-5 py-3.5 font-medium">วันที่/เวลา</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-4 py-3.5 font-medium">ลูกค้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-4 py-3.5 font-medium">รายการสินค้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-4 py-3.5 font-medium text-right">ยอดรวม</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-4 py-3.5 font-medium text-center">โปรโมชั่นที่ใช้</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="px-5 py-3.5 font-medium text-center">สถานะ</th>
                     </tr>
                 </thead>
+                @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-slate-100/80 text-[11px] font-normal">
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                     @if (hasDbReceipts)
                     {
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var r in Model!)
                         {
                             var itemSummary = r.Receiptitems.Any() ? string.Join(", ", r.Receiptitems.Select(i => $"{i.ItemDescription} x{i.Quantity}")) : "สินค้าหน้าร้าน x1";
                             var customerName = r.Customer != null ? (r.Customer.FullName ?? r.Customer.Email) : (string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : "ลูกค้าสมาชิก");
                             var staffName = r.CashierUser != null ? (r.CashierUser.FullName ?? r.CashierUser.Email) : "พนักงานหน้าร้าน";
 
+                            @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-slate-50/60 transition-colors receipt-row cursor-pointer"
-                                onclick="previewReceipt('@r.ReceiptNo', '@r.IssuedAt.ToString("dd MMM yyyy HH:mm น.")', '@customerName', '@(string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : r.CustomerPhone)', '@itemSummary', '฿@r.NetTotalAmount.ToString("N0")', '฿@r.VatAmount.ToString("N2")', 'เงินสด / สแกน', '@staffName', '@(r.DiscountAmount > 0 ? "ส่วนลดพิเศษ" : "—")')">
+                                data-no="@r.ReceiptNo"
+                                data-time="@r.IssuedAt.ToString("dd MMM yyyy HH:mm น.")"
+                                data-customer="@customerName"
+                                data-phone="@(string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : r.CustomerPhone)"
+                                data-items="@itemSummary"
+                                data-total="฿@r.NetTotalAmount.ToString("N0")"
+                                data-vat="฿@r.VatAmount.ToString("N2")"
+                                data-method="เงินสด / สแกน"
+                                data-staff="@staffName"
+                                data-promo="@(r.DiscountAmount > 0 ? $"ส่วนลด ฿{r.DiscountAmount:N0}" : "—")"
+                                onclick="previewReceiptFromRow(this)">
                                 <!-- วันที่/เวลา -->
                                 <td class="px-5 py-3.5 whitespace-nowrap">
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="text-[11px] text-[#050315]">@r.IssuedAt.ToString("dd MMM yyyy")</div>
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="text-[10px] text-slate-400 mt-0.5">@r.IssuedAt.ToString("HH:mm น.")</div>
                                 </td>
 
                                 <!-- ลูกค้า -->
                                 <td class="px-4 py-3.5 whitespace-nowrap">
+                                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                                     @if (!string.IsNullOrEmpty(r.CustomerPhone))
                                     {
+                                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                         <div class="text-[11px] text-[#050315] font-mono">@r.CustomerPhone</div>
+                                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                         <div class="mt-0.5">
+                                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                             <span class="inline-block px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 text-[10px]">
                                                 @(r.Customer != null ? "สมาชิก" : "ลูกค้า")
                                             </span>
@@ -135,6 +197,7 @@
                                     }
                                     else
                                     {
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="text-[11px] text-[#050315]">ลูกค้าทั่วไป</span>
                                     }
                                 </td>
@@ -151,12 +214,15 @@
 
                                 <!-- โปรโมชั่นที่ใช้ -->
                                 <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                                     @if (r.DiscountAmount <= 0)
                                     {
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="text-slate-400 text-[11px]">—</span>
                                     }
                                     else
                                     {
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] text-[10px] font-normal">
                                             ลด ฿@r.DiscountAmount.ToString("N0")
                                         </span>
@@ -165,6 +231,7 @@
 
                                 <!-- สถานะ -->
                                 <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                     <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] text-[10px] font-normal">
                                         สำเร็จ
                                     </span>
@@ -174,7 +241,9 @@
                     }
                     else
                     {
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td colspan="6" class="px-5 py-8 text-center text-xs text-slate-400">
                                 ยังไม่มีประวัติใบเสร็จหรือรายการธุรกรรมในระบบ
                             </td>
@@ -195,14 +264,21 @@
         }
         <!-- แถบแบ่งหน้าประวัติใบเสร็จ / ธุรกรรม เชื่อมโยงกับ AccountantController.Receipts -->
         <div class="px-5 py-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-slate-500">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
                 แสดง @startRow–@endRow จากทั้งหมด @totalReceipts รายการในฐานข้อมูล
             </div>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-1 self-center sm:self-auto">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (currentPage > 1)
                 {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                     <a asp-controller="Accountant" asp-action="Receipts"
                        asp-route-searchTerm="@ViewBag.SearchTerm"
+                       asp-route-startDate="@ViewBag.StartDate"
+                       asp-route-endDate="@ViewBag.EndDate"
+                       asp-route-promoFilter="@ViewBag.PromoFilter"
                        asp-route-page="@(currentPage - 1)"
                        class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
                         ‹
@@ -210,23 +286,30 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">
                         ‹
                     </span>
                 }
 
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @for (int p = 1; p <= totalPages; p++)
                 {
                     if (p == currentPage)
                     {
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-medium flex items-center justify-center text-xs">
                             @p
                         </span>
                     }
                     else
                     {
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-controller="Accountant" asp-action="Receipts"
                            asp-route-searchTerm="@ViewBag.SearchTerm"
+                           asp-route-startDate="@ViewBag.StartDate"
+                           asp-route-endDate="@ViewBag.EndDate"
+                           asp-route-promoFilter="@ViewBag.PromoFilter"
                            asp-route-page="@p"
                            class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
                             @p
@@ -234,10 +317,15 @@
                     }
                 }
 
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (currentPage < totalPages)
                 {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                     <a asp-controller="Accountant" asp-action="Receipts"
                        asp-route-searchTerm="@ViewBag.SearchTerm"
+                       asp-route-startDate="@ViewBag.StartDate"
+                       asp-route-endDate="@ViewBag.EndDate"
+                       asp-route-promoFilter="@ViewBag.PromoFilter"
                        asp-route-page="@(currentPage + 1)"
                        class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
                         ›
@@ -245,6 +333,7 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">
                         ›
                     </span>
@@ -256,11 +345,15 @@
 
 <!-- Modal 1: ตัวอย่างใบเสร็จรับเงินอย่างเป็นทางการ ตาม Figma Note [64:2938] -->
 <div id="receiptPreviewModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 my-8">
         <!-- Close button & Title -->
         <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs font-bold text-slate-400 tracking-wider">ตัวอย่างใบเสร็จรับเงินอย่างเป็นทางการ</span>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeReceiptPreview()" class="text-slate-400 hover:text-[#050315] cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -272,45 +365,71 @@
         <div class="space-y-4 text-xs" id="printableReceiptArea">
             <!-- Store Branding & Header -->
             <div class="text-center space-y-1">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="size-10 rounded-xl bg-[#2F39A9] text-white flex items-center justify-center font-bold text-sm mx-auto shadow-xs">
                     FH
                 </div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base font-bold text-[#050315]">@pageHeader.StoreName</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-[10px] text-slate-400">เลขประจำตัวผู้เสียภาษี: @pageHeader.TaxId</p>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-[10px] text-slate-400 max-w-xs mx-auto leading-tight">@pageHeader.StoreAddress</p>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="border-t border-b border-dashed border-slate-200 py-2.5 space-y-1 text-[11px]">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400">เลขที่ใบเสร็จ:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-mono font-bold text-[#050315]" id="rcptNo">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400">วันที่และเวลา:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-[#050315]" id="rcptDateTime">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400">ลูกค้า:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-medium text-[#050315]" id="rcptCustomer">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400">พนักงานขาย:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-[#050315]" id="rcptStaff">-</span>
                 </div>
             </div>
 
             <!-- Items -->
             <div>
+                @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
                 <table class="w-full text-[11px]">
+                    @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                     <thead>
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr class="border-b border-slate-100 text-slate-400 text-left">
+                            @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                             <th class="pb-1.5 font-normal">รายการ</th>
+                            @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                             <th class="pb-1.5 text-right font-normal">ยอดรวม</th>
                         </tr>
                     </thead>
+                    @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                     <tbody class="divide-y divide-slate-50">
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-2 text-[#050315]" id="rcptItemName">-</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-2 text-right font-semibold text-[#050315]" id="rcptItemTotal">-</td>
                         </tr>
                     </tbody>
@@ -319,134 +438,94 @@
 
             <!-- Promotion & Calculation -->
             <div class="border-t border-slate-100 pt-2.5 space-y-1 text-[11px]">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between text-slate-400">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>โปรโมชั่นที่ใช้:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-medium text-[#0284C7]" id="rcptPromo">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between text-slate-400">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>ภาษีมูลค่าเพิ่ม 7% (รวมในราคา):</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-mono text-[#050315]" id="rcptVat">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between text-[13px] font-bold text-[#050315] border-t border-slate-100 pt-2">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>ยอดชำระสุทธิ</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-sm text-[#2F39A9] font-bold" id="rcptFinalTotal">-</span>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between text-[11px] text-slate-400 pt-0.5">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>วิธีการชำระ:</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-medium text-[#050315]" id="rcptMethod">-</span>
                 </div>
             </div>
 
             <!-- Barcode & Notice -->
             <div class="text-center pt-2 border-t border-dashed border-slate-200 space-y-1.5">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="inline-block py-1 px-4 bg-slate-50 border border-slate-100 rounded-md">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-mono text-[11px] tracking-widest text-slate-600 font-bold" id="rcptBarcode">||| ||||||| ||||||| ||||</span>
                 </div>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-[10px] text-slate-400">ขอบคุณที่อุดหนุน FriendHouse · สินค้าและโมเดลแท้ 100%</p>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeReceiptPreview()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">
                 ปิด
             </button>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-xs font-medium shadow-xs hover:bg-[#2F39A9]/90 transition cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 6 2 18 2 18 9"></polyline>
                     <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                     <rect x="6" y="14" width="12" height="8"></rect>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>พิมพ์ใบเสร็จ</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Modal 2: ส่งออก Excel (Export Excel Modal with Hours, Days, Months filter) ตาม Figma note [64:2938] -->
-<div id="exportReceiptsModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl border border-slate-200">
-        <h3 class="text-base font-bold text-[#050315] mb-3">ส่งออกประวัติใบเสร็จ Excel</h3>
-        <div class="space-y-3.5">
-            <div>
-                <label class="block text-[11px] font-medium text-slate-500 mb-1">ช่วงเวลาที่ต้องการส่งออก</label>
-                <select class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-[#050315] focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20">
-                    <option>ย้อนหลัง 24 ชั่วโมง</option>
-                    <option>ย้อนหลัง 7 วันล่าสุด</option>
-                    <option selected>ย้อนหลัง 30 วัน</option>
-                    <option>ย้อนหลัง 3 เดือนล่าสุด</option>
-                    <option>ประวัติทั้งหมดตั้งแต่เปิดร้าน</option>
-                </select>
-            </div>
-            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
-                <button type="button" onclick="closeExportReceiptsModal()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">ยกเลิก</button>
-                <button type="button" onclick="executeExportReceipts()" class="px-4 py-1.5 rounded-xl bg-[#2F39A9] text-white text-xs font-medium cursor-pointer">ยืนยันส่งออก .xlsx</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal 3: แจ้งส่งออกสำเร็จ -->
-<div id="exportReceiptsSuccessModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 text-center">
-        <div class="size-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5 mx-auto">
-            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 6L9 17l-5-5"></path>
-            </svg>
-        </div>
-        <h3 class="text-sm font-bold text-[#050315]">ส่งออก Excel สำเร็จ!</h3>
-        <p class="text-[11px] text-slate-500 mt-0.5">ไฟล์ receipts_2569.xlsx ถูกดาวน์โหลดแล้ว</p>
-        <button type="button" onclick="closeExportReceiptsSuccessModal()" class="mt-4 w-full py-2 px-3 rounded-xl bg-[#2F39A9] text-xs font-medium text-white cursor-pointer">ตกลง</button>
-    </div>
-</div>
-
 @section Scripts {
+@* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
 <script>
-    function previewReceipt(no, time, customer, phone, item, total, vat, method, staff, promo) {
-        document.getElementById('rcptNo').innerText = no;
-        document.getElementById('rcptDateTime').innerText = time;
-        document.getElementById('rcptCustomer').innerText = phone ? `${customer} (${phone})` : customer;
-        document.getElementById('rcptStaff').innerText = staff;
-        document.getElementById('rcptItemName').innerText = item;
-        document.getElementById('rcptItemTotal').innerText = total;
-        document.getElementById('rcptVat').innerText = vat;
-        document.getElementById('rcptPromo').innerText = promo;
-        document.getElementById('rcptFinalTotal').innerText = total;
-        document.getElementById('rcptMethod').innerText = method;
-        document.getElementById('rcptBarcode').innerText = `*${no}*`;
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
+    function previewReceiptFromRow(row) {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+        const d = row.dataset;
+        document.getElementById('rcptNo').innerText = d.no || '';
+        document.getElementById('rcptDateTime').innerText = d.time || '';
+        document.getElementById('rcptCustomer').innerText = d.phone ? `${d.customer} (${d.phone})` : (d.customer || '');
+        document.getElementById('rcptStaff').innerText = d.staff || '';
+        document.getElementById('rcptItemName').innerText = d.items || '';
+        document.getElementById('rcptItemTotal').innerText = d.total || '';
+        document.getElementById('rcptVat').innerText = d.vat || '';
+        document.getElementById('rcptPromo').innerText = d.promo || '—';
+        document.getElementById('rcptFinalTotal').innerText = d.total || '';
+        document.getElementById('rcptMethod').innerText = d.method || '';
+        document.getElementById('rcptBarcode').innerText = `*${d.no || ''}*`;
 
         document.getElementById('receiptPreviewModal').classList.remove('hidden');
     }
 
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     function closeReceiptPreview() {
         document.getElementById('receiptPreviewModal').classList.add('hidden');
     }
-
-    function openExportReceiptsModal() { document.getElementById('exportReceiptsModal').classList.remove('hidden'); }
-    function closeExportReceiptsModal() { document.getElementById('exportReceiptsModal').classList.add('hidden'); }
-    function executeExportReceipts() {
-        closeExportReceiptsModal();
-        document.getElementById('exportReceiptsSuccessModal').classList.remove('hidden');
-    }
-    function closeExportReceiptsSuccessModal() { document.getElementById('exportReceiptsSuccessModal').classList.add('hidden'); }
-
-    // กรองรายการใบเสร็จตามคำค้นหาและโปรโมชั่น (รองรับการพิมพ์รหัสโดยไม่ต้องใส่ขีด - หรือ #)
-    function applyReceiptFilters() {
-        const query = document.getElementById('receiptSearch')?.value.toLowerCase().trim() || '';
-        const queryNoHyphen = query.replace(/[-#\s]/g, '');
-        const promo = document.getElementById('promoFilter')?.value.trim() || '';
-        const rows = document.querySelectorAll('.receipt-row');
-        
-        rows.forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const textNoHyphen = text.replace(/[-#\s]/g, '');
-            const matchesQuery = !query || text.includes(query) || (queryNoHyphen.length > 0 && textNoHyphen.includes(queryNoHyphen));
-            const matchesPromo = !promo || text.includes(promo.toLowerCase());
-            row.style.display = (matchesQuery && matchesPromo) ? '' : 'none';
-        });
-    }
-
-    document.getElementById('receiptSearch')?.addEventListener('input', applyReceiptFilters);
-    document.getElementById('promoFilter')?.addEventListener('change', applyReceiptFilters);
 </script>
 }

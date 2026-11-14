@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Khetsophon_CSI402_8456.Models;
+using Khetsophon_CSI402_8456.Helpers;
 using Microsoft.VisualBasic;
 using Khetsophon_CSI402_8456.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -10,10 +11,12 @@ namespace Khetsophon_CSI402_8456.Controllers;
 public class AccountController : Controller
 {
     private readonly Csi402dbContext _db;
+    private readonly IWebHostEnvironment _env;
 
-    public AccountController(Csi402dbContext db)
+    public AccountController(Csi402dbContext db, IWebHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
     
     // CREATE: แสดงแบบฟอร์มลงทะเบียนสมาชิกใหม่ (GET Method)
@@ -92,35 +95,57 @@ public class AccountController : Controller
                     return View(data);
                 }
 
-                // ขั้นตอนที่ 2: บันทึกสถานะการเข้าสู่ระบบลงใน Session
+                // ขั้นตอนที่ 2: ล้าง Session เก่าก่อนบันทึกสถานะการเข้าสู่ระบบใหม่เพื่อป้องกัน Role ปะปน
+                ClearAllAuthSession();
                 HttpContext.Session.SetInt32("UserId", user.UserId);
                 HttpContext.Session.SetString("Role", user.RoleName);
                 HttpContext.Session.SetString("UserEmail", user.Email);
                 HttpContext.Session.SetString("UserName", user.FullName ?? user.Email);
 
-                // บันทึก Session แยกตามบทบาท เพื่อป้องกันการแย่ง Session เมื่อเปิดทดสอบหลายหน้าต่างพร้อมกัน
+                // บันทึก Session เฉพาะบทบาทที่เข้าสู่ระบบ
+                // แปลงชื่อบทบาทผู้ใช้งานเป็นตัวพิมพ์เล็กเพื่อตรวจสอบสิทธิ์
                 string r = user.RoleName.ToLowerInvariant();
+                // กรณีผู้ใช้มีบทบาทลูกค้าทั่วไป (Customer)
                 if (r == "customer")
                 {
+                    // กำหนดรหัสผู้ใช้และชื่อลูกค้าลงใน Session
                     HttpContext.Session.SetInt32("CustomerUserId", user.UserId);
                     HttpContext.Session.SetString("CustomerUserName", user.FullName ?? user.Email);
                 }
+                // กรณีผู้ใช้มีบทบาทพนักงานหน้าร้าน (Staff)
                 else if (r == "staff")
                 {
+                    // กำหนดรหัสพนักงานและชื่อพนักงานลงใน Session
                     HttpContext.Session.SetInt32("StaffUserId", user.UserId);
                     HttpContext.Session.SetString("StaffUserName", user.FullName ?? user.Email);
                 }
+                // กรณีผู้ใช้มีบทบาทเจ้าของร้าน (Owner)
                 else if (r == "owner")
                 {
+                    // กำหนดรหัสเจ้าของร้านและชื่อเจ้าของร้านลงใน Session
                     HttpContext.Session.SetInt32("OwnerUserId", user.UserId);
                     HttpContext.Session.SetString("OwnerUserName", user.FullName ?? user.Email);
+                }
+                // กรณีผู้ใช้มีบทบาทฝ่ายบัญชีและการเงิน (Accountant)
+                else if (r == "accountant")
+                {
+                    // กำหนดรหัสฝ่ายบัญชีและชื่อฝ่ายบัญชีลงใน Session
+                    HttpContext.Session.SetInt32("AccountantUserId", user.UserId);
+                    HttpContext.Session.SetString("AccountantUserName", user.FullName ?? user.Email);
+                }
+                // กรณีผู้ใช้มีบทบาทฝ่ายสนับสนุนไอที (IT Support)
+                else if (r == "itsupport")
+                {
+                    // กำหนดรหัสฝ่ายไอทีและชื่อฝ่ายไอทีลงใน Session
+                    HttpContext.Session.SetInt32("ITSupportUserId", user.UserId);
+                    HttpContext.Session.SetString("ITSupportUserName", user.FullName ?? user.Email);
                 }
                 
                 // ขั้นตอนที่ 3: บันทึก Log ประวัติการเข้าสู่ระบบลงตาราง Systemlogs
                 _db.Systemlogs.Add(new Systemlog
                 {
                     // กำหนดรหัส Log
-                    LogCode = "AUTH-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                    LogCode = PromoAndRedemptionHelper.GenerateLogCode("AUTH"),
                     // กำหนดระดับความสำคัญเป็น INFO
                     LogLevel = "INFO",
                     // กำหนดโมดูลที่เกี่ยวข้อง
@@ -154,55 +179,93 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult FastLogin(string role)
     {
+        // ปรับบทบาทผู้ใช้งานเป็นตัวพิมพ์เล็กเพื่อความปลอดภัย
         string normalizedRole = (role ?? "customer").ToLowerInvariant();
         
+        // กำหนดค่าจำลองตั้งต้นสำหรับบทบาทลูกค้า
         int mockUserId = 1;
+        // กำหนดอีเมลจำลองตั้งต้น
         string email = "customer@friendhouse.com";
+        // กำหนดชื่อผู้ใช้งานจำลองตั้งต้น
         string name = "ลูกค้าทดสอบ";
+        // กำหนดแอ็กชันปลายทาง
         string targetAction = "Customer";
+        // กำหนดคอนโทรลเลอร์ปลายทาง
         string targetController = "Home";
 
+        // ตรวจสอบและตั้งค่าผู้ใช้งานจำลองตามบทบาทที่เลือก
         switch (normalizedRole)
         {
+            // กรณีบทบาทพนักงานหน้าร้าน
             case "staff":
+                // รหัสผู้ใช้พนักงาน
                 mockUserId = 2;
+                // อีเมลพนักงาน
                 email = "staff@friendhouse.com";
+                // ชื่อพนักงาน
                 name = "พนักงานหน้าร้าน";
+                // คอนโทรลเลอร์ปลายทางฝ่ายพนักงาน
                 targetController = "Staff";
+                // หน้าเริ่มต้นฝ่ายพนักงาน
                 targetAction = "Index";
                 break;
 
+            // กรณีบทบาทเจ้าของร้าน
             case "owner":
+                // รหัสผู้ใช้เจ้าของร้าน
                 mockUserId = 3;
+                // อีเมลเจ้าของร้าน
                 email = "owner@friendhouse.com";
+                // ชื่อเจ้าของร้าน
                 name = "เจ้าของร้าน";
+                // คอนโทรลเลอร์ปลายทางฝ่ายเจ้าของร้าน
                 targetController = "Owner";
+                // หน้าเริ่มต้นฝ่ายเจ้าของร้าน
                 targetAction = "Promotions";
                 break;
 
+            // กรณีบทบาทผู้ดูแลระบบไอที
             case "itsupport":
+                // รหัสผู้ใช้ฝ่ายไอที
                 mockUserId = 4;
+                // อีเมลฝ่ายไอที
                 email = "it@friendhouse.com";
+                // ชื่อฝ่ายไอที
                 name = "เจ้าหน้าที่ไอที";
+                // คอนโทรลเลอร์ปลายทางฝ่ายไอที
                 targetController = "ITSupport";
+                // หน้าเริ่มต้นฝ่ายไอที
                 targetAction = "Dashboard";
                 break;
 
+            // กรณีบทบาทนักบัญชีและการเงิน
             case "accountant":
+                // รหัสผู้ใช้นักบัญชี
                 mockUserId = 5;
+                // อีเมลนักบัญชี
                 email = "account@friendhouse.com";
+                // ชื่อนักบัญชี
                 name = "นักบัญชี";
+                // คอนโทรลเลอร์ปลายทางฝ่ายบัญชี
                 targetController = "Accountant";
+                // หน้าเริ่มต้นฝ่ายบัญชี
                 targetAction = "Index";
                 break;
 
+            // กรณีบทบาทลูกค้าทั่วไปหรือบทบาทอื่นๆ
             default:
+                // คืนค่าบทบาทเป็นลูกค้า
                 normalizedRole = "customer";
                 break;
         }
 
-        // WHY: ค้นหาในฐานข้อมูลก่อนเพื่อใช้ ID จริงหากมีการบันทึกไว้ แต่ถ้ายังไม่มีก็มีข้อมูลสำรองรองรับ
-        var dbUser = _db.Users.FirstOrDefault(u => u.RoleName.ToLower() == normalizedRole);
+        // WHY: ค้นหาบัญชีที่ยังเปิดใช้งานในฐานข้อมูลก่อน หากถูกระงับทั้งหมดจะไม่ให้เข้าสู่ระบบ
+        var dbUser = _db.Users.FirstOrDefault(u => u.RoleName.ToLower() == normalizedRole && u.IsActive != false);
+        if (dbUser == null && _db.Users.Any(u => u.RoleName.ToLower() == normalizedRole))
+        {
+            TempData["ErrorMessage"] = $"ไม่พบบัญชีบทบาท {normalizedRole} ที่เปิดใช้งานอยู่";
+            return RedirectToAction("Login", "Account");
+        }
         if (dbUser != null)
         {
             mockUserId = dbUser.UserId;
@@ -210,13 +273,16 @@ public class AccountController : Controller
             name = dbUser.FullName ?? dbUser.Email;
         }
 
+        // ล้าง Session บทบาทเดิมทั้งหมดก่อนเข้าสู่ระบบบทบาทใหม่ (ป้องกัน Session ปะปนข้ามบทบาท)
+        ClearAllAuthSession();
+
         // บันทึก Session จำเป็นสำหรับใช้ตรวจสอบทุกหน้า
         HttpContext.Session.SetInt32("UserId", mockUserId);
         HttpContext.Session.SetString("Role", normalizedRole);
         HttpContext.Session.SetString("UserEmail", email);
         HttpContext.Session.SetString("UserName", name);
 
-        // บันทึก Session แยกตามบทบาท เพื่อรองรับการเปิดหลายแท็บพร้อมกัน
+        // บันทึก Session เฉพาะบทบาทที่เลือก
         if (normalizedRole == "customer")
         {
             HttpContext.Session.SetInt32("CustomerUserId", mockUserId);
@@ -247,7 +313,7 @@ public class AccountController : Controller
         _db.Systemlogs.Add(new Systemlog
         {
             // กำหนดรหัส Log
-            LogCode = "AUTH-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("AUTH"),
             // กำหนดระดับความสำคัญ
             LogLevel = "INFO",
             // กำหนดโมดูลที่เกี่ยวข้อง
@@ -266,23 +332,48 @@ public class AccountController : Controller
         return RedirectToAction(targetAction, targetController);
     }
 
-    // Action สำหรับออกจากระบบ (Logout) และล้าง Session
+    // ฟังก์ชันช่วยล้างค่า Session การยืนยันตัวตนทั้งหมดออกจากระบบ
+    private void ClearAllAuthSession()
+    {
+        // รายการคีย์เซสชันทั้งหมดที่เกี่ยวข้องกับการเข้าสู่ระบบและโปรโมชั่น
+        string[] keys = {
+            "UserId", "Role", "UserEmail", "UserName",
+            "CustomerUserId", "CustomerUserName",
+            "StaffUserId", "StaffUserName",
+            "OwnerUserId", "OwnerUserName",
+            "AccountantUserId", "AccountantUserName",
+            "ITSupportUserId", "ITSupportUserName",
+            PromoAndRedemptionHelper.AppliedPromoSessionKey,
+            PromoAndRedemptionHelper.CollectedPromoSessionKey
+        };
+        // วนลูปเพื่อลบแต่ละคีย์ออกจาก Session ของผู้ใช้งาน
+        foreach (var k in keys)
+        {
+            // ลบค่าเซสชันตามชื่อคีย์
+            HttpContext.Session.Remove(k);
+        }
+    }
+
+    // ฟังก์ชันช่วยดึงรหัสผู้ใช้งานปัจจุบันที่ผ่านการยืนยันตัวตน
+    private int? GetAuthenticatedUserId()
+    {
+        // อ่านรหัสผู้ใช้ทั่วไปหรือรหัสลูกค้าจากเซสชัน
+        return HttpContext.Session.GetInt32("UserId")
+            ?? HttpContext.Session.GetInt32("CustomerUserId");
+    }
+
+    // Action สำหรับออกจากระบบ (Logout) และล้าง Session ทั้งหมดอย่างสะอาด
     public IActionResult Logout(string? role)
     {
-        // ตรวจสอบกรณีเป็นลูกค้า (Customer) ให้ออกจากระบบแล้วนำทางกลับไปยังหน้าแรก
+        // ล้างข้อมูลทั้งหมดใน Session
+        HttpContext.Session.Clear();
+        // ตรวจสอบว่าผู้ใช้งานออกจากระบบในบทบาทลูกค้าหรือไม่
         if (string.Equals(role, "customer", StringComparison.OrdinalIgnoreCase))
         {
-            // ลบ Session รหัสลูกค้า
-            HttpContext.Session.Remove("CustomerUserId");
-            // ลบ Session ชื่อลูกค้า
-            HttpContext.Session.Remove("CustomerUserName");
-            // นำทางกลับไปยังหน้าแรกของเว็บไซต์
+            // เปลี่ยนเส้นทางกลับไปหน้าแรกสำหรับลูกค้า
             return RedirectToAction("Index", "Home");
         }
-
-        // ล้างข้อมูลเซสชันทั้งหมดของผู้ใช้งานออกจากหน่วยความจำ
-        HttpContext.Session.Clear();
-        // นำทางกลับไปยังหน้าเข้าสู่ระบบ (Login) สำหรับทุกบทบาทการทำงาน
+        // เปลี่ยนเส้นทางกลับไปหน้าเข้าสู่ระบบสำหรับเจ้าหน้าที่
         return RedirectToAction("Login", "Account");
     }
 
@@ -306,9 +397,7 @@ public class AccountController : Controller
         }
 
         // ขั้นตอนที่ 2: ดึงรหัสสมาชิกจาก Session เพื่อยืนยันตัวตน
-        var userId = HttpContext.Session.GetInt32("CustomerUserId") 
-                     ?? (HttpContext.Session.GetString("Role") == "customer" ? HttpContext.Session.GetInt32("UserId") : null)
-                     ?? HttpContext.Session.GetInt32("UserId");
+        var userId = GetAuthenticatedUserId();
 
         if (!userId.HasValue)
         {
@@ -345,9 +434,7 @@ public class AccountController : Controller
     public IActionResult Profile()
     {
         // ขั้นตอนที่ 1: ดึงรหัสสมาชิกปัจจุบันจาก Session
-        var userId = HttpContext.Session.GetInt32("CustomerUserId") 
-                     ?? (HttpContext.Session.GetString("Role") == "customer" ? HttpContext.Session.GetInt32("UserId") : null)
-                     ?? HttpContext.Session.GetInt32("UserId");
+        var userId = GetAuthenticatedUserId();
 
         if (!userId.HasValue)
         {
@@ -390,12 +477,10 @@ public class AccountController : Controller
     // WHY: รับค่าผ่าน UserProfileViewModel อัปเดตข้อมูลชื่อ เบอร์โทรศัพท์ และรูปโปรไฟล์ลง MySQL Database โดยตรง และปรับปรุง Session
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult UpdateProfile(UserProfileViewModel model, string? fullName = null, string? phone = null, string? avatarUrl = null)
+    public IActionResult UpdateProfile(UserProfileViewModel model, string? fullName = null, string? phone = null, string? avatarUrl = null, IFormFile? avatarFile = null)
     {
         // ขั้นตอนที่ 1: ดึงรหัสสมาชิกปัจจุบันจาก Session
-        var userId = HttpContext.Session.GetInt32("CustomerUserId") 
-                     ?? (HttpContext.Session.GetString("Role") == "customer" ? HttpContext.Session.GetInt32("UserId") : null)
-                     ?? HttpContext.Session.GetInt32("UserId");
+        var userId = GetAuthenticatedUserId();
 
         // ตรวจสอบว่าผู้ใช้งานเข้าสู่ระบบแล้วหรือไม่
         if (!userId.HasValue)
@@ -442,18 +527,22 @@ public class AccountController : Controller
             user.Phone = updatedPhone.Trim();
         }
 
-        // ขั้นตอนที่ 5: ปรับปรุงที่อยู่รูปโปรไฟล์ (ถ้ามี)
-        if (!string.IsNullOrWhiteSpace(updatedAvatar))
+        // ขั้นตอนที่ 5: บันทึกไฟล์รูปโปรไฟล์จริงลง wwwroot/media/images/ (ไม่อิง Base64)
+        string? candidateAvatarUrl = (!string.IsNullOrWhiteSpace(updatedAvatar) && !updatedAvatar.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            ? updatedAvatar.Trim()
+            : user.AvatarUrl;
+
+        string? savedAvatarUrl = PromoAndRedemptionHelper.SaveUploadedImage(avatarFile, _env.WebRootPath, "avatar", candidateAvatarUrl);
+        if (!string.IsNullOrWhiteSpace(savedAvatarUrl))
         {
-            // กำหนดพาธรูปโปรไฟล์ใหม่
-            user.AvatarUrl = updatedAvatar.Trim();
+            user.AvatarUrl = savedAvatarUrl;
         }
 
         // บันทึกประวัติการแก้ไขโปรไฟล์ลงตาราง Systemlogs
         _db.Systemlogs.Add(new Systemlog
         {
             // กำหนดรหัส Log
-            LogCode = "PROF-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = $"PROF-{DateTime.Now:yyyyMMddHHmmssfff}-{Random.Shared.Next(10, 99)}",
             // กำหนดระดับความสำคัญ
             LogLevel = "INFO",
             // กำหนดโมดูลที่เกี่ยวข้อง
@@ -482,9 +571,7 @@ public class AccountController : Controller
     public IActionResult DeleteAccount()
     {
         // ขั้นตอนที่ 1: ดึงรหัสสมาชิกปัจจุบันจาก Session
-        var userId = HttpContext.Session.GetInt32("CustomerUserId") 
-                     ?? (HttpContext.Session.GetString("Role") == "customer" ? HttpContext.Session.GetInt32("UserId") : null)
-                     ?? HttpContext.Session.GetInt32("UserId");
+        var userId = GetAuthenticatedUserId();
 
         // ตรวจสอบว่าผู้ใช้งานเข้าสู่ระบบแล้วหรือไม่
         if (!userId.HasValue)
@@ -521,7 +608,7 @@ public class AccountController : Controller
         _db.Systemlogs.Add(new Systemlog
         {
             // กำหนดรหัส Log
-            LogCode = "ACC-DEL-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+            LogCode = PromoAndRedemptionHelper.GenerateLogCode("ACC-DEL"),
             // กำหนดระดับความสำคัญเป็น WARNING
             LogLevel = "WARNING",
             // กำหนดโมดูลที่เกี่ยวข้อง

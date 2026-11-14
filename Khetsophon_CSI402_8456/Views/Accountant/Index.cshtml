@@ -22,20 +22,57 @@
     };
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+        <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="font-bold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+        <div class="rounded-2xl bg-[#FEF2F2] border border-[#FECACA] p-4 flex items-center gap-3 text-xs text-[#DC2626] shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+            <svg class="size-5 text-[#DC2626] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
     <!-- ส่วนหัวหน้าภาพรวมการเงินและตัวเลือกช่วงเดือนจากฐานข้อมูลจริง -->
     <div class="flex items-center justify-between flex-wrap gap-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
         </div>
 
         <!-- ตัวควบคุมเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง -->
         <div class="flex items-center gap-2">
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-gray-500 font-medium">เลือกช่วงเวลา:</span>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="relative">
+                @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select id="accountantMonthSelect" onchange="navigateAccountantMonth(this.value)"
                         class="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] shadow-2xs focus:outline-none cursor-pointer">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var m in Model.AvailableMonths)
                     {
                         if (m.Key.Equals(Model.SelectedMonthKey, StringComparison.OrdinalIgnoreCase))
@@ -48,10 +85,12 @@
                         }
                     }
                 </select>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-[#2F39A9] bg-[#92EEFF]/25 px-3 py-1.5 rounded-xl font-semibold">
                 ตรงกับรายงานเจ้าของร้าน
             </span>
@@ -62,61 +101,85 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- รายได้รวม -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs text-gray-400 font-medium">รายได้รวม (@pageHeader.SelectedMonth)</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="size-6 rounded-lg bg-purple-50 text-[#7E22CE] text-xs font-bold flex items-center justify-center">฿</span>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315]">@financeStats.Revenue</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs font-semibold text-[#16A34A]">@financeStats.RevenueDelta</div>
         </div>
 
         <!-- รายจ่าย/ต้นทุนที่บันทึก -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs text-gray-400 font-medium">รายจ่ายและต้นทุนที่บันทึก</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="size-6 rounded-lg bg-cyan-50 text-[#0E7490] text-xs font-bold flex items-center justify-center">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                     </svg>
                 </span>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315]">@financeStats.Cost</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-gray-400">@financeStats.CostSubtext</div>
         </div>
 
         <!-- กำไรขั้นต้น -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs text-gray-400 font-medium">กำไรขั้นต้น</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="size-6 rounded-lg bg-green-50 text-[#16A34A] text-xs font-bold flex items-center justify-center">▲</span>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold @(Model.GrossProfit >= 0 ? "text-[#16A34A]" : "text-rose-600")">@financeStats.GrossProfit</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-gray-400">@financeStats.GrossProfitSubtext</div>
         </div>
 
         <!-- อัตรากำไรขั้นต้น -->
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs text-gray-400 font-medium">อัตรากำไรขั้นต้น</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="size-6 rounded-lg bg-blue-50 text-[#2563EB] text-xs font-bold flex items-center justify-center">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                 </span>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315]">@financeStats.GrossMargin</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-gray-400">@financeStats.GrossMarginSubtext</div>
         </div>
     </div>
 
     <!-- แถบข้อมูลอธิบายการเชื่อมโยงยอดจริงและสิทธิ์อ่านอย่างเดียว -->
     <div class="rounded-2xl bg-[#F0FDF4]/70 border border-[#BAF2FF] p-4 flex items-center gap-3 text-xs text-gray-600 leading-relaxed">
+        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
         <svg class="size-5 shrink-0 text-[#0E7490]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
             <line x1="12" y1="16" x2="12" y2="12"></line>
             <line x1="12" y1="8" x2="12.01" y2="8"></line>
         </svg>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span>
             ยอด "รายได้รวม" คำนวณจากใบเสร็จรับเงินจริงในร้านรวมกับรายรับในสมุดบัญชีรายวันในช่วงเวลาเดียวกันกับรายงานเจ้าของร้าน หน้านี้แสดงผลเพื่อการตรวจสอบทางบัญชีเท่านั้น ไม่สามารถแก้ไขโปรโมชั่นหรือสต็อกสินค้าได้
         </span>
@@ -126,26 +189,40 @@
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <!-- คอลัมน์ซ้าย: รายได้เทียบรายจ่าย 6 เดือนล่าสุดจากฐานข้อมูลจริง -->
         <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-sm font-bold text-[#050315]">รายได้เทียบรายจ่าย 6 เดือนล่าสุด</h2>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-4 text-xs">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="flex items-center gap-1.5 text-gray-600 font-medium">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-2.5 rounded-sm bg-[#2F39A9]"></span> รายได้
                     </span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="flex items-center gap-1.5 text-gray-600 font-medium">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-2.5 rounded-sm bg-[#92EEFF]"></span> รายจ่าย
                     </span>
                 </div>
             </div>
 
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="pt-6 pb-2 h-56 flex items-end justify-between gap-6 max-w-xl mx-auto px-4">
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var bar in Model.MonthlyTrends)
                 {
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group" title="@bar.MonthShort: รายได้ ฿@bar.Revenue.ToString("N0") / รายจ่าย ฿@bar.Expense.ToString("N0")">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="w-full flex items-end justify-center gap-1 h-full">
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="w-4 rounded-t-sm bg-[#2F39A9] transition-all duration-300" style="height: @(bar.RevenueHeightPct)%;"></div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="w-4 rounded-t-sm bg-[#92EEFF] transition-all duration-300" style="height: @(bar.ExpenseHeightPct)%;"></div>
                         </div>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-xs font-semibold @(bar.IsCurrent ? "text-[#050315] font-bold" : "text-gray-400")">
                             @bar.MonthShort
                         </span>
@@ -156,17 +233,27 @@
 
         <!-- คอลัมน์ขวา: สรุปรายได้ตามหมวดหมู่สินค้าจริงจากฐานข้อมูล -->
         <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 flex flex-col justify-between space-y-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-sm font-bold text-[#050315] mb-5">สรุปรายได้ตามหมวดหมู่สินค้า</h2>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="space-y-4">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var cat in Model.CategorySummaries)
                     {
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="space-y-1.5">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex items-center justify-between text-xs">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="font-medium text-[#050315]">@cat.CategoryName</span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="font-bold text-gray-600">฿@cat.RevenueAmount.ToString("N0")</span>
                             </div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="h-full rounded-full bg-[#2F39A9]" style="width: @(cat.BarPercent)%;"></div>
                             </div>
                         </div>
@@ -174,10 +261,14 @@
                 </div>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="pt-4 border-t border-gray-100">
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                 <a asp-controller="Accountant" asp-action="Receipts"
                    class="text-xs font-bold text-[#2F39A9] hover:underline inline-flex items-center gap-1 cursor-pointer">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>ดูรายละเอียดเต็มในหน้าประวัติใบเสร็จ</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>→</span>
                 </a>
             </div>
@@ -186,9 +277,11 @@
 </div>
 
 @section Scripts {
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
         // ฟังก์ชันนำทางเมื่อเปลี่ยนช่วงเวลาบนหน้าภาพรวมการเงินฝ่ายบัญชีเพื่อโหลดตัวเลขจริงจากฐานข้อมูล
         function navigateAccountantMonth(monthKey) {
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (!monthKey) return;
             window.location.href = '/Accountant/Index?selectedMonth=' + encodeURIComponent(monthKey);
         }

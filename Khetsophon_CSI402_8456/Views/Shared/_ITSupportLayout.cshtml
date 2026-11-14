@@ -9,32 +9,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Khetsophon_CSI402_8456.styles.css" asp-append-version="true" />
 </head>
 <body class="min-h-screen flex flex-col bg-[#F8F9FD] text-[#050315] antialiased font-sans">
-    <!-- IT Support Header -->
+    <!-- แถบนำทางด้านบนสำหรับบทบาทผู้ดูแลระบบไอที -->
     <header class="sticky top-0 z-50 w-full shadow-sm">
         @await Component.InvokeAsync("Navbar", new { role = "itsupport" })
     </header>
 
-    <!-- Main Content -->
+    <!-- พื้นที่เนื้อหาหลักของระบบไอทีซัพพอร์ต -->
     <main role="main" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         @RenderBody()
     </main>
 
-    <!-- Footer matching Figma frame_9_19.png -->
+    <!-- ส่วนท้ายแสดงคำกำกับสำหรับระบบตรวจสอบและดูแลระบบภายใน -->
     <footer class="mt-auto border-t border-gray-200/60 bg-white py-4 text-xs text-gray-400">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between flex-wrap gap-2">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
-                © 2569 FriendHouse — IT Support Console (เครื่องมือใช้งานภายในร้าน)
+                © 2569 FriendHouse — ระบบผู้ดูแลระบบไอที (ใช้งานภายในร้าน)
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
-                เวอร์ชันมอคอัพ · ข้อมูลจำลองทั้งหมด ไม่ใช่ข้อมูลจริง
+                ระบบตรวจสอบและกู้คืนข้อมูลภายในร้าน
             </div>
         </div>
     </footer>
 
+    <!-- สคริปต์พื้นฐานของเว็บไซต์และส่วนสคริปต์เฉพาะหน้า -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

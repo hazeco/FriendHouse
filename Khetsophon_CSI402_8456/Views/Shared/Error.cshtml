@@ -1,8 +1,8 @@
-﻿@model ErrorViewModel
+@model ErrorViewModel
 @{
     ViewData["Title"] = "เกิดข้อผิดพลาดในการประมวลผล — FriendHouse";
 
-    // Top-of-file Media & Content Configuration
+    // การตั้งค่าข้อความแจ้งข้อผิดพลาดและคำแนะนำสำหรับหน้าจอ Error ไว้ส่วนบนสุดของไฟล์
     var pageConfig = new {
         Title = "เกิดข้อผิดพลาดในการประมวลผล",
         Subtitle = "ขออภัยในความไม่สะดวก ระบบไม่สามารถดำเนินการตามคำขอของคุณได้ในขณะนี้",
@@ -14,9 +14,13 @@
     };
 }
 
+<!-- พื้นที่จัดวางการ์ดแจ้งเตือนข้อผิดพลาดให้อยู่กึ่งกลางหน้าจอ -->
 <div class="min-h-[70vh] flex items-center justify-center px-4 py-12 bg-white">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="max-w-lg w-full text-center space-y-6">
+        <!-- ไอคอนแจ้งเตือนข้อผิดพลาดแบบ SVG -->
         <div class="mx-auto flex size-20 items-center justify-center rounded-3xl bg-rose-50 text-rose-500 border border-rose-100 shadow-sm">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
@@ -24,38 +28,52 @@
             </svg>
         </div>
 
+        <!-- หัวข้อหลักและข้อความอธิบายข้อผิดพลาด -->
         <div class="space-y-2">
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h1 class="text-2xl sm:text-3xl font-extrabold text-[#050315]">@pageConfig.Title</h1>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
                 @pageConfig.Subtitle
             </p>
         </div>
 
+        <!-- แสดงรหัสอ้างอิงคำขอ (RequestId) เมื่อระบบตรวจพบสำหรับช่วยตรวจสอบย้อนหลัง -->
         @if (Model.ShowRequestId)
         {
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-mono">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="font-bold text-slate-700">@pageConfig.RequestIdLabel</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>@Model.RequestId</span>
             </div>
         }
 
+        <!-- ปุ่มนำทางกลับสู่หน้าแรกของร้านค้า -->
         <div class="pt-2">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Home" asp-action="Index"
                class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                     <polyline points="9 22 9 12 15 12 15 22"></polyline>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>@pageConfig.BackHome</span>
             </a>
         </div>
 
         <!-- กล่องข้อมูลทางเทคนิคสำหรับนักพัฒนา -->
         <div class="mt-8 pt-6 border-t border-slate-100 text-left rounded-2xl bg-slate-50/70 p-5 border border-slate-200/80 space-y-2">
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h3 class="text-xs font-bold text-slate-700">@pageConfig.DevModeTitle</h3>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-slate-500 leading-relaxed">
                 @pageConfig.DevModeDesc1
             </p>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-slate-400 leading-relaxed">
                 @pageConfig.DevModeDesc2
             </p>

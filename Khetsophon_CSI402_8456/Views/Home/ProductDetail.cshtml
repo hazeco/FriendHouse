@@ -1,860 +1,460 @@
-@model Khetsophon_CSI402_8456.ViewModels.ProductDetailViewModel?
+@model Khetsophon_CSI402_8456.ViewModels.ProductDetailViewModel
 @{
-    ViewData["Title"] = "รายละเอียดสินค้า — FriendHouse";
+    // กำหนดชื่อหัวข้อของหน้าเว็บรายละเอียดสินค้า
+    ViewData["Title"] = $"{Model.Name} — FriendHouse";
 
-    // Top-of-file Media & Content Configuration
-    var catalog = new[] {
-        new {
-            Id = 1,
-            Name = "นารูโตะ อุซึมากิ โหมดคิวบิเซจ อัลติเมตสตอร์ม",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿4,290",
-            RawPrice = 4290,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_hero_fig.png",
-            Series = "Naruto Shippuden",
-            Description = "งานปั้นนารูโตะ อุซึมากิ โหมดคิวบิเซจ อัลติเมตสตอร์ม รายละเอียดคมชัดระดับมาสเตอร์พีซ ท่วงท่าร่ายวิชานินจาอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
-                new { Label = "ผู้ผลิต", Value = "Banpresto" },
-                new { Label = "สเกล", Value = "1/6 Scale (ประมาณ 32 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + Resin" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 2,
-            Name = "ทันจิโร่ คามาโดะ ระบำเทพสุริยัน ฮิโนะคามิ",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿2,450",
-            RawPrice = 2450,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/tanjiro_kamado.png",
-            Series = "Demon Slayer",
-            Description = "ทันจิโร่ คามาโดะ ในท่วงท่าร่ายรำระบำเทพสุริยัน ฮิโนะคามิ คางุระ เอฟเฟกต์เพลิงสุริยันโปร่งแสงสุดอลังการ รายละเอียดคมชัดทุกองศา ลิขสิทธิ์แท้",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 21 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + Clear Parts" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 3,
-            Name = "ฮัตสึเนะ มิกุ เมจิคัลมิไร 2024 สเปเชียล",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿4,200",
-            RawPrice = 4200,
-            Status = "เปิดรับสั่งจองล่วงหน้า",
-            EstimatedArrival = "ไตรมาส 4 ปี 2569 (พรีออเดอร์)",
-            ImageUrl = "~/media/images/hatsune_miku_magical.png",
-            Series = "Vocaloid",
-            Description = "ฟิกเกอร์ฮัตสึเนะ มิกุ ในชุด เมจิคัลมิไร 2024 ดีไซน์ชุดสดใสพร้อมไมโครโฟนและเอฟเฟกต์เวทีดนตรีระยิบระยับ ชิ้นส่วนสีเมทัลลิกและเคลือบเงาสวยงามสมบูรณ์แบบ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Vocaloid" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 24 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
-            }
-        },
-        new {
-            Id = 4,
-            Name = "มังกี้ ดี ลูฟี่ เกียร์ 5 คิงออฟอาร์ติสต์",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿950",
-            RawPrice = 950,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/luffy_gear5.png",
-            Series = "One Piece",
-            Description = "ลูฟี่ เกียร์ 5 ร่างเทพพระอาทิตย์ นิกะ งานปั้นสุดทรงพลังจากซีรีส์ King of Artist ผมและกลุ่มควันสีขาวทรงกลม ดวงตาและรอยยิ้มเอกลักษณ์ตามฉบับอนิเมะตอนไคลแมกซ์",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "ความสูง", Value = "ประมาณ 16 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 5,
-            Name = "อาเนีย ฟอร์เจอร์ และ บอนด์ ชุดไปเที่ยววันหยุด",
-            Category = "ของสะสมและตุ๊กตา",
-            Price = "฿1,850",
-            RawPrice = 1850,
-            Status = "เปิดรับสั่งจองล่วงหน้า",
-            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
-            ImageUrl = "~/media/images/anya_forger.png",
-            Series = "Spy x Family",
-            Description = "อาเนีย ฟอร์เจอร์ กับเจ้าหมาบอนด์ในชุดออกไปเที่ยวสุดน่ารัก ถ่ายทอดความอบอุ่นและรอยยิ้มแสนสดใส งานปั้นเก็บรายละเอียดชุดและขนสุนัขได้อย่างนุ่มนวล",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Spy x Family" },
-                new { Label = "ผู้ผลิต", Value = "Megahouse" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 15 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
-            }
-        },
-        new {
-            Id = 6,
-            Name = "นารูโตะ อุซึมากิ ไวเบรชันสตาร์ส สเปเชียล",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿1,200",
-            RawPrice = 1200,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/naruto_vibration_stars.png",
-            Series = "Naruto Shippuden",
-            Description = "งานปั้นรายละเอียดสูงจากซีรีส์นารูโตะ ไวเบรชันสตาร์ส ท่าแอคชั่นปล่อยพลังอันทรงพลัง หล่อจากเรซิ่นและ PVC เกรดพรีเมียม ลงสีมือประณีตทุกจุด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
-                new { Label = "ผู้ผลิต", Value = "Banpresto" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 18 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 7,
-            Name = "โกโจ ซาโตรุ อุบัติการณ์ชิบูย่า เนตรริคุกัน",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿3,800",
-            RawPrice = 3800,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/gojo_satoru.png",
-            Series = "Jujutsu Kaisen",
-            Description = "โกโจ ซาโตรุ ในศึกอุบัติการณ์ชิบูย่า เปิดผ้าปิดตาสีดำเผยให้เห็นดวงตาริคุกันสีฟ้าสดใส รายละเอียดชุดคลุมและเอฟเฟกต์อาณาเขตไร้เขตจำกัด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
-                new { Label = "ผู้ผลิต", Value = "Megahouse" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 23 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 8,
-            Name = "โชกุน ไรเดน อาณาจักรแห่งความสงบสุขนิรันดร์",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿5,690",
-            RawPrice = 5690,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/raiden_shogun.png",
-            Series = "Genshin Impact",
-            Description = "โชกุน ไรเดน เทพแห่งสายฟ้าแห่งอินาสึมะ ยืนตระหง่านพร้อมดาบสายฟ้า ชิ้นส่วนเอฟเฟกต์มิติและสายฟ้าสีม่วงสุดอลังการ งานลงสีระดับไฮเอนด์",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 26 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + LED Base" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 9,
-            Name = "ตุ๊กตาหมีเมฆ คลาวด์แบร์ สีฟ้าพาสเทล",
-            Category = "ของสะสมและตุ๊กตา",
-            Price = "฿590",
-            RawPrice = 590,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/cloud_bear_plush.png",
-            Series = "FriendHouse Studio",
-            Description = "ตุ๊กตาหมีเนื้อผ้ากำมะหยี่นุ่มพิเศษ สีพาสเทลฟ้า ขนาดสูง 28 ซม. ออกแบบลิมิเต็ดสำหรับคอลเลกชันฤดูหนาวนี้โดยเฉพาะ ผลิตจากวัสดุคุณภาพสูง สัมผัสนุ่มละมุน",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
-                new { Label = "ผู้ผลิต", Value = "FriendHouse Original" },
-                new { Label = "ขนาด", Value = "สูงประมาณ 28 ซม." },
-                new { Label = "วัสดุ", Value = "กำมะหยี่ขนนุ่มพิเศษ" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 10,
-            Name = "โรโรโนอา โซโร ท่าดาบเพลิงยมโลก เก้าดาบสังหาร",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿2,790",
-            RawPrice = 2790,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/roronoa_zoro.png",
-            Series = "One Piece",
-            Description = "โรโรโนอา โซโร ในท่วงท่าไม้ตายเก้าดาบตัดมิติเพลิงยมโลก ออร่าฮาคิราชันย์ห่อหุ้มคมดาบสามเล่ม งานปั้นกล้ามเนื้อและรอยแผลเป็นคมชัด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 20 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 11,
-            Name = "คามาโดะ เนซึโกะ ร่างอสูรขั้นสมบูรณ์ระเบิดโลหิต",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿3,450",
-            RawPrice = 3450,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/nezuko_kamado.png",
-            Series = "Demon Slayer",
-            Description = "คามาโดะ เนซึโกะ ปลดปล่อยพลังอสูรขั้นสมบูรณ์พร้อมลวดลายเถาวัลย์บนผิวกายและเขาสีขาว เอฟเฟกต์มนต์อสูรโลหิตเพลิงชมพูระยิบระยับ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ผู้ผลิต", Value = "Aniplex" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 22 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + Clear Effects" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 12,
-            Name = "ฟุชิกุโระ เมกุมิ คาถาเงามือแปดหางมังกร",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿3,190",
-            RawPrice = 3190,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/megumi_fushiguro.png",
-            Series = "Jujutsu Kaisen",
-            Description = "ฟุชิกุโระ เมกุมิ ผสานอินคาถาเงามือสิบประการ อัญเชิญหมาป่าศักดิ์สิทธิ์และเงาอสูรโอบล้อมกายด้วยพลังไสยเวทสีคราม",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
-                new { Label = "ผู้ผลิต", Value = "Kotobukiya" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 19 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 13,
-            Name = "จงหลี่ ราชาแห่งหินผาและพันธสัญญาโบราณ",
-            Category = "ของสะสมลิมิเต็ด",
-            Price = "฿6,200",
-            RawPrice = 6200,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/zhongli_morax.png",
-            Series = "Genshin Impact",
-            Description = "จงหลี่ เทพแห่งหินโมแรกซ์ในชุดประจำตำแหน่งสง่างาม เสาหินเสาค้ำสวรรค์พร้อมอัญมณีธาตุหินและฐานเรืองแสง LED ลิมิเต็ด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 28 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + Polystone + LED Base" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 14,
-            Name = "อุจิวะ ซาสึเกะ เนตรวงแหวนกระจกเงาหมื่นบุปผาและพันปักษา",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿2,590",
-            RawPrice = 2590,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/sasuke_uchiha.png",
-            Series = "Naruto Shippuden",
-            Description = "อุจิวะ ซาสึเกะ ปลดปล่อยพันปักษาชิโดริสายฟ้าสีฟ้าใสคราม พร้อมดวงตาเนตรวงแหวนกระจกเงาหมื่นบุปผาและเนตรสังสาระ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Naruto Shippuden" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 17 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Chidori Clear Parts" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 15,
-            Name = "เร็นโกคุ เคียวจูโร่ เพลิงผลาญอสูรภาคบันทึกรถไฟนิรันดร์",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿4,600",
-            RawPrice = 4600,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/rengoku_kyojuro.png",
-            Series = "Demon Slayer",
-            Description = "เร็นโกคุ เคียวจูโร่ เสาหลักเพลิงแห่งหน่วยพิฆาตอสูร ดาบเพลิงระอุพร้อมเอฟเฟกต์ไฟคลั่งล้อมรอบฐานจำลองโบกี้รถไฟนิรันดร์",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ผู้ผลิต", Value = "Aniplex" },
-                new { Label = "สเกล", Value = "1/8 Scale (ประมาณ 25 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + Flame Resin" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 16,
-            Name = "ยอร์ ฟอร์เจอร์ เจ้าหญิงหนามแห่งองค์กรการ์เดน",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿3,250",
-            RawPrice = 3250,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/yor_forger.png",
-            Series = "Spy x Family",
-            Description = "ยอร์ ฟอร์เจอร์ ในฉายาเจ้าหญิงหนามแห่งองค์กรการ์เดน ชุดเดรสสีดำหรูหราพร้อมอาวุธเข็มเหล็กสีทองคู่ใจ ท่วงท่านักฆ่าที่เปี่ยมด้วยความงดงาม",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Spy x Family" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 25 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Metal Stilettos" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 17,
-            Name = "ฮัตสึเนะ มิกุ ซากุระสปริงบลอสซัม ลิมิเต็ด",
-            Category = "ของสะสมลิมิเต็ด",
-            Price = "฿2,890",
-            RawPrice = 2890,
-            Status = "เปิดรับสั่งจองล่วงหน้า",
-            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
-            ImageUrl = "~/media/images/hatsune_miku_sakura.png",
-            Series = "Vocaloid",
-            Description = "ฮัตสึเนะ มิกุ ในชุดซากุระสีชมพูอ่อน ประดับดอกซากุระบานสะพรั่ง ผมทวินเทลไล่เฉดสีชมพูขาวพร้อมฐานกลีบซากุระโปร่งแสงสุดประณีต",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Vocaloid" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 22 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Sakura Petal Base" },
-                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
-            }
-        },
-        new {
-            Id = 18,
-            Name = "โปร์ตกัส ดี เอส หมัดอัคคีเพลิงบรรลัยกัลป์",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿1,890",
-            RawPrice = 1890,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/portgas_d_ace.png",
-            Series = "One Piece",
-            Description = "โปร์ตกัส ดี เอส หมัดอัคคีแห่งกลุ่มโจรสลัดหนวดขาว ปล่อยพลังหมัดเพลิงระเบิดเปลวไฟสีส้มใสสว่างโชน ท่าโพสอันทรงพลัง",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "MegaHouse" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 19 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Fire Clear Parts" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 19,
-            Name = "อิตาโดริ ยูจิ หมัดประกายทมิฬโคเซ็น",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿1,450",
-            RawPrice = 1450,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/itadori_yuji.png",
-            Series = "Jujutsu Kaisen",
-            Description = "อิตาโดริ ยูจิ ปลดปล่อยหมัดประกายทมิฬโคคุเซ็น เอฟเฟกต์สายฟ้าสีดำประกายแดงฉานรอบกำปั้น สะท้อนพลังหมัดอันดุดัน",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 16 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Black Flash Effect" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 20,
-            Name = "กานอวี่ ปักษาหิมะกลีบเมฆาแห่งศาลาเยว่ไห่",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿5,400",
-            RawPrice = 5400,
-            Status = "เปิดรับสั่งจองล่วงหน้า",
-            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
-            ImageUrl = "~/media/images/ganyu_plenilune.png",
-            Series = "Genshin Impact",
-            Description = "กานอวี่ เลขานุการแห่งศาลาเยว่ไห่ เลือดผสมกิเลน ในชุดทางการสง่างามพร้อมธนูล่าวิญญาณและดอกบัวน้ำแข็งกลีบเมฆาเรืองประกายเย็นเยือก",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 27 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Ice Lotus Base" },
-                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
-            }
-        },
-        new {
-            Id = 21,
-            Name = "ตุ๊กตาแมวนำโชค คิตตี้การ์เดียน ขนนุ่มพรีเมียม",
-            Category = "ของสะสมและตุ๊กตา",
-            Price = "฿490",
-            RawPrice = 490,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/lucky_cat_plush.png",
-            Series = "FriendHouse Studio",
-            Description = "ตุ๊กตาแมวนำโชค คิตตี้การ์เดียน ขนนุ่มระดับพรีเมียม ปลอกคอสีแดงผูกกระดิ่งทองนำโชคลาภ ออกแบบพิเศษเฉพาะ FriendHouse",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
-                new { Label = "ผู้ผลิต", Value = "FriendHouse Original" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 25 ซม.)" },
-                new { Label = "วัสดุ", Value = "ผ้าขนนุ่มเกรดญี่ปุ่น + กระดิ่งโลหะทอง" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 22,
-            Name = "โทนี่ โทนี่ ช็อปเปอร์ หมวกซากุระรุ่นพิเศษ",
-            Category = "ของสะสมและตุ๊กตา",
-            Price = "฿650",
-            RawPrice = 650,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/chopper_plush.png",
-            Series = "One Piece",
-            Description = "โทนี่ โทนี่ ช็อปเปอร์ ในหมวกซากุระรุ่นพิเศษ ขนนุ่มละมุนน่ากอด ขนาดกะทัดรัด รายละเอียดหมวกและเขากวางสมบูรณ์แบบ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 22 ซม.)" },
-                new { Label = "วัสดุ", Value = "กำมะหยี่ขนละเอียด นุ่มพิเศษ" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 23,
-            Name = "คุกิซากิ โนบาระ คาถาหุ่นฟางตะปูอาถรรพ์",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿1,350",
-            RawPrice = 1350,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/nobara_kugisaki.png",
-            Series = "Jujutsu Kaisen",
-            Description = "คุกิซากิ โนบาระ นักเรียนไสยเวทปีหนึ่ง กำค้อนและตะปูลงอาคมในท่วงท่าปล่อยคาถาหุ่นฟางสะท้อนวิญญาณ เอฟเฟกต์ประกายเวทสีครามสดใส",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Jujutsu Kaisen" },
-                new { Label = "ผู้ผลิต", Value = "Bandai Spirits" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 15 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Nails Effects" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 24,
-            Name = "ฮูเต๋า ผีเสื้อนำทางวิญญาณแห่งโถงหวังเซิง",
-            Category = "ฟิกเกอร์สเกล",
-            Price = "฿5,200",
-            RawPrice = 5200,
-            Status = "เปิดรับสั่งจองล่วงหน้า",
-            EstimatedArrival = "สินค้าเข้าเร็วๆ นี้ (พรีออเดอร์)",
-            ImageUrl = "~/media/images/hu_tao_ghost.png",
-            Series = "Genshin Impact",
-            Description = "ฮูเต๋า ผู้ดูแลโถงหวังเซิงรุ่นที่ 77 ร่าเริงสดใสพร้อมเจ้าผีวิญญาณสีขาวเพื่อนซี้ ฐานดอกบ๊วยและผีเสื้อวิญญาณเปล่งประกายสีแดงชาด",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Genshin Impact" },
-                new { Label = "ผู้ผลิต", Value = "Apex Innovation" },
-                new { Label = "สเกล", Value = "1/7 Scale (ประมาณ 27 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Spirit Base" },
-                new { Label = "สถานะ", Value = "เปิดรับสั่งจองพรีออเดอร์" }
-            }
-        },
-        new {
-            Id = 25,
-            Name = "ลอยด์ ฟอร์เจอร์ สนธยา เจ้าหน้าที่สายลับเวสทาลิส",
-            Category = "แอคชั่นฟิกเกอร์",
-            Price = "฿2,390",
-            RawPrice = 2390,
-            Status = "มีสินค้า",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/loid_forger.png",
-            Series = "Spy x Family",
-            Description = "ลอยด์ ฟอร์เจอร์ ในโค้ดเนมสนธยา สุดยอดสายลับมือหนึ่งแห่งเวสทาลิส ชุดสูทสีเขียวเข้มเนี้ยบกริบพร้อมปืนพกเก็บเสียงและชิ้นส่วนใบหน้าสับเปลี่ยนได้",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Spy x Family" },
-                new { Label = "ผู้ผลิต", Value = "Good Smile Company" },
-                new { Label = "สเกล", Value = "Non-scale (ประมาณ 17 ซม.)" },
-                new { Label = "วัสดุ", Value = "PVC + ABS + Pistol Parts" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมส่งมอบหน้าร้าน" }
-            }
-        },
-        new {
-            Id = 301,
-            Name = "พวงกุญแจอะคริลิก ดาบพิฆาตอสูร รุ่นพิเศษ",
-            Category = "ของสะสมแต้มสะสม",
-            Price = "350 แต้ม",
-            RawPrice = 350,
-            Status = "มีสินค้าพร้อมแลก",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/tanjiro_kamado.png",
-            Series = "Demon Slayer",
-            Description = "พวงกุญแจอะคริลิกใสพิมพ์ลายสองด้าน คมชัดระดับพรีเมียม ลิขสิทธิ์แท้พร้อมห่วงคล้องโลหะแข็งแรง ทันจิโร่ คามาโดะ ท่วงท่าเพลิงสุริยันสุดเท่ เหมาะสำหรับคล้องกระเป๋าและกุญแจ",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ขนาด", Value = "สูงประมาณ 7 ซม." },
-                new { Label = "วัสดุ", Value = "อะคริลิกคุณภาพสูงพร้อมห่วงโลหะ" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
-            }
-        },
-        new {
-            Id = 302,
-            Name = "โปสเตอร์ผ้าวันพีซ ฟิล์มเรด ลิขสิทธิ์แท้",
-            Category = "ของสะสมแต้มสะสม",
-            Price = "600 แต้ม",
-            RawPrice = 600,
-            Status = "มีสินค้าพร้อมแลก",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/luffy_gear5.png",
-            Series = "One Piece Film Red",
-            Description = "โปสเตอร์ผ้าซาตินเนื้อนุ่มพรีเมียม สีสดคมชัด ไม่ยับง่าย ขนาดมาตรฐาน B2 ลายลูฟี่และแก๊งหมวกฟางจากภาพยนตร์ภาคยอดฮิต One Piece Film Red",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "One Piece Film Red" },
-                new { Label = "ขนาด", Value = "B2 (ประมาณ 51.5 x 72.8 ซม.)" },
-                new { Label = "วัสดุ", Value = "ผ้าซาตินพร้อมแกนแขวนพลาสติกและเชือก" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
-            }
-        },
-        new {
-            Id = 303,
-            Name = "แก้วมัคเซรามิก FriendHouse รุ่นลิมิเต็ด 2026",
-            Category = "ของสะสมแต้มสะสม",
-            Price = "850 แต้ม",
-            RawPrice = 850,
-            Status = "มีสินค้าพร้อมแลก",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/cloud_bear_plush.png",
-            Series = "FriendHouse Studio",
-            Description = "แก้วมัคเซรามิกผิวสัมผัสด้าน งานออกแบบพิเศษลายตุ๊กตาหมีเมฆ คลาวด์แบร์ คอลเลกชันฤดูหนาว 2026 ปลอดภัยทนความร้อน เข้าไมโครเวฟและเครื่องล้างจานได้",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "FriendHouse Studio" },
-                new { Label = "ความจุ", Value = "380 มล. (ประมาณ 13 ออนซ์)" },
-                new { Label = "วัสดุ", Value = "เซรามิกหนาพิเศษเกรดอาหาร" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
-            }
-        },
-        new {
-            Id = 304,
-            Name = "มินิฟิกเกอร์ เนซึโกะ กล่องไม้ ลิมิเต็ด",
-            Category = "ของสะสมแต้มสะสม",
-            Price = "1,800 แต้ม",
-            RawPrice = 1800,
-            Status = "มีสินค้าพร้อมแลก",
-            EstimatedArrival = "มีสินค้าพร้อมส่งมอบ",
-            ImageUrl = "~/media/images/nezuko_kamado.png",
-            Series = "Demon Slayer",
-            Description = "มินิฟิกเกอร์ เนซึโกะ คามาโดะ โผล่ออกมาจากกล่องไม้สะพายหลัง งานปั้นน่ารักลงสีประณีต ขนาดกะทัดรัดเหมาะสำหรับตั้งโชว์บนโต๊ะทำงานหรือตู้สะสม",
-            Specs = new[] {
-                new { Label = "ซีรีส์", Value = "Demon Slayer" },
-                new { Label = "ขนาด", Value = "สูงประมาณ 9 ซม." },
-                new { Label = "วัสดุ", Value = "PVC + ABS" },
-                new { Label = "สถานะ", Value = "มีสินค้าพร้อมแลกรับที่หน้าร้าน" }
-            }
-        }
+    // การกำหนดค่าข้อความ สื่อ รูปภาพ และปุ่มกดไว้ที่ส่วนบนสุดของไฟล์ตามกฎ AGENTS.md
+    var pageConfig = new
+    {
+        BreadcrumbHome = "หน้าแรก",
+        BreadcrumbCollection = "สินค้าทั้งหมด",
+        FallbackImage = "~/media/images/naruto_hero_fig.png",
+        AddCartText = "เพิ่มลงตะกร้า",
+        BuyNowText = "ซื้อเลย",
+        OutOfStockText = "สินค้าหมดชั่วคราว",
+        RelatedTitle = "สินค้าแนะนำเพิ่มเติม",
+        ViewAllText = "ดูทั้งหมด",
+        PriceLabel = "ราคา"
     };
 
-    // Determine active product based on route parameter or query string
-    var routeId = ViewContext.RouteData.Values["id"]?.ToString();
-    var queryId = Context.Request.Query["id"].ToString();
-    var rawId = !string.IsNullOrEmpty(routeId) ? routeId : queryId;
-
-    int currentId = 1;
-    if (int.TryParse(rawId, out int parsedId))
-    {
-        currentId = parsedId;
-    }
-
-    var fallbackCatalogProduct = catalog.FirstOrDefault(p => p.Id == currentId)
-                  ?? (currentId == 201 ? catalog.FirstOrDefault(p => p.Id == 6) : null)
-                  ?? (currentId == 202 ? catalog.FirstOrDefault(p => p.Id == 2) : null)
-                  ?? (currentId == 203 ? catalog.FirstOrDefault(p => p.Id == 3) : null)
-                  ?? (currentId == 204 ? catalog.FirstOrDefault(p => p.Id == 4) : null)
-                  ?? (currentId == 205 ? catalog.FirstOrDefault(p => p.Id == 7) : null)
-                  ?? (currentId == 206 ? catalog.FirstOrDefault(p => p.Id == 9) : null)
-                  ?? (currentId == 207 ? catalog.FirstOrDefault(p => p.Id == 8) : null)
-                  ?? (currentId == 208 ? catalog.FirstOrDefault(p => p.Id == 5) : null)
-                  ?? (currentId == 209 ? catalog.FirstOrDefault(p => p.Id == 1) : null)
-                  ?? catalog[0];
-
-    var product = Model != null ? new {
-        Id = Model.ProductId,
-        Name = Model.Name,
-        Category = Model.CategoryName ?? "ฟิกเกอร์สเกล",
-        Price = Model.PriceFormatted,
-        RawPrice = (int)Model.RetailPrice,
-        Status = Model.InStock ? "มีสินค้า" : "เปิดสั่งจองล่วงหน้า",
-        EstimatedArrival = !string.IsNullOrEmpty(Model.ExpectedArrival) ? Model.ExpectedArrival : "มีสินค้าพร้อมส่งมอบ",
-        ImageUrl = !string.IsNullOrEmpty(Model.ImageUrl) ? Model.ImageUrl : fallbackCatalogProduct.ImageUrl,
-        Series = !string.IsNullOrEmpty(Model.SeriesName) ? Model.SeriesName : (Model.CategoryName ?? "คอลเลกชัน FriendHouse"),
-        Description = !string.IsNullOrEmpty(Model.Description) ? Model.Description : fallbackCatalogProduct.Description,
-        Specs = new[] {
-            new { Label = "หมวดหมู่", Value = Model.CategoryName ?? "ฟิกเกอร์สเกล" },
-            new { Label = "ซีรีส์", Value = Model.SeriesName ?? "FriendHouse ลิขสิทธิ์แท้" },
-            new { Label = "ผู้ผลิต", Value = Model.BrandName ?? "ผู้ผลิตลิขสิทธิ์แท้" },
-            new { Label = "สเกล", Value = Model.Scale ?? "มาตรฐาน" },
-            new { Label = "วัสดุ", Value = Model.Material ?? "PVC + ABS เกรดพรีเมียม" },
-            new { Label = "สถานะ", Value = Model.InStock ? "มีสินค้าพร้อมส่งมอบหน้าร้าน" : "เปิดรับสั่งจองพรีออเดอร์" }
-        }
-    } : fallbackCatalogProduct;
-
-    bool isRewardItem = (product.Id >= 301 && product.Id <= 304) || product.Price.Contains("แต้ม");
-    int availableStock = Model != null 
-        ? Model.AvailableStock
-        : 10;
-    bool isOutOfStock = !isRewardItem && availableStock <= 0;
-
-    var notice = isRewardItem 
-        ? "การแลกของรางวัล FriendHouse: ใช้คะแนนสะสมของท่านเพื่อแลกรับสินค้าสุดพิเศษที่หน้าร้าน FriendHouse สยามสแควร์ โดยไม่ต้องชำระเงินออนไลน์"
-        : "สั่งจองคืออะไร? เป็นการจองสิทธิ์ล่วงหน้าสำหรับสินค้าที่หน้าร้าน ไม่มีการชำระเงินหรือจัดส่งออนไลน์ — เมื่อสินค้าพร้อมรับ ทางร้านจะให้มาชำระเงินและรับสินค้าที่หน้าร้านเท่านั้น ภายในระยะเวลาที่กำหนด";
+    // ตรวจสอบว่าสินค้านี้มีไฟล์โมเดล 3 มิติ (.glb) พร้อมสำหรับแสดงผลหรือไม่
+    bool hasModel3D = !string.IsNullOrWhiteSpace(Model.Model3DPath);
+    // ตรวจสอบสถานะสต็อกสินค้าคงเหลือว่าหมดแล้วหรือไม่
+    bool isOutOfStock = Model.AvailableStock <= 0;
+    // กำหนดจำนวนสั่งซื้อสูงสุดไม่เกินจำนวนสินค้าคงเหลือในคลัง
+    int maxOrderQty = Math.Max(1, Model.AvailableStock);
+    // กำหนดพาธรูปภาพหลักของสินค้า หากไม่มีให้ใช้รูปภาพสำรองตามคอนฟิก
+    string displayImage = !string.IsNullOrWhiteSpace(Model.ImageUrl) ? Model.ImageUrl : pageConfig.FallbackImage;
+    // ข้อความแสดงสถานะบนป้ายกำกับสต็อก
+    string statusBadgeText = isOutOfStock
+        ? pageConfig.OutOfStockText
+        : $"มีสินค้าพร้อมส่ง ({Model.AvailableStock} ชิ้น)";
+    // คลาสสีของป้ายกำกับสถานะสต็อกสินค้า
+    string statusBadgeClass = isOutOfStock
+        ? "bg-rose-100 text-rose-800"
+        : "bg-emerald-100 text-emerald-800";
+    // ข้อความแจ้งเตือนเงื่อนไขการรับสินค้าและชำระเงินที่หน้าร้าน
+    string notice = isOutOfStock
+        ? "สินค้าชิ้นนี้หมดชั่วคราว กรุณาตรวจสอบอีกครั้งเมื่อสินค้าเข้าสาขา"
+        : $"มีสินค้าพร้อมส่งมอบหน้าร้าน ({Model.AvailableStock} ชิ้น) กดซื้อหรือใส่ตะกร้าเพื่อเลือกวันนัดรับที่สาขาสยามสแควร์";
 }
 
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-8 space-y-8 bg-white">
-    <!-- Breadcrumb Navigation -->
+@* กรอบคอนเทนเนอร์หลักของหน้ารายละเอียดสินค้า *@
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-10 space-y-8 bg-white">
+    @* แถบนำทางแสดงเส้นทาง Breadcrumb เพื่อให้ผู้ใช้ย้อนกลับหน้าก่อนหน้าได้สะดวก *@
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
-        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
+        @* ลิงก์ย้อนกลับไปยังหน้าแรก *@
+        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">@pageConfig.BreadcrumbHome</a>
+        @* สัญลักษณ์คั่นเส้นทาง *@
         <span>/</span>
-        @if (isRewardItem)
-        {
-            <a asp-controller="Home" asp-action="Rewards" class="hover:text-primary transition-colors">แคตตาล็อกแลกแต้มสะสม</a>
-        }
-        else
-        {
-            <a asp-controller="Home" asp-action="Collection" class="hover:text-primary transition-colors">สินค้าทั้งหมด</a>
-        }
+        @* ลิงก์ย้อนกลับไปยังหน้ารวมคอลเลกชันสินค้าทั้งหมด *@
+        <a asp-controller="Home" asp-action="Collection" class="hover:text-primary transition-colors">@pageConfig.BreadcrumbCollection</a>
+        @* สัญลักษณ์คั่นเส้นทาง *@
         <span>/</span>
-        <span class="text-text font-semibold truncate">@product.Name</span>
+        @* ชื่อสินค้าปัจจุบันที่กำลังเปิดดู *@
+        <span class="text-text font-semibold truncate">@Model.Name</span>
     </nav>
 
+    @* กล่องข้อความแจ้งเตือนเมื่อการทำรายการสำเร็จ เช่น เพิ่มสินค้าลงตะกร้าเรียบร้อย *@
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+        @* การ์ดสีเขียวแสดงผลข้อความความสำเร็จพร้อมไอคอนเครื่องหมายถูก *@
+        <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
+            @* ไอคอนเครื่องหมายถูกแบบ SVG *@
             <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            @* ข้อความแจ้งความสำเร็จจากระบบ *@
             <span>@TempData["SuccessMessage"]</span>
         </div>
     }
 
+    @* กล่องข้อความแจ้งเตือนเมื่อเกิดข้อผิดพลาดในการทำรายการ *@
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+        @* การ์ดสีแดงแสดงผลข้อผิดพลาดพร้อมไอคอนเครื่องหมายตกใจ *@
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+            @* ไอคอนเครื่องหมายแจ้งเตือนข้อผิดพลาดแบบ SVG *@
             <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            @* ข้อความแจ้งข้อผิดพลาดจากระบบ *@
             <span>@TempData["ErrorMessage"]</span>
         </div>
     }
 
-    <!-- Main Product Layout Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-stretch">
-        <!-- Left: Product Media Gallery (Edge-to-edge, full cover image stretching to match right column height) -->
-        <div class="lg:col-span-6 flex flex-col h-full">
-            <div class="relative aspect-square sm:aspect-4/3 lg:aspect-auto w-full h-full min-h-[260px] sm:min-h-[400px] lg:min-h-0 flex-1 rounded-3xl border border-slate-200/80 bg-slate-100 overflow-hidden shadow-xs">
-                <!-- Status Badge -->
-                @if (isOutOfStock)
+    @* โครงสร้างสองคอลัมน์หลัก: ด้านซ้ายแสดงสื่อรูปภาพ/โมเดล 3D และด้านขวาแสดงข้อมูลสินค้า *@
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        @* คอลัมน์ด้านซ้าย: กรอบแสดงสื่อรูปภาพสินค้าและโมเดล 3 มิติ *@
+        <div class="lg:col-span-6">
+            @* กรอบรูปภาพขอบมนสีขาวพร้อมเส้นขอบสวยงาม *@
+            <div class="relative w-full rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                @* กรณีสินค้ามีไฟล์โมเดล 3 มิติ แสดงตัวแสดงโมเดล 3D พร้อมปุ่มสลับมุมมองรูปภาพ *@
+                @if (hasModel3D)
                 {
-                    <div class="absolute top-4 left-4 z-10 rounded-full bg-rose-100 px-3.5 py-1 text-xs font-bold text-rose-700 shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
-                        <span class="size-2 rounded-full bg-rose-500"></span>
-                        <span>สินค้าหมดชั่วคราว</span>
-                    </div>
+                    @* ปุ่มกดสลับมุมมองระหว่างรูปภาพสินค้าปกติและโมเดล 3 มิติ *@
+                    <button type="button" onclick="toggleProductMediaMode()" id="btnToggle3DView"
+                            class="absolute top-3.5 right-3.5 z-20 rounded-full border border-slate-200 bg-white/95 px-3.5 py-1.5 text-xs font-bold text-[#2F39A9] shadow-xs hover:border-[#2F39A9] transition cursor-pointer">
+                        <span id="btnToggle3DLabel">ดูรูปภาพสินค้า</span>
+                    </button>
+                    @* องค์ประกอบเว็บคอมโพเนนต์ model-viewer สำหรับเรนเดอร์โมเดล 3 มิติแบบหมุนได้ *@
+                    <model-viewer id="detailModelViewer"
+                                  src="@Url.Content(Model.Model3DPath!)"
+                                  alt="โมเดล 3 มิติ @Model.Name"
+                                  camera-controls
+                                  auto-rotate
+                                  auto-rotate-delay="600"
+                                  shadow-intensity="1"
+                                  class="w-full h-[360px] sm:h-[440px] lg:h-[500px] bg-white">
+                    </model-viewer>
+                    @* รูปภาพสินค้าปกติ ซ่อนไว้เป็นค่าเริ่มต้นเมื่อมีโมเดล 3D *@
+                    <img id="detailProductImage" src="@Url.Content(displayImage)" alt="@Model.Name"
+                         class="hidden block w-full h-auto" />
                 }
                 else
                 {
-                    <div class="absolute top-4 left-4 z-10 rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-700 shadow-xs flex items-center gap-1.5 backdrop-blur-xs">
-                        <span class="size-2 rounded-full bg-emerald-500"></span>
-                        <span>@product.Status</span>
-                    </div>
+                    @* กรณีไม่มีโมเดล 3 มิติ แสดงรูปภาพสินค้าปกติโดยตรง *@
+                    <img id="detailProductImage" src="@Url.Content(displayImage)" alt="@Model.Name"
+                         class="block w-full h-auto" />
                 }
-
-                <!-- Full Edge-to-Edge Image -->
-                <img src="@Url.Content(product.ImageUrl)" alt="@product.Name"
-                     class="size-full object-cover object-center" />
             </div>
         </div>
 
-        <!-- Right: Product Information & Pre-order Action -->
+        @* คอลัมน์ด้านขวา: ข้อมูลรายละเอียดสินค้า สเปก และแบบฟอร์มการสั่งซื้อ *@
         <div class="lg:col-span-6 space-y-6">
-            <div>
-                <span class="text-xs font-semibold text-primary uppercase tracking-wide">@product.Series • @product.Category</span>
-                <h1 class="mt-1 text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@product.Name</h1>
-                <div class="mt-3 text-3xl font-extrabold text-primary">@product.Price</div>
+            @* กลุ่มข้อความส่วนหัว: ป้ายสถานะ ซีรีส์ ชื่อสินค้า รหัส และราคา *@
+            <div class="space-y-2">
+                @* แถวป้ายสถานะสินค้าและหมวดหมู่/ซีรีส์ *@
+                <div class="flex flex-wrap items-center gap-2">
+                    @* ป้ายกำกับสถานะสต็อกสินค้า เช่น มีสินค้าพร้อมส่ง หรือ สินค้าหมด *@
+                    <span class="rounded-md @statusBadgeClass px-2.5 py-1 text-xs font-bold">
+                        @statusBadgeText
+                    </span>
+                    @* ป้ายกำกับชื่อซีรีส์และหมวดหมู่สินค้า *@
+                    <span class="text-xs font-semibold text-primary uppercase tracking-wide">
+                        @(string.IsNullOrWhiteSpace(Model.SeriesName) ? Model.CategoryName : Model.SeriesName) • @Model.CategoryName
+                    </span>
+                </div>
+                @* หัวข้อชื่อสินค้าฟิกเกอร์ขนาดใหญ่ *@
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">@Model.Name</h1>
+                @* แสดงรหัสสินค้าประจำชิ้น SKU *@
+                <div class="text-xs text-slate-400">รหัสสินค้า: <span class="font-mono font-semibold text-slate-600">@Model.Sku</span></div>
+                @* แสดงราคาขายปลีกจัดรูปแบบเงินบาทไทย *@
+                <div class="pt-1 text-3xl font-extrabold text-primary">@Model.PriceFormatted</div>
             </div>
 
-            <!-- Description -->
+            @* ย่อหน้าคำอธิบายรายละเอียดสินค้าอย่างครบถ้วน *@
             <p class="text-sm sm:text-base leading-relaxed text-slate-600">
-                @product.Description
+                @Model.Description
             </p>
 
-            <!-- Specs Table -->
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-4 space-y-3 shadow-xs">
-                @foreach (var spec in product.Specs)
+            @* ตารางข้อมูลจำเพาะเชิงเทคนิคของฟิกเกอร์ (Specs Table) *@
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 space-y-2.5">
+                @* วนลูปแสดงข้อมูลจำเพาะแต่ละรายการจาก ViewModel *@
+                @foreach (var spec in Model.Specs)
                 {
-                    <div class="flex items-center justify-between text-xs sm:text-sm py-1 border-b border-slate-100 last:border-0">
-                        <span class="font-medium text-slate-400">@spec.Label</span>
+                    @* แถวข้อมูลจำเพาะคู่คีย์-ค่า *@
+                    <div class="flex items-center justify-between text-xs sm:text-sm py-1.5 border-b border-slate-100 last:border-0">
+                        @* ชื่อคุณสมบัติ เช่น หมวดหมู่ ซีรีส์ ผู้ผลิต สเกล หรือวัสดุ *@
+                        <span class="font-medium text-slate-500">@spec.Key</span>
+                        @* ค่าของคุณสมบัติที่ระบุ *@
                         <span class="font-semibold text-text">@spec.Value</span>
+                    </div>
+                }
+                @* กรณีมีการระบุความสูงของโมเดลเป็นเซนติเมตร *@
+                @if (Model.HeightCm.HasValue)
+                {
+                    @* แถวแสดงความสูงโดยประมาณของฟิกเกอร์ *@
+                    <div class="flex items-center justify-between text-xs sm:text-sm py-1.5 border-t border-slate-100">
+                        <span class="font-medium text-slate-500">ความสูงโดยประมาณ</span>
+                        <span class="font-semibold text-text">@Model.HeightCm.Value.ToString("0.#") ซม.</span>
                     </div>
                 }
             </div>
 
-            <!-- ปุ่มดำเนินการ: พรีออเดอร์สินค้านี้ หรือ แลกของรางวัลนี้ -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2">
+            @* ส่วนเลือกจำนวนสินค้าและปุ่มสั่งซื้อ / เพิ่มลงตะกร้า *@
+            <div class="pt-1 space-y-3">
+                @* กรณีสินค้าหมดสต็อก แสดงปุ่มแจ้งเตือนและลิงก์กลับหน้ารวมสินค้า *@
                 @if (isOutOfStock)
                 {
-                    <button type="button" disabled
-                            class="flex-1 w-full sm:w-auto rounded-xl bg-slate-200 px-6 py-3.5 text-center text-sm font-bold text-slate-500 cursor-not-allowed shadow-none">
-                        สินค้าหมดชั่วคราว
-                    </button>
-                    <button type="button" disabled
-                            class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-slate-100 px-5 py-3.5 text-sm font-semibold text-slate-400 cursor-not-allowed">
-                        เพิ่มลงตะกร้า
-                    </button>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        @* ปุ่มปิดการใช้งานแจ้งสินค้าหมด *@
+                        <button type="button" disabled
+                                class="flex-1 rounded-xl bg-slate-200 px-6 py-3.5 text-center text-sm font-bold text-slate-500 cursor-not-allowed">
+                            @pageConfig.OutOfStockText
+                        </button>
+                        @* ลิงก์กลับไปยังหน้าคอลเลกชันรวมสินค้าทั้งหมด *@
+                        <a asp-controller="Home" asp-action="Collection"
+                           class="rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-center text-sm font-semibold text-text hover:bg-slate-50 transition-colors">
+                            กลับไปหน้ารวมสินค้า
+                        </a>
+                    </div>
                 }
                 else
                 {
-                    @if (isRewardItem)
-                    {
-                        <!-- Open Redeem Modal Button -->
-                        <button type="button" id="btn-open-preorder-modal"
-                                class="flex-1 w-full sm:w-auto rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
-                            แลกของรางวัลนี้
-                        </button>
+                    @* แถบเลือกจำนวนชิ้นที่ต้องการสั่งซื้อ พร้อมปุ่มบวกและลบจำนวน *@
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-2.5">
+                        @* ป้ายบอกจำนวนสต็อกพร้อมส่งมอบ *@
+                        <span class="text-xs font-bold text-slate-700">จำนวนที่ต้องการ (คงเหลือ @Model.AvailableStock ชิ้น)</span>
+                        @* ตัวควบคุมการปรับเพิ่มลดจำนวนชิ้น *@
+                        <div class="inline-flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden">
+                            @* ปุ่มกดลดจำนวนสินค้า *@
+                            <button type="button" onclick="adjustDetailQty(-1, @maxOrderQty)" class="px-3 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" aria-label="ลดจำนวน">-</button>
+                            @* ช่องกรอกตัวเลขจำนวนชิ้นที่ต้องการสั่งซื้อ *@
+                            <input type="number" id="detailQtyPicker" value="1" min="1" max="@maxOrderQty" onchange="syncDetailQty(this.value, @maxOrderQty)"
+                                   class="w-12 text-center text-sm font-bold text-text focus:outline-none" aria-label="จำนวนสินค้า" />
+                            @* ปุ่มกดเพิ่มจำนวนสินค้า *@
+                            <button type="button" onclick="adjustDetailQty(1, @maxOrderQty)" class="px-3 py-1.5 text-sm font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" aria-label="เพิ่มจำนวน">+</button>
+                        </div>
+                    </div>
 
-                        <!-- Back to Rewards Link -->
-                        <a asp-controller="Home" asp-action="Rewards"
-                           class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
-                            ดูของรางวัลอื่น
-                        </a>
-                    }
-                    else
-                    {
-                        @* ฟอร์มกด "ซื้อตอนนี้" เพิ่มลงตะกร้าแล้วพาไปหน้าตะกร้าทันทีเพื่อเลือกวันรับและเบอร์โทร *@
+                    @* กลุ่มปุ่มกดสั่งซื้อ "ซื้อเลย" และ "เพิ่มลงตะกร้า" โดยไม่ใส่ method attribute ตามกฎโครงการ *@
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        @* แบบฟอร์มสั่งซื้อทันทีเพื่อนำทางไปยังหน้าตะกร้าสินค้า (goToCart=true) *@
                         <form asp-controller="Home" asp-action="AddToCart" class="flex-1 w-full sm:w-auto">
-                            <input type="hidden" name="productId" value="@product.Id" />
-                            <input type="hidden" name="quantity" value="1" />
+                            <input type="hidden" name="productId" value="@Model.ProductId" />
+                            <input type="hidden" name="quantity" id="buyNowQtyInput" value="1" />
                             <input type="hidden" name="goToCart" value="true" />
+                            @* ปุ่มสั่งซื้อทันที "ซื้อเลย" สี Accent ตามชุดสีหลักของโครงการ *@
                             <button type="submit"
-                                    class="w-full rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-accent/25 transition-all hover:bg-accent/90 hover:-translate-y-0.5 cursor-pointer">
-                                ซื้อตอนนี้
+                                    class="w-full rounded-xl bg-accent px-6 py-3.5 text-center text-sm font-bold text-white transition-opacity hover:opacity-90 cursor-pointer">
+                                @pageConfig.BuyNowText
                             </button>
                         </form>
 
-                        @* ฟอร์มส่งข้อมูลเพิ่มสินค้าลงตะกร้าแล้วอยู่หน้าเดิม ไปยัง HomeController แอ็กชัน AddToCart *@
+                        @* แบบฟอร์มเพิ่มสินค้าลงตะกร้าแล้วคงอยู่หน้าเดิม (ส่งค่า returnUrl) *@
                         <form asp-controller="Home" asp-action="AddToCart" class="w-full sm:w-auto">
-                            @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
-                            <input type="hidden" name="productId" value="@product.Id" />
-                            @* ตัวแปรซ่อนกำหนดจำนวนสินค้าเริ่มต้นเป็น 1 ชิ้น *@
-                            <input type="hidden" name="quantity" value="1" />
-                            @* ตัวแปรซ่อนให้กลับมายังหน้ารายละเอียดสินค้าเดิม *@
+                            <input type="hidden" name="productId" value="@Model.ProductId" />
+                            <input type="hidden" name="quantity" id="addCartQtyInput" value="1" />
                             <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
-                            @* ปุ่มกดยืนยันเพิ่มสินค้าลงในตะกร้า *@
+                            @* ปุ่มกดเพิ่มสินค้าลงตะกร้า *@
                             <button type="submit"
-                               class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text shadow-xs transition-colors hover:bg-slate-50 cursor-pointer">
-                                เพิ่มลงตะกร้า
+                                    class="w-full sm:w-auto text-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-semibold text-text transition-colors hover:bg-slate-50 cursor-pointer">
+                                @pageConfig.AddCartText
                             </button>
                         </form>
-                    }
+                    </div>
                 }
             </div>
 
-            <!-- Pre-order / Reward Explanation Notice -->
-            <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3.5 items-start">
+            @* กล่องข้อความแจ้งเตือนเงื่อนไขการรับสินค้าและชำระเงินที่หน้าร้านสยามสแควร์ *@
+            <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3 items-start">
+                @* กรอบไอคอนข้อมูลสีน้ำเงิน *@
                 <div class="flex size-6 shrink-0 items-center justify-center rounded-lg bg-primary text-white mt-0.5">
+                    @* ไอคอนข้อมูลแบบ SVG *@
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
                 </div>
-                <p class="text-xs sm:text-sm leading-relaxed text-slate-600">
-                    @notice
-                </p>
+                @* ข้อความรายละเอียดเงื่อนไขการรับและชำระเงิน *@
+                <p class="text-xs sm:text-sm leading-relaxed text-slate-600">@notice</p>
             </div>
         </div>
     </div>
-</div>
 
-<!-- PRE-ORDER / REDEEM CONFIRMATION MODAL -->
-<div id="preorder-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs transition-opacity" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-8 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-        <!-- Modal Header -->
-        <div>
-            <h2 id="modal-title" class="text-xl sm:text-2xl font-extrabold text-text">
-                @(isRewardItem ? "ยืนยันการแลกของรางวัล" : "บันทึกสิทธิ์จองสินค้า")
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                @(isRewardItem ? "ใช้แต้มสะสมและรับสินค้าตัวจริงที่หน้าร้าน FriendHouse สยามสแควร์" : "ชำระเงินและรับสินค้าตัวจริงที่หน้าร้าน FriendHouse สยามสแควร์")
-            </p>
-        </div>
+    @* ส่วนแสดงสินค้าแนะนำเพิ่มเติม (Related Products) แสดงสูงสุด 5 รายการในกริด 5 คอลัมน์บนหน้าจอเดสก์ท็อป *@
+    @if (Model.RelatedProducts != null && Model.RelatedProducts.Any())
+    {
+        @* คอนเทนเนอร์ส่วนสินค้าแนะนำเพิ่มเติมพร้อมเส้นคั่นด้านบน *@
+        <div class="pt-8 border-t border-slate-100 space-y-5">
+            @* แถบหัวข้อส่วนสินค้าแนะนำเพิ่มเติมและลิงก์ดูสินค้าทั้งหมด *@
+            <div class="flex items-center justify-between">
+                <div>
+                    @* หัวข้อ "สินค้าแนะนำเพิ่มเติม" *@
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-text tracking-tight">@pageConfig.RelatedTitle</h2>
+                    @* คำอธิบายการจัดอันดับสินค้าแนะนำตามซีรีส์และหมวดหมู่ *@
+                    <p class="text-xs sm:text-sm text-slate-400 mt-0.5">สินค้าในซีรีส์เดียวกันและหมวดหมู่ยอดนิยมที่มีสินค้าพร้อมส่ง</p>
+                </div>
+                @* ลิงก์นำทางไปยังหน้ารวมคอลเลกชันสินค้าทั้งหมด "ดูทั้งหมด" *@
+                <a asp-controller="Home" asp-action="Collection"
+                   class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:text-accent transition-colors">
+                    <span>@pageConfig.ViewAllText</span>
+                    @* ไอคอนลูกศรชี้ขวาแบบ SVG *@
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
 
-        <!-- Order Summary Card -->
-        <div class="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-slate-50 p-4">
-            <img src="@Url.Content(product.ImageUrl)" alt="@product.Name" class="size-16 rounded-xl object-cover border border-slate-200 shrink-0" />
-            <div class="min-w-0 flex-1">
-                <h4 class="text-sm font-bold text-text truncate">@product.Name</h4>
-                <div class="text-xs text-slate-400 mt-0.5">จำนวน: 1 ชิ้น</div>
-                <div class="text-sm font-extrabold text-primary mt-1">@product.Price</div>
+            @* กริดแสดงการ์ดสินค้าแนะนำ 5 คอลัมน์บนเดสก์ท็อป และ 1-3 คอลัมน์บนจอมือถือ/แท็บเล็ตตามข้อกำหนด R1 *@
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                @* วนลูปแสดงการ์ดสินค้าแนะนำแต่ละรายการจาก RelatedProducts *@
+                @foreach (var item in Model.RelatedProducts)
+                {
+                    @* การ์ดสินค้าฟิกเกอร์สไตล์เดียวกับหน้าแรกและหน้าคอลเลกชัน *@
+                    <div class="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors hover:border-primary/40">
+                        <div>
+                            @* ลิงก์ครอบรูปภาพสินค้าสัดส่วน 1:1 เชื่อมโยงไปยังหน้ารายละเอียดสินค้า *@
+                            <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.ProductId"
+                               class="block aspect-square w-full bg-white border-b border-slate-100 overflow-hidden">
+                                @* รูปภาพสินค้า 1:1 ขนาดเต็มช่องพร้อม object-cover และ object-top *@
+                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(!string.IsNullOrEmpty(item.ImageUrl) ? item.ImageUrl : pageConfig.FallbackImage))"
+                                     alt="@item.Name" class="size-full object-cover object-top" loading="lazy" />
+                            </a>
+
+                            @* กล่องข้อมูลข้อความในการ์ดสินค้า *@
+                            <div class="px-3.5 pt-3 space-y-1.5">
+                                @* แถวป้ายสถานะสต็อกสินค้าและสเกลโมเดล *@
+                                <div class="flex items-center justify-between gap-1.5">
+                                    @* ป้ายสถานะสต็อก เช่น มีสินค้าพร้อมส่ง หรือ สินค้าหมด *@
+                                    <span class="rounded-md @item.BadgeClass px-2 py-0.5 text-[10px] font-bold">
+                                        @item.StatusText
+                                    </span>
+                                    @* แสดงอัตราส่วนสเกลของโมเดล *@
+                                    <span class="text-[10px] text-slate-400 shrink-0 truncate">@item.Scale</span>
+                                </div>
+                                @* แสดงชื่อซีรีส์หรือหมวดหมู่สินค้า *@
+                                <div class="text-[10px] font-bold text-primary uppercase tracking-wide truncate">
+                                    @(string.IsNullOrEmpty(item.SeriesName) ? item.CategoryName : item.SeriesName)
+                                </div>
+                                @* ลิงก์ชื่อสินค้าฟิกเกอร์ เชื่อมโยงไปยังหน้ารายละเอียดสินค้า *@
+                                <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.ProductId" class="block">
+                                    <h3 class="text-xs font-bold text-text leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                                        @item.Name
+                                    </h3>
+                                </a>
+                            </div>
+                        </div>
+
+                        @* ส่วนท้ายการ์ด: แสดงราคา และปุ่มหยิบใส่ตะกร้า / ซื้อเลย *@
+                        <div class="px-3.5 pb-3.5 mt-3 pt-2.5 border-t border-slate-100 space-y-2.5">
+                            @* แถวแสดงป้ายราคาและจำนวนเงินบาท *@
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-slate-400">@pageConfig.PriceLabel</span>
+                                <span class="text-base font-extrabold text-primary">@item.PriceFormatted</span>
+                            </div>
+
+                            @* ตรวจสอบว่าสินค้ามีสต็อกพร้อมสั่งซื้อหรือไม่ *@
+                            @if (item.InStock)
+                            {
+                                @* กริดสองช่องสำหรับปุ่ม "เพิ่มลงตะกร้า" และ "ซื้อเลย" *@
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    @* แบบฟอร์มเพิ่มสินค้าลงตะกร้าแล้วคงอยู่หน้าเดิม (ไม่ระบุ method attribute) *@
+                                    <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                        @* ปุ่มกดเพิ่มสินค้าลงตะกร้าพร้อมไอคอนตะกร้า SVG *@
+                                        <button type="submit"
+                                                class="w-full flex items-center justify-center gap-1 rounded-xl border border-primary/25 bg-primary/5 py-2 text-[11px] font-bold text-primary transition-colors hover:bg-primary/15 cursor-pointer">
+                                            @* ไอคอนรถเข็นสินค้าแบบ SVG *@
+                                            <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="9" cy="21" r="1"></circle>
+                                                <circle cx="20" cy="21" r="1"></circle>
+                                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                            </svg>
+                                            <span>@pageConfig.AddCartText</span>
+                                        </button>
+                                    </form>
+
+                                    @* แบบฟอร์มสั่งซื้อทันทีเพื่อนำทางไปยังหน้าตะกร้าสินค้า goToCart=true (ไม่ระบุ method attribute) *@
+                                    <form asp-controller="Home" asp-action="AddToCart" class="w-full">
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <input type="hidden" name="goToCart" value="true" />
+                                        @* ปุ่มกด "ซื้อเลย" สี Accent เพื่อเปิดหน้าตะกร้าทันที *@
+                                        <button type="submit"
+                                                class="w-full flex items-center justify-center rounded-xl bg-accent py-2 px-1 text-[11px] font-bold text-white transition-opacity hover:opacity-90 cursor-pointer text-center leading-tight">
+                                            @pageConfig.BuyNowText
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                @* กรณีสินค้าหมดสต็อก แสดงปุ่มดูรายละเอียดและป้ายสินค้าหมด *@
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    @* ลิงก์ไปหน้ารายละเอียดสินค้าเพื่อดูข้อมูล *@
+                                    <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.ProductId"
+                                       class="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-2 px-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                                        ดูรายละเอียด
+                                    </a>
+                                    @* ปุ่มแจ้งสินค้าหมดชั่วคราว *@
+                                    <button type="button" disabled
+                                            class="rounded-xl bg-slate-100 py-2 px-1 text-[11px] font-bold text-slate-400 cursor-not-allowed">
+                                        @pageConfig.OutOfStockText
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </div>
-
-        @* ฟอร์มส่งข้อมูลบันทึกสิทธิ์จองสินค้าหรือแลกของรางวัล ไปยัง HomeController แอ็กชัน DirectPreorder *@
-        <form asp-controller="Home" asp-action="DirectPreorder" class="space-y-4">
-            @* ตัวแปรซ่อนเก็บรหัสสินค้า productId *@
-            <input type="hidden" name="productId" value="@product.Id" />
-            @* ตัวแปรซ่อนกำหนดจำนวนสั่งจอง 1 ชิ้น *@
-            <input type="hidden" name="quantity" value="1" />
-            <div>
-                @* ป้ายกำกับช่องเลือกวันที่สะดวกเข้ารับสินค้า *@
-                <label for="pickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับสินค้าโดยประมาณ</label>
-                @* ช่องเลือกวันที่นัดรับสินค้าพร้อมป้องกันการเลือกวันย้อนหลังด้วย min วันที่ปัจจุบัน *@
-                <input type="date" id="pickupDate" name="pickupDate" required autocomplete="off" min="@DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)"
-                       class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
-            </div>
-
-            <div>
-                @* ป้ายกำกับช่องกรอกหมายเลขโทรศัพท์ *@
-                <label for="contactPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับรับ SMS แจ้งเตือนเมื่อสินค้าถึงร้าน</label>
-                @* ช่องกรอกหมายเลขโทรศัพท์สำหรับติดต่อและรับการแจ้งเตือน *@
-                <input type="tel" id="contactPhone" name="contactPhone" placeholder="08x-xxx-xxxx" required
-                       class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" />
-            </div>
-
-            <div class="pt-2 flex items-center justify-end gap-3">
-                @* ปุ่มกดยกเลิกและปิดหน้าต่าง Modal *@
-                <button type="button" id="btn-cancel-modal" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
-                    ยกเลิก
-                </button>
-                @* ปุ่มกดยืนยันการสั่งจองหรือยืนยันแลกของรางวัล *@
-                <button type="submit" class="rounded-xl bg-accent px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
-                    @(isRewardItem ? "ยืนยันการใช้แต้มแลก" : "ยืนยันการสั่งจอง")
-                </button>
-            </div>
-        </form>
-    </div>
+    }
 </div>
 
+@* ส่วนสคริปต์ JavaScript สำหรับจัดการการสลับมุมมองโมเดล 3D และตัวนับจำนวนชิ้น *@
 @section Scripts {
 <script>
+    // ดักฟังเหตุการณ์เมื่อเอกสาร DOM โหลดเสร็จสมบูรณ์เพื่อตั้งค่าการทำงานเริ่มต้น
+    // เมื่อโหลดหน้าเสร็จ ตรวจสอบสถานะการโหลดโมเดล 3D หากเกิดข้อผิดพลาดให้สลับกลับไปแสดงรูปภาพสินค้าอัตโนมัติ
     document.addEventListener('DOMContentLoaded', function () {
-        var modal = document.getElementById('preorder-modal');
-        var openBtn = document.getElementById('btn-open-preorder-modal');
-        var closeBtn = document.getElementById('btn-close-preorder-modal');
-        var cancelBtn = document.getElementById('btn-cancel-modal');
-
-        function openModal() {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+        // อ้างอิงอิลิเมนต์โมเดลวิวเวอร์ รูปภาพสินค้า และปุ่มสลับมุมมอง
+        var modelViewerEl = document.getElementById('detailModelViewer');
+        var productImgEl = document.getElementById('detailProductImage');
+        var toggleBtnEl = document.getElementById('btnToggle3DView');
+        // กรณีตัวแสดงผลโมเดล 3 มิติเกิดข้อผิดพลาดในการโหลดไฟล์ ให้สลับกลับมาแสดงรูปภาพปกติแทน
+        if (modelViewerEl) {
+            modelViewerEl.addEventListener('error', function () {
+                modelViewerEl.classList.add('hidden');
+                if (productImgEl) productImgEl.classList.remove('hidden');
+                if (toggleBtnEl) toggleBtnEl.classList.add('hidden');
+            });
         }
-
-        function closeModal() {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        if (openBtn) openBtn.addEventListener('click', openModal);
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-
-        window.addEventListener('click', function (e) {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
     });
+
+    // ฟังก์ชันสลับการแสดงผลระหว่างโมเดล 3 มิติ และรูปภาพสินค้า 2 มิติ
+    // สลับโหมดการแสดงผลระหว่างภาพสินค้าปกติกับโมเดล 3 มิติ พร้อมเปลี่ยนข้อความบนปุ่มสลับโหมด
+    function toggleProductMediaMode() {
+        // ดึงอิลิเมนต์โมเดลวิวเวอร์ รูปภาพสินค้า และป้ายข้อความบนปุ่มสลับ
+        var modelViewerEl = document.getElementById('detailModelViewer');
+        var productImgEl = document.getElementById('detailProductImage');
+        var labelEl = document.getElementById('btnToggle3DLabel');
+        if (!modelViewerEl || !productImgEl) return;
+
+        // ตรวจสอบว่าปัจจุบันกำลังแสดงโมเดล 3 มิติอยู่หรือไม่
+        // ตรวจสอบสถานะปัจจุบันของหน้าต่างโมเดล 3D เพื่อสลับซ่อน/แสดงผล
+        var showing3D = !modelViewerEl.classList.contains('hidden');
+        if (showing3D) {
+            // ซ่อนโมเดล 3D และแสดงรูปภาพสินค้าปกติแทน
+            modelViewerEl.classList.add('hidden');
+            productImgEl.classList.remove('hidden');
+            if (labelEl) labelEl.textContent = 'ดูโมเดล 3D';
+        } else {
+            // ซ่อนรูปภาพสินค้าและแสดงโมเดล 3D แทน
+            productImgEl.classList.add('hidden');
+            modelViewerEl.classList.remove('hidden');
+            if (labelEl) labelEl.textContent = 'ดูรูปภาพสินค้า';
+        }
+    }
+
+    // ฟังก์ชันซิงค์ค่าจำนวนสินค้าในกล่องข้อความและแบบฟอร์มสั่งซื้อทั้งสอง
+    // ปรับและซิงค์จำนวนสินค้าที่เลือกไปยังช่อง input ซ่อนของฟอร์มสั่งซื้อทันทีและเพิ่มลงตะกร้า
+    function syncDetailQty(val, maxQty) {
+        // แปลงค่าสตริงเป็นตัวเลขจำนวนเต็ม
+        var parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed < 1) parsed = 1;
+        var limit = parseInt(maxQty, 10);
+        if (!isNaN(limit) && limit > 0 && parsed > limit) parsed = limit;
+
+        // อัปเดตค่าตัวเลขลงในอินพุตของตัวเลือกจำนวนและแบบฟอร์มสั่งซื้อทั้งสอง
+        // อัปเดตค่าจำนวนล่าสุดให้ตรงกันทุกองค์ประกอบฟอร์ม
+        var picker = document.getElementById('detailQtyPicker');
+        var buyNowInput = document.getElementById('buyNowQtyInput');
+        var addCartInput = document.getElementById('addCartQtyInput');
+        if (picker) picker.value = parsed;
+        if (buyNowInput) buyNowInput.value = parsed;
+        if (addCartInput) addCartInput.value = parsed;
+    }
+
+    // ฟังก์ชันปรับเพิ่มหรือลดจำนวนสินค้าตามค่า delta (+1 หรือ -1)
+    // เพิ่มหรือลดจำนวนสินค้าเมื่อกดปุ่ม + หรือ - แล้วส่งต่อให้ฟังก์ชันซิงค์ค่า
+    function adjustDetailQty(delta, maxQty) {
+        // ดึงค่าจำนวนปัจจุบันจากกล่องข้อความ
+        var picker = document.getElementById('detailQtyPicker');
+        var current = picker ? parseInt(picker.value, 10) : 1;
+        if (isNaN(current)) current = 1;
+        // เรียกใช้ฟังก์ชันซิงค์ค่าด้วยจำนวนที่คำนวณใหม่
+        syncDetailQty(current + delta, maxQty);
+    }
 </script>
 }

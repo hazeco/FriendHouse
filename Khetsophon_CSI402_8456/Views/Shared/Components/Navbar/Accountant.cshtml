@@ -2,8 +2,8 @@
     var brand = new {
         LogoUrl = "~/logo/logo.png",
         Name = "FriendHouse",
-        UserName = "ปวีณา รักษ์บัญชี",
-        UserRole = "คนทำบัญชี"
+        UserName = ViewBag.RoleUserName as string ?? "ฝ่ายบัญชี",
+        UserRole = "พนักงานบัญชี"
     };
 
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -17,32 +17,45 @@
     }
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="bg-[#2F39A9] text-white">
+    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         <!-- Brand (frame_9_23.png) -->
         <a asp-controller="Accountant" asp-action="Index" class="flex items-center gap-3 shrink-0 cursor-pointer">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
+                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                 <img src="@Url.Content(brand.LogoUrl)" alt="@brand.Name" class="size-full object-cover" onerror="this.outerHTML='<span class=\'text-[#2F39A9] font-black text-xs\'>FH</span>'" />
             </div>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
         <!-- Center Nav Items (frame_9_23.png: แดชบอร์ดการเงิน, บันทึกรายรับ-รายจ่าย, ประวัติใบเสร็จ) -->
         <nav class="hidden md:flex items-center gap-2">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Accountant" asp-action="Index" class="@NavClass("Index")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>แดชบอร์ดการเงิน</span>
             </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Accountant" asp-action="Ledger" class="@NavClass("Ledger")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>บันทึกรายรับ-รายจ่าย</span>
             </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Accountant" asp-action="Receipts" class="@NavClass("Receipts")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>ประวัติใบเสร็จ</span>
             </a>
         </nav>
 
         <!-- Right User (frame_9_23.png: ปวีณา รักษ์บัญชี / คนทำบัญชี) -->
         <div class="flex items-center gap-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-full bg-[#BAF2FF] text-[#2F39A9] flex items-center justify-center shadow-xs">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -51,8 +64,11 @@
                     <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="hidden sm:block text-left">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-xs font-bold leading-tight text-white">@brand.UserName</div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-[10px] text-white/70 leading-tight">@brand.UserRole</div>
             </div>
             @* ลิงก์ออกจากระบบ สไตล์เดียวกับ Customer พร้อมเอฟเฟกต์ hover สีแดง นำทางไปยัง AccountController แอ็กชัน Logout *@
@@ -63,15 +79,13 @@
         </div>
     </div>
 
-    <!-- Mobile Sub-navigation Bar -->
+    <!-- Mobile Sub-navigation Bar (ไม่ซ้ำปุ่มออกจากระบบ) -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Accountant" asp-action="Index" class="@NavClass("Index") text-xs py-1.5 px-3 shrink-0">แดชบอร์ดการเงิน</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Accountant" asp-action="Ledger" class="@NavClass("Ledger") text-xs py-1.5 px-3 shrink-0">บันทึกรายรับ-รายจ่าย</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Accountant" asp-action="Receipts" class="@NavClass("Receipts") text-xs py-1.5 px-3 shrink-0">ประวัติใบเสร็จ</a>
-        @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
-        <a asp-controller="Account" asp-action="Logout" asp-route-role="accountant"
-           class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
-            ออกจากระบบ
-        </a>
     </div>
 </div>

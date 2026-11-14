@@ -13,26 +13,38 @@
     };
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 bg-white">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium mb-8" aria-label="แถบนำทาง">
-        <a asp-controller="Home" asp-action="Customer" class="hover:text-primary transition-colors">หน้าแรก</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+        <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span>/</span>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span class="text-text font-semibold">โปรไฟล์ของฉัน</span>
     </nav>
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="mx-auto max-w-[576px] mb-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["SuccessMessage"]</span>
         </div>
     }
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["ErrorMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="mx-auto max-w-[576px] mb-5 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["ErrorMessage"]</span>
         </div>
     }
@@ -41,14 +53,19 @@
     <div class="mx-auto max-w-[576px] space-y-5">
         <!-- Header with Avatar & Title -->
         <div class="flex items-center justify-between gap-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-4">
                 <!-- Avatar with Edit Badge -->
                 <div class="relative group cursor-pointer" id="btn-avatar-trigger" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex size-16 items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-slate-100 shadow-sm">
+                        @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                         <img id="userAvatarImg" src="@Url.Content(defaultUser.DefaultAvatar)" alt="รูปโปรไฟล์"
                              class="size-full object-cover" />
                     </div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-primary text-white shadow-xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                             <path d="M12 20h9"></path>
                             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -58,9 +75,12 @@
 
                 <!-- Titles -->
                 <div>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h1 class="text-xl sm:text-2xl font-bold text-text flex items-center gap-2">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span id="userNameDisplay">@defaultUser.Name</span>
                     </h1>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs text-slate-500 mt-0.5">ข้อมูลบัญชีสมาชิก FriendHouse</p>
                 </div>
             </div>
@@ -68,27 +88,35 @@
             <!-- Edit Button -->
             <button type="button" id="btn-open-edit-profile"
                     class="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-text shadow-2xs hover:border-primary/40 hover:bg-slate-50 transition-colors cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>แก้ไขข้อมูล</span>
             </button>
         </div>
 
         <!-- Yellow Pending Pre-order Alert Banner (Figma Node 60:1219) -->
         <div class="flex items-center justify-between rounded-xl border border-[#FDE8B0] bg-[#FFFBE8] px-4 py-3 text-xs text-[#995204] shadow-2xs">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 font-medium">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 shrink-0 text-[#995204]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="1" y="3" width="15" height="13"></rect>
                     <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
                     <circle cx="5.5" cy="18.5" r="2.5"></circle>
                     <circle cx="18.5" cy="18.5" r="2.5"></circle>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>@defaultUser.PendingOrders</span>
             </div>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Home" asp-action="PreorderStatus" class="inline-flex items-center gap-1 shrink-0 font-semibold hover:underline">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>ดูสถานะ</span>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
@@ -99,50 +127,69 @@
         <div class="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
             <!-- Row 1: Email -->
             <div class="flex items-center gap-4 px-5 py-4">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="min-w-0 flex-1">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="block text-[11px] text-slate-400 font-medium">อีเมล</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="userEmailDisplay" class="text-sm font-semibold text-text truncate">@defaultUser.Email</span>
                 </div>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="h-px w-full bg-slate-100"></div>
 
             <!-- Row 2: Phone -->
             <div class="flex items-center gap-4 px-5 py-4">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                     </svg>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="min-w-0 flex-1">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="block text-[11px] text-slate-400 font-medium">เบอร์โทรศัพท์</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="userPhoneDisplay" class="text-sm font-semibold text-text">@defaultUser.Phone</span>
                 </div>
             </div>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="h-px w-full bg-slate-100"></div>
 
             <!-- Row 3: Points + Action -->
             <div class="flex items-center justify-between gap-4 px-5 py-4">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-4">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4 fill-current" viewBox="0 0 20 20">
                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                         </svg>
                     </div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="block text-[11px] text-slate-400 font-medium">แต้มสะสม</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-sm font-semibold text-text">@defaultUser.Points</span>
                     </div>
                 </div>
 
-                <a asp-controller="Home" asp-action="Rewards" asp-route-role="customer"
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Home" asp-action="Rewards"
                    class="rounded-lg bg-accent px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:opacity-90 transition-opacity cursor-pointer">
                     แลกแต้ม
                 </a>
@@ -154,48 +201,62 @@
             <!-- Link 1: เปลี่ยนรหัสผ่าน -->
             <a asp-controller="Account" asp-action="ResetPassword"
                class="flex items-center justify-between px-5 py-4 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer group">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-3">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4 text-slate-400 group-hover:text-primary transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-sm font-medium text-text group-hover:text-primary transition-colors">เปลี่ยนรหัสผ่าน</span>
                 </div>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </a>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="h-px w-full bg-slate-100"></div>
 
             <!-- Link 2: พรีออเดอร์ของฉัน -->
             <a asp-controller="Home" asp-action="PreorderStatus"
                class="flex items-center justify-between px-5 py-4 text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer group">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-3">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4 text-slate-400 group-hover:text-primary transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
                         <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                         <line x1="12" y1="22.08" x2="12" y2="12"></line>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-sm font-medium text-text group-hover:text-primary transition-colors">พรีออเดอร์ของฉัน</span>
                 </div>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </a>
 
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="h-px w-full bg-slate-100"></div>
 
             <!-- Link 3: ยกเลิกและลบบัญชีสมาชิก -->
             <button type="button" id="btn-open-delete-account"
                     class="w-full flex items-center justify-between px-5 py-4 text-rose-600 hover:bg-rose-50/60 transition-colors cursor-pointer group text-left">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-3">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-4 text-rose-400 group-hover:text-rose-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"></polyline>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-sm font-medium text-rose-600">ลบบัญชีผู้ใช้งาน</span>
                 </div>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 text-rose-300 group-hover:text-rose-600 group-hover:translate-x-0.5 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
@@ -212,10 +273,15 @@
 
 <!-- หน้าต่างแก้ไขข้อมูลโปรไฟล์สมาชิก -->
 <div id="edit-profile-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h3 class="text-base font-bold text-text">แก้ไขข้อมูลโปรไฟล์</h3>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" id="btn-close-edit-modal" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -223,45 +289,60 @@
             </button>
         </div>
 
-        @* ฟอร์มแก้ไขข้อมูลส่วนตัวของสมาชิก ส่งไปยัง AccountController แอ็กชัน UpdateProfile *@
-        <form asp-controller="Account" asp-action="UpdateProfile" class="space-y-4">
+        @* ฟอร์มแก้ไขข้อมูลส่วนตัวของสมาชิก (ใช้ Multipart Form Upload มาตรฐาน ไม่แปลง Base64) *@
+        <form asp-controller="Account" asp-action="UpdateProfile" enctype="multipart/form-data" class="space-y-4">
             <!-- อัปโหลดรูปโปรไฟล์ -->
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">รูปโปรไฟล์</label>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-3">
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="size-14 rounded-full overflow-hidden border border-slate-200 bg-slate-50 shrink-0">
-                        <img id="modalAvatarPreview" src="@Url.Content(defaultUser.DefaultAvatar)" class="size-full object-cover" />
+                        @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                        <img id="modalAvatarPreview" src="@Url.Content(defaultUser.DefaultAvatar)" alt="ตัวอย่างรูปโปรไฟล์" class="size-full object-cover" />
                     </div>
+                    @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                     <input type="hidden" asp-for="AvatarUrl" id="avatarUrlHidden" />
-                    <input type="file" id="avatarFileInput" accept="image/*" class="text-xs text-slate-500 file:mr-2.5 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20 cursor-pointer" />
+                    @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
+                    <input type="file" id="avatarFileInput" name="avatarFile" accept="image/*" class="text-xs text-slate-500 file:mr-2.5 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20 cursor-pointer" />
                 </div>
             </div>
 
             <!-- ชื่อ-นามสกุล -->
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label for="editFullName" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล</label>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                 <input type="text" id="editFullName" asp-for="FullName" required
                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
             </div>
 
             <!-- อีเมล -->
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label for="editEmail" class="block text-xs font-semibold text-slate-700 mb-1">อีเมล</label>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                 <input type="email" id="editEmail" value="@defaultUser.Email" disabled
                        class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500 focus:outline-none cursor-not-allowed" />
             </div>
 
             <!-- เบอร์โทรศัพท์ -->
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label for="editPhone" class="block text-xs font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์</label>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                 <input type="tel" id="editPhone" asp-for="Phone" required
                        class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-text focus:border-primary focus:outline-none" />
             </div>
 
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
                 <button type="button" id="btn-cancel-edit" class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
                     ยกเลิก
                 </button>
+                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                 <button type="submit" class="rounded-xl bg-primary px-5 py-2 text-xs font-bold text-white shadow-xs hover:opacity-90 cursor-pointer">
                     บันทึกข้อมูล
                 </button>
@@ -272,24 +353,32 @@
 
 <!-- หน้าต่างยืนยันการลบบัญชีสมาชิก -->
 <div id="delete-account-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl space-y-4 text-center">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
         </div>
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h3 class="text-base font-bold text-text">ยืนยันการลบบัญชีผู้ใช้งาน</h3>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
                 คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีสมาชิก <span class="font-semibold text-text">@defaultUser.Email</span>? บัญชีของคุณจะถูกระงับการใช้งานและออกจากระบบทันที
             </p>
         </div>
         @* ฟอร์มยืนยันการลบบัญชี ส่งไปยัง AccountController แอ็กชัน DeleteAccount *@
         <form asp-controller="Account" asp-action="DeleteAccount" class="flex items-center gap-2 pt-2">
+            @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
             <button type="button" id="btn-cancel-delete-account" class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
                 ยกเลิก
             </button>
+            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
             <button type="submit" class="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 cursor-pointer">
                 ยืนยันลบบัญชี
             </button>
@@ -298,69 +387,88 @@
 </div>
 
 @section Scripts {
+@* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
 <script>
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     document.addEventListener('DOMContentLoaded', function () {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var modal = document.getElementById('edit-profile-modal');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var openBtn = document.getElementById('btn-open-edit-profile');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var avatarTrigger = document.getElementById('btn-avatar-trigger');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var closeBtn = document.getElementById('btn-close-edit-modal');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var cancelBtn = document.getElementById('btn-cancel-edit');
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var deleteModal = document.getElementById('delete-account-modal');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var openDeleteBtn = document.getElementById('btn-open-delete-account');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var cancelDeleteBtn = document.getElementById('btn-cancel-delete-account');
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var modalAvatarPreview = document.getElementById('modalAvatarPreview');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var avatarFileInput = document.getElementById('avatarFileInput');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         var avatarUrlHidden = document.getElementById('avatarUrlHidden');
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function openModal() {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function closeModal() {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function openDeleteModal() {
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (deleteModal) {
                 deleteModal.classList.remove('hidden');
                 deleteModal.classList.add('flex');
             }
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function closeDeleteModal() {
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (deleteModal) {
                 deleteModal.classList.add('hidden');
                 deleteModal.classList.remove('flex');
             }
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (openBtn) openBtn.addEventListener('click', openModal);
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (avatarTrigger) avatarTrigger.addEventListener('click', openModal);
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (openDeleteBtn) openDeleteBtn.addEventListener('click', openDeleteModal);
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         if (cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeDeleteModal);
 
-        // แสดงภาพตัวอย่างรูปโปรไฟล์ที่เลือกและอัปเดตค่าในช่องซ่อน
+        // แสดงภาพตัวอย่างรูปโปรไฟล์จากไฟล์ที่เลือกด้วย Object URL ก่อนส่งฟอร์ม Multipart จริง
         if (avatarFileInput) {
+            // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
             avatarFileInput.addEventListener('change', function (e) {
+                // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                 var file = e.target.files[0];
-                if (file) {
-                    var reader = new FileReader();
-                    reader.onload = function (evt) {
-                        if (modalAvatarPreview) {
-                            modalAvatarPreview.src = evt.target.result;
-                        }
-                        if (avatarUrlHidden) {
-                            avatarUrlHidden.value = evt.target.result;
-                        }
-                    };
-                    reader.readAsDataURL(file);
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+                if (file && modalAvatarPreview) {
+                    modalAvatarPreview.src = URL.createObjectURL(file);
                 }
             });
         }

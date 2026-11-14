@@ -1,4 +1,5 @@
 @{
+    // กำหนดรายการลิงก์สำหรับหมวดฟิกเกอร์และสินค้า
     var figuretLinks = new[]
     {
         new { Label = "คอลเลกชันทั้งหมด", Controller = "Home", Action = "Collection" },
@@ -6,41 +7,55 @@
         new { Label = "สถานะพรีออเดอร์", Controller = "Home", Action = "PreorderStatus" }
     };
 
+    // กำหนดรายการลิงก์สำหรับสิทธิพิเศษของสมาชิก
     var platformLinks = new[]
     {
         new { Label = "โปรโมชั่น", Controller = "Home", Action = "Promotion" },
         new { Label = "แลกแต้มรางวัล", Controller = "Home", Action = "Rewards" }
     };
 
+    // ข้อมูลชื่อร้านและช่องทางติดต่อหน้าร้าน
     var siteName = "FriendHouse";
     var phone = "02-xxx-xxxx";
     var lineId = "friendhouse_shop";
     var contactEmail = "hello@friendhouse.shop";
 }
 
+<!-- ส่วนท้ายของเว็บไซต์ (Footer) แสดงลิงก์นำทางและข้อมูลติดต่อร้าน -->
 <footer id="footer" class="scroll-mt-10 border-t border-slate-200 bg-white px-4 pt-10 pb-8 text-slate-700">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="mx-auto max-w-7xl">
-        <div class="mb-10 grid grid-cols-1 gap-9 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- กริด 4 คอลัมน์แสดงโลโก้ เมนูสินค้า สิทธิพิเศษ และช่องทางติดต่อ -->
+        <div class="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- คอลัมน์ที่ 1: โลโก้ร้านและคำอธิบายสั้น -->
             <div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="mb-4 flex items-center gap-2.5 text-xl font-bold text-text sm:text-2xl">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex size-9 items-center justify-center overflow-hidden rounded-xl border border-primary/20 bg-white shadow-xs">
+                        @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                         <img src="~/logo/logo.png" alt="@siteName" class="size-full object-cover" />
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>@siteName</span>
                 </div>
 
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="max-w-[260px] text-sm leading-7 text-slate-500">
                     ร้านฟิกเกอร์และของสะสมสำหรับคนรักอนิเมะ จองล่วงหน้า รับและชำระเงินที่หน้าร้าน
                 </p>
             </div>
 
+            <!-- คอลัมน์ที่ 2: ลิงก์หมวดฟิกเกอร์และสินค้า -->
             <div>
                 <h4 class="mb-4 font-semibold text-text">ฟิกเกอร์และสินค้า</h4>
 
                 <ul class="space-y-2 text-sm text-slate-500">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var link in figuretLinks)
                     {
                         <li>
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                             <a asp-controller="@link.Controller" asp-action="@link.Action" class="hover:text-primary transition-colors">
                                 @link.Label
                             </a>
@@ -49,7 +64,25 @@
                 </ul>
             </div>
 
-            
+            <!-- คอลัมน์ที่ 3: ลิงก์สิทธิพิเศษสำหรับสมาชิก -->
+            <div>
+                <h4 class="mb-4 font-semibold text-text">สิทธิพิเศษสมาชิก</h4>
+
+                <ul class="space-y-2 text-sm text-slate-500">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+                    @foreach (var link in platformLinks)
+                    {
+                        <li>
+                            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                            <a asp-controller="@link.Controller" asp-action="@link.Action" class="hover:text-primary transition-colors">
+                                @link.Label
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+            <!-- คอลัมน์ที่ 4: ช่องทางการติดต่อร้านค้า -->
             <div>
                 <h4 class="mb-4 font-semibold text-text">ติดต่อ</h4>
 
@@ -61,10 +94,13 @@
             </div>
         </div>
 
+        <!-- แถบลิขสิทธิ์ด้านล่างสุดของส่วนท้าย -->
         <div class="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>
                 &copy; @DateTime.Now.Year @siteName สงวนลิขสิทธิ์ทั้งหมด
             </span>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>จองล่วงหน้า รับและชำระเงินที่หน้าร้านเท่านั้น</span>
         </div>
     </div>

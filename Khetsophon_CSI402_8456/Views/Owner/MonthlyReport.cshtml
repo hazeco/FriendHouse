@@ -26,24 +26,44 @@
     int endRow = Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalProductRowCount);
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
     <!-- ส่วนหัวหน้าเพจและตัวเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง -->
     <div class="flex items-center justify-between flex-wrap gap-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-400 font-medium mb-1">@pageHeader.Breadcrumb</div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-sm text-slate-500 mt-1">@pageHeader.Subtitle</p>
         </div>
 
         <!-- ปุ่มเลื่อนช่วงเดือนและการส่งออกรายงาน -->
-        <div class="flex items-center gap-2">
-            <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.PrevMonthKey"
-               class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="ช่วงก่อนหน้า">
-                ‹
-            </a>
+        <div class="flex items-center gap-2 print:hidden">
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+            @if (!string.IsNullOrEmpty(Model.PrevMonthKey))
+            {
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.PrevMonthKey"
+                   class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="เดือนก่อนหน้า" aria-label="เดือนก่อนหน้า">
+                    ‹
+                </a>
+            }
+            else
+            {
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                <span class="size-9 rounded-xl border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center text-sm font-bold cursor-not-allowed" title="ไม่มีข้อมูลเดือนก่อนหน้า">
+                    ‹
+                </span>
+            }
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="relative">
+                @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select id="headerMonthSelect" onchange="navigateReportMonth(this.value)"
                         class="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-[#050315] shadow-2xs focus:outline-none cursor-pointer">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var m in Model.AvailableMonths)
                     {
                         if (m.Key.Equals(Model.SelectedMonthKey, StringComparison.OrdinalIgnoreCase))
@@ -56,64 +76,136 @@
                         }
                     }
                 </select>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </div>
-            <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.NextMonthKey"
-               class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="ช่วงถัดไป">
-                ›
-            </a>
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+            @if (!string.IsNullOrEmpty(Model.NextMonthKey))
+            {
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Owner" asp-action="MonthlyReport" asp-route-selectedMonth="@Model.NextMonthKey"
+                   class="size-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center text-sm font-bold shadow-2xs cursor-pointer" title="เดือนถัดไป" aria-label="เดือนถัดไป">
+                    ›
+                </a>
+            }
+            else
+            {
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                <span class="size-9 rounded-xl border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center text-sm font-bold cursor-not-allowed" title="อยู่ในเดือนล่าสุดแล้ว">
+                    ›
+                </span>
+            }
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="openExportModal()" class="inline-flex items-center gap-1.5 bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white font-bold px-4 py-2 rounded-xl shadow-xs transition-colors cursor-pointer text-sm ml-1">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16"></path>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>ส่งออก</span>
             </button>
         </div>
     </div>
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+        <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs print:hidden">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="font-bold">@TempData["SuccessMessage"]</span>
+        </div>
+    }
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+    @if (TempData["ErrorMessage"] != null)
+    {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+        <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-xs text-rose-800 shadow-xs print:hidden">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="font-bold">@TempData["ErrorMessage"]</span>
+        </div>
+    }
+
     <!-- การ์ดสถิติสรุปยอด 4 รายการจากฐานข้อมูลจริง (ยอดรายได้ตรงกับหน้าภาพรวมการเงินบัญชี) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-400 font-medium">ยอดรายได้รวม</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.Revenue</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs font-semibold text-[#16A34A] mt-2">@stats.RevenueDelta</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+            <div class="text-[11px] text-slate-400 mt-1">หน้าร้าน ฿@Model.StorefrontRevenue.ToString("N0") + บัญชี ฿@Model.LedgerIncome.ToString("N0")</div>
         </div>
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-400 font-medium">จำนวนสต็อกที่รับเข้า</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.StockIn</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs font-semibold text-[#2F39A9] mt-2">@stats.StockInDelta</div>
         </div>
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-400 font-medium">จำนวนสต็อกที่ขายออก</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.StockOut</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs font-semibold text-slate-500 mt-2">@stats.StockOutDelta</div>
         </div>
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-400 font-medium">คำสั่งจองพรีออเดอร์</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold text-[#050315] mt-1.5">@stats.Preorder</div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs font-semibold text-[#16A34A] mt-2">@stats.PreorderDelta</div>
         </div>
     </div>
 
     <!-- กราฟแท่งแสดงแนวโน้มรายได้จริงย้อนหลัง 6 เดือนจากฐานข้อมูล -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-6 space-y-4">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-center justify-between">
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h2 class="text-sm font-bold text-[#050315]">แนวโน้มรายได้ 6 เดือนล่าสุด</h2>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-slate-400">หน่วย: บาท</span>
         </div>
 
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="pt-6 pb-2 h-64 flex items-end justify-between gap-4 max-w-4xl mx-auto px-4">
+            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var bar in Model.MonthlyTrends)
             {
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex-1 flex flex-col items-center gap-2 h-full justify-end group" title="@bar.MonthShort: ฿@bar.Revenue.ToString("N0")">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-xs font-semibold @(bar.IsCurrent ? "text-[#2F39A9] font-bold" : "text-slate-400")">
                         @bar.RevenueShortLabel
                     </span>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="w-full max-w-[56px] rounded-t-xl transition-all duration-300 @(bar.IsCurrent ? "bg-[#2F39A9] shadow-xs" : "bg-[#92EEFF]/60 hover:bg-[#92EEFF]")"
                          style="height: @(bar.RevenueHeightPct)%;">
                     </div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-xs font-semibold mt-1 @(bar.IsCurrent ? "text-[#050315] font-bold" : "text-slate-500")">
                         @bar.MonthShort
                     </span>
@@ -124,48 +216,150 @@
 
     <!-- ตารางรายละเอียดความเคลื่อนไหวสต็อกสินค้าจริงจากฐานข้อมูลพร้อมระบบแบ่งหน้า -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 id="reportTableMonthHeading" class="text-sm font-bold text-[#050315]">รายละเอียดสต็อกเข้า-ออก · @pageHeader.SelectedMonth</h2>
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+            <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
+                <h2 id="reportTableMonthHeading" class="text-sm font-bold text-[#050315]">รายละเอียดสต็อกเข้า-ออกรายสินค้า · @pageHeader.SelectedMonth</h2>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+                <p class="text-[11px] text-slate-400 mt-0.5">คำนวณจากยอดรับเข้าคลังและรายการขายตามใบเสร็จรับเงินหน้าร้าน (ไม่รวมรายรับสมุดบัญชีอื่น)</p>
+            </div>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-slate-400">@Model.TotalProductRowCount รายการ</span>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm min-w-[740px]">
+        <!-- Mobile Card List (md:hidden) -->
+        <div class="divide-y divide-slate-100 md:hidden">
+            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+            @foreach (var row in Model.StockMovementRows)
+            {
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                <div class="p-4 space-y-2.5">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                    <div class="flex items-start justify-between gap-2">
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div class="min-w-0">
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="font-bold text-[#050315] text-sm">@row.ProductName</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[11px] text-slate-400 mt-0.5"><span class="font-mono">@row.Sku</span> · @row.CategoryName</div>
+                        </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div class="text-right shrink-0">
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[11px] text-slate-400">ยอดขายออก</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="font-bold text-sm text-[#2F39A9]">฿@row.OutValue.ToString("N0")</div>
+                        </div>
+                    </div>
+                    @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
+                    <div class="grid grid-cols-3 gap-2 text-center bg-[#F8F9FD] rounded-xl p-2.5 text-xs">
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[10px] text-slate-400">รับเข้า</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="font-bold text-slate-700">@row.InQty.ToString("N0")</div>
+                        </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[10px] text-slate-400">ขายออก</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="font-bold text-slate-700">@row.OutQty.ToString("N0")</div>
+                        </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                        <div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[10px] text-slate-400">คงเหลือ</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="font-bold text-[#050315]">@row.RemainQty.ToString("N0")</div>
+                        </div>
+                    </div>
+                </div>
+            }
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+            <div class="p-4 bg-slate-50/90 space-y-1.5 text-xs">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                <div class="font-bold text-[#050315]">รวมทั้งหมด (@Model.TotalProductRowCount รายการ)</div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                <div class="flex items-center justify-between text-slate-600">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                    <span>รับเข้า @Model.GrandTotalInQty.ToString("N0") · ขายออก @Model.GrandTotalOutQty.ToString("N0") · คงเหลือ @Model.GrandTotalRemainQty.ToString("N0")</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                    <span class="font-bold text-sm text-[#2F39A9]">฿@Model.GrandTotalOutValue.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+        <div class="hidden md:block overflow-x-auto">
+            @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
+            <table class="w-full text-sm">
+                @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                 <thead>
+                    @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                     <tr class="border-b border-slate-100 text-left text-xs font-semibold text-slate-400 bg-[#FBFBFE]">
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6">สินค้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6">หมวดหมู่</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-center">รับเข้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-center">ขายออก</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-center">คงเหลือ</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-right">มูลค่ารับเข้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-right">มูลค่าขายออก</th>
                     </tr>
                 </thead>
+                @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-slate-100">
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                     @foreach (var row in Model.StockMovementRows)
                     {
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr class="hover:bg-slate-50/70 transition-colors">
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6">
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="font-semibold text-[#050315]">@row.ProductName</div>
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-[11px] font-mono text-slate-400">@row.Sku</div>
                             </td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-slate-500 text-xs">@row.CategoryName</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.InQty.ToString("N0")</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.OutQty.ToString("N0")</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-center text-slate-600 font-medium">@row.RemainQty.ToString("N0")</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-right text-slate-600 font-medium">฿@row.InValue.ToString("N0")</td>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td class="py-3.5 px-6 text-right font-bold text-[#050315]">฿@row.OutValue.ToString("N0")</td>
                         </tr>
                     }
                     <!-- แถวยอดรวมทั้งหมดของสินค้าทุกชิ้นในฐานข้อมูล -->
                     <tr class="bg-slate-50/80 font-bold text-[#050315]">
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6">รวมทั้งหมด (@Model.TotalProductRowCount รายการ)</td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6"></td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6 text-center">@Model.GrandTotalInQty.ToString("N0")</td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6 text-center">@Model.GrandTotalOutQty.ToString("N0")</td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6 text-center">@Model.GrandTotalRemainQty.ToString("N0")</td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6 text-right">฿@Model.GrandTotalInValue.ToString("N0")</td>
+                        @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6 text-right text-base text-[#2F39A9]">฿@Model.GrandTotalOutValue.ToString("N0")</td>
                     </tr>
                 </tbody>
@@ -174,10 +368,14 @@
 
         <!-- แถบแบ่งหน้าตารางรายงานประจำเดือน -->
         <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>แสดง @startRow–@endRow จากทั้งหมด @Model.TotalProductRowCount รายการ</span>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-1.5">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (Model.CurrentPage > 1)
                 {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                     <a asp-controller="Owner" asp-action="MonthlyReport"
                        asp-route-selectedMonth="@Model.SelectedMonthKey"
                        asp-route-page="@(Model.CurrentPage - 1)"
@@ -187,21 +385,25 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
                         ก่อนหน้า
                     </span>
                 }
 
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @for (int p = 1; p <= Model.TotalPages; p++)
                 {
                     if (p == Model.CurrentPage)
                     {
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
                             @p
                         </span>
                     }
                     else
                     {
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-controller="Owner" asp-action="MonthlyReport"
                            asp-route-selectedMonth="@Model.SelectedMonthKey"
                            asp-route-page="@p"
@@ -211,8 +413,10 @@
                     }
                 }
 
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (Model.CurrentPage < Model.TotalPages)
                 {
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                     <a asp-controller="Owner" asp-action="MonthlyReport"
                        asp-route-selectedMonth="@Model.SelectedMonthKey"
                        asp-route-page="@(Model.CurrentPage + 1)"
@@ -222,6 +426,7 @@
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="px-3 py-1.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 font-medium cursor-not-allowed">
                         ถัดไป
                     </span>
@@ -231,24 +436,32 @@
     </div>
 </div>
 
-<!-- Modal 1: รายงานส่งออก (Exact Figma Frame 65:4704) -->
-<div id="exportModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+<!-- Modal 1: รายงานส่งออก -->
+<div id="exportModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 print:hidden">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
         <!-- Header -->
         <div>
-            <h2 class="text-xl font-bold text-[#050315]">รายงานส่งออก</h2>
-            <p class="text-sm text-slate-500 mt-1">เลือกช่วงวันที่และขอบเขตข้อมูลเพื่อสร้างไฟล์</p>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
+            <h2 class="text-xl font-bold text-[#050315]">ส่งออกรายงาน</h2>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+            <p class="text-sm text-slate-500 mt-1">เลือกช่วงเวลาและรูปแบบไฟล์ที่ต้องการส่งออกจากข้อมูลจริง</p>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="space-y-4">
             <!-- 1. รูปแบบไฟล์ -->
             <div>
-                <label class="text-[13px] font-semibold text-[#050315] block mb-2">รูปแบบไฟล์</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <!-- Excel Option (Selected by default) -->
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
+                <label class="text-[13px] font-semibold text-[#050315] block mb-2">รูปแบบการส่งออก</label>
+                @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Excel CSV Option -->
                     <button type="button" id="btnFormatExcel" onclick="selectFormat('Excel')"
                             class="p-4 rounded-2xl border-2 border-[#2F39A9] bg-white flex items-center gap-3 text-left transition cursor-pointer">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-10 rounded-xl bg-[#2F39A9] text-white flex items-center justify-center shrink-0">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -256,16 +469,21 @@
                                 <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
                             </svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
-                            <div class="text-sm font-bold text-[#050315]">Excel</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">.xlsx file</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-sm font-bold text-[#050315]">ไฟล์ Excel / CSV</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[11px] text-slate-400 mt-0.5">.csv (เปิดด้วย Excel ได้ทันที)</div>
                         </div>
                     </button>
 
-                    <!-- PDF Option -->
+                    <!-- PDF Print Option -->
                     <button type="button" id="btnFormatPdf" onclick="selectFormat('PDF')"
                             class="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 flex items-center gap-3 text-left transition cursor-pointer">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="size-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                 <polyline points="14 2 14 8 20 8"></polyline>
@@ -274,34 +492,26 @@
                                 <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
                         </div>
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
-                            <div class="text-sm font-bold text-[#050315]">PDF</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">.pdf document</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-sm font-bold text-[#050315]">พิมพ์ / บันทึก PDF</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="text-[11px] text-slate-400 mt-0.5">สั่งพิมพ์รายงานหน้าปัจจุบันเป็น PDF</div>
                         </div>
                     </button>
                 </div>
             </div>
 
-            <!-- 2. ประเภทช่วงเวลา (Segmented Pill: รายเดือน / รายไตรมาส) -->
+            <!-- 2. เลือกช่วงเวลา -->
             <div>
-                <label class="text-[13px] font-semibold text-[#050315] block mb-2">ประเภทช่วงเวลา</label>
-                <div class="bg-[#F1F3F9] p-1 rounded-2xl flex items-center">
-                    <button type="button" id="tabMonthly" onclick="selectPeriodType('month')"
-                            class="flex-1 py-2.5 rounded-xl text-xs font-medium text-center bg-white shadow-xs text-[#050315] transition cursor-pointer">
-                        รายงานรายเดือน
-                    </button>
-                    <button type="button" id="tabQuarterly" onclick="selectPeriodType('quarter')"
-                            class="flex-1 py-2.5 rounded-xl text-xs font-medium text-center text-slate-400 hover:text-slate-700 transition cursor-pointer">
-                        รายงานรายไตรมาส
-                    </button>
-                </div>
-            </div>
-
-            <!-- 3. เลือกเดือน / ไตรมาส Dropdown -->
-            <div>
-                <label id="periodSelectLabel" class="text-[13px] font-semibold text-[#050315] block mb-2">เลือกเดือน</label>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
+                <label id="periodSelectLabel" class="text-[13px] font-semibold text-[#050315] block mb-2">ช่วงเวลาของรายงาน</label>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="relative">
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select id="periodSelect" class="w-full appearance-none px-4 py-3 rounded-2xl border border-slate-200 text-sm font-medium text-[#050315] bg-white focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 cursor-pointer pr-10">
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var m in Model.AvailableMonths)
                         {
                             if (m.Key.Equals(Model.SelectedMonthKey, StringComparison.OrdinalIgnoreCase))
@@ -314,116 +524,108 @@
                             }
                         }
                     </select>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </div>
                 </div>
             </div>
-
-            <!-- 4. ขอบเขตข้อมูล (Checkboxes matching Figma 65:4704) -->
-            <div>
-                <label class="text-[13px] font-semibold text-[#050315] block mb-2">ขอบเขตข้อมูล</label>
-                <div class="flex flex-wrap items-center gap-4 sm:gap-6 pt-1">
-                    <!-- Checkbox 1: สรุปยอดขาย -->
-                    <label class="inline-flex items-center gap-2.5 cursor-pointer">
-                        <input type="checkbox" id="chkSales" checked
-                               class="size-4 rounded border-slate-300 text-[#2F39A9] focus:ring-[#2F39A9] accent-[#2F39A9]" />
-                        <span class="text-sm font-medium text-[#050315]">สรุปยอดขาย</span>
-                    </label>
-
-                    <!-- Checkbox 2: การดำเนินการตามคำสั่งซื้อล่วงหน้า -->
-                    <label class="inline-flex items-center gap-2.5 cursor-pointer">
-                        <input type="checkbox" id="chkPreorder" checked
-                               class="size-4 rounded border-slate-300 text-[#2F39A9] focus:ring-[#2F39A9] accent-[#2F39A9]" />
-                        <span class="text-sm font-medium text-[#050315]">การดำเนินการตามคำสั่งซื้อล่วงหน้า</span>
-                    </label>
-
-                    <!-- Checkbox 3: สินค้าที่รับเข้า -->
-                    <label class="inline-flex items-center gap-2.5 cursor-pointer">
-                        <input type="checkbox" id="chkStockIn"
-                               class="size-4 rounded border-slate-300 text-[#2F39A9] focus:ring-[#2F39A9] accent-[#2F39A9]" />
-                        <span class="text-sm font-normal text-slate-600">สินค้าที่รับเข้า</span>
-                    </label>
-                </div>
-            </div>
         </div>
 
-        <!-- Footer Actions (Exact Figma Frame 65:4704) -->
+        <!-- Footer Actions -->
         <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeExportModal()"
                     class="px-6 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-sm font-bold text-[#050315] transition cursor-pointer">
                 ยกเลิก
             </button>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="executeExportReport()"
                     class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-sm font-bold text-white shadow-md shadow-[#2F39A9]/20 transition cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
-                <span>สร้างและส่งออกรายงาน</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                <span>ส่งออกรายงาน</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Modal 2: ส่งออกข้อมูลสำเร็จ (Exact Figma Frame 65:4576) -->
-<div id="exportSuccessModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+<!-- Modal 2: ส่งออกข้อมูลสำเร็จ -->
+<div id="exportSuccessModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 print:hidden">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl border border-slate-100 animate-scale-up">
         <!-- Success Icon -->
         <div class="size-16 rounded-full bg-[#ECFDF5] text-[#10B981] mx-auto flex items-center justify-center mb-4">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
         </div>
 
         <!-- Title -->
-        <h3 class="text-2xl font-bold text-[#050315] mb-5">ส่งออกข้อมูลสำเร็จ</h3>
+        <h3 class="text-2xl font-bold text-[#050315] mb-5">เตรียมไฟล์สำเร็จ</h3>
 
-        <!-- File Details Card (Exact Figma Frame 65:4576) -->
+        <!-- File Details Card -->
         <div class="bg-[#F8F9FC] rounded-2xl p-4 text-left border border-slate-100 mb-6 space-y-3">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-[11px] font-semibold text-slate-400">ชื่อไฟล์</div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2 mt-1">
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="fileIconExcel" class="text-emerald-600">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                             <line x1="9" y1="9" x2="15" y2="15"></line>
                             <line x1="15" y1="9" x2="9" y2="15"></line>
                         </svg>
                     </span>
-                    <span id="fileIconPdf" class="text-red-600 hidden">
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                        </svg>
-                    </span>
-                    <span id="successFileName" class="text-sm font-bold text-[#050315] font-mono">Sales_Report_Q1_2026.xlsx</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                    <span id="successFileName" class="text-sm font-bold text-[#050315] font-mono break-all">FriendHouse_Report.csv</span>
                 </div>
             </div>
 
+            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
             <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/50">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
-                    <div class="text-[11px] font-semibold text-slate-400">ขนาดไฟล์</div>
-                    <div class="text-sm font-semibold text-[#050315] mt-0.5">1.2 MB</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div class="text-[11px] font-semibold text-slate-400">รูปแบบ</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div class="text-sm font-semibold text-[#050315] mt-0.5">CSV (Excel)</div>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-[11px] font-semibold text-slate-400">ช่วงเวลา</div>
-                    <div id="successPeriod" class="text-[13px] font-semibold text-[#050315] mt-0.5">สิงหาคม 2569</div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div id="successPeriod" class="text-[13px] font-semibold text-[#050315] mt-0.5">@Model.SelectedMonthLabel</div>
                 </div>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="space-y-3">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a id="downloadExportFileLink" asp-controller="Owner" asp-action="ExportMonthlyReport" asp-route-selectedMonth="@Model.SelectedMonthKey"
                onclick="closeExportSuccessModal()"
                class="w-full py-3 px-4 rounded-xl bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-md shadow-[#2F39A9]/20 transition cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
                 </svg>
-                <span>ดาวน์โหลดไฟล์ตอนนี้</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                <span>ดาวน์โหลดไฟล์ CSV</span>
             </a>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeExportSuccessModal()"
                     class="w-full py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm transition cursor-pointer">
                 ปิด
@@ -433,23 +635,30 @@
 </div>
 
 @section Scripts {
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         let currentFormat = 'Excel';
-        let currentPeriodType = 'month';
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function openExportModal() {
             document.getElementById('exportModal')?.classList.remove('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function closeExportModal() {
             document.getElementById('exportModal')?.classList.add('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function selectFormat(fmt) {
             currentFormat = fmt;
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const btnExcel = document.getElementById('btnFormatExcel');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const btnPdf = document.getElementById('btnFormatPdf');
 
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (fmt === 'Excel') {
                 btnExcel.className = 'p-4 rounded-2xl border-2 border-[#2F39A9] bg-white flex items-center gap-3 text-left transition cursor-pointer';
                 btnExcel.querySelector('div').className = 'size-10 rounded-xl bg-[#2F39A9] text-white flex items-center justify-center shrink-0';
@@ -463,55 +672,46 @@
             }
         }
 
-        function selectPeriodType(type) {
-            currentPeriodType = type;
-            const tabMonthly = document.getElementById('tabMonthly');
-            const tabQuarterly = document.getElementById('tabQuarterly');
-            const label = document.getElementById('periodSelectLabel');
-
-            if (type === 'month') {
-                tabMonthly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center bg-white shadow-xs text-[#050315] transition cursor-pointer';
-                tabQuarterly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center text-slate-400 hover:text-slate-700 transition cursor-pointer';
-                label.innerText = 'เลือกเดือน';
-            } else {
-                tabQuarterly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center bg-white shadow-xs text-[#050315] transition cursor-pointer';
-                tabMonthly.className = 'flex-1 py-2.5 rounded-xl text-xs font-medium text-center text-slate-400 hover:text-slate-700 transition cursor-pointer';
-                label.innerText = 'เลือกช่วงเวลา';
-            }
-        }
-
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function executeExportReport() {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const select = document.getElementById('periodSelect');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const periodKey = select ? select.value : '@Model.SelectedMonthKey';
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const periodLabel = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text : '@Model.SelectedMonthLabel';
-            const ext = currentFormat === 'Excel' ? '.csv' : '.pdf';
-            const fileName = `FriendHouse_Report_${periodKey}${ext}`;
 
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+            if (currentFormat === 'PDF') {
+                closeExportModal();
+                window.print();
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
+                return;
+            }
+
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+            const fileName = `FriendHouse_Report_${periodKey}.csv`;
             document.getElementById('successFileName').innerText = fileName;
             document.getElementById('successPeriod').innerText = periodLabel;
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const downloadLink = document.getElementById('downloadExportFileLink');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (downloadLink) {
                 downloadLink.href = '/Owner/ExportMonthlyReport?selectedMonth=' + encodeURIComponent(periodKey);
-            }
-
-            if (currentFormat === 'Excel') {
-                document.getElementById('fileIconExcel').classList.remove('hidden');
-                document.getElementById('fileIconPdf').classList.add('hidden');
-            } else {
-                document.getElementById('fileIconPdf').classList.remove('hidden');
-                document.getElementById('fileIconExcel').classList.add('hidden');
             }
 
             closeExportModal();
             document.getElementById('exportSuccessModal')?.classList.remove('hidden');
         }
 
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function closeExportSuccessModal() {
             document.getElementById('exportSuccessModal')?.classList.add('hidden');
         }
 
-        // ฟังก์ชันนำทางเมื่อเลือกช่วงเดือนจากรายการเลือกเพื่อดึงข้อมูลใหม่จากฐานข้อมูลจริง
+        // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
         function navigateReportMonth(monthKey) {
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (!monthKey) return;
             window.location.href = '/Owner/MonthlyReport?selectedMonth=' + encodeURIComponent(monthKey);
         }

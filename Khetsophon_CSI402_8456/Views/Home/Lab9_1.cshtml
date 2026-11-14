@@ -40,36 +40,51 @@
     bool isSuccess = !string.IsNullOrEmpty(rawStatus) && (rawStatus.Contains("Success", StringComparison.OrdinalIgnoreCase) || rawStatus.Contains("สำเร็จ", StringComparison.OrdinalIgnoreCase));
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="min-h-screen bg-background py-8 sm:py-10 px-4 sm:px-6 lg:px-8">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="max-w-6xl mx-auto space-y-6">
 
         <!-- แถบด้านบน: หัวเรื่อง + ปุ่มเพิ่มข้อมูล -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-4">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-md">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="@pageConfig.Icons.Users"></path>
                     </svg>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2.5">
+                        @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                         <h1 class="text-xl sm:text-2xl font-bold text-text">@pageConfig.Title</h1>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary/30 text-primary border border-secondary">
                             ปฏิบัติการที่ 9.1 และ 10.1
                         </span>
                     </div>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">@pageConfig.Subtitle</p>
                 </div>
             </div>
 
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-3">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-600">
                     @pageConfig.Labels.Total: <span class="font-bold text-primary">@(Model?.Count() ?? 0)</span> @pageConfig.Labels.Unit
                 </div>
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                 <a asp-action="Lab9" asp-controller="Home" class="inline-flex items-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-white text-xs sm:text-sm font-semibold hover:bg-accent focus:outline-none focus:ring-4 focus:ring-primary/20 shadow-md hover:shadow-lg transition-all cursor-pointer">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="@pageConfig.Icons.Add"></path>
                     </svg>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>@pageConfig.Labels.AddBtn</span>
                 </a>
             </div>
@@ -78,12 +93,16 @@
         <!-- กล่องแจ้งเตือนสถานะการทำงาน -->
         @if (!string.IsNullOrEmpty(rawStatus))
         {
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="rounded-2xl p-4 flex items-center gap-3 text-sm @(isSuccess ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-rose-50 border border-rose-200 text-rose-800") shadow-sm">
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 @(isSuccess ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600")">
+                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="@(isSuccess ? pageConfig.Icons.Check : pageConfig.Icons.Alert)"></path>
                     </svg>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex-1 font-medium">
                     สถานะการทำงาน: <span class="font-bold">@rawStatus</span>
                 </div>
@@ -92,54 +111,78 @@
 
         <!-- ตารางแสดงข้อมูล -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (Model != null && Model.Any())
             {
                 <!-- ตารางสำหรับหน้าจอ Desktop และ Tablet -->
                 <div class="overflow-x-auto">
+                    @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
                     <table class="w-full text-left border-collapse">
+                        @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                         <thead>
+                            @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                                @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                                 <th class="py-4 px-6">@pageConfig.Labels.ColId</th>
+                                @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                                 <th class="py-4 px-6">@pageConfig.Labels.ColPassword</th>
+                                @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                                 <th class="py-4 px-6">@pageConfig.Labels.ColName</th>
+                                @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                                 <th class="py-4 px-6">@pageConfig.Labels.ColLastname</th>
+                                @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                                 <th class="py-4 px-6 text-right">@pageConfig.Labels.ColActions</th>
                             </tr>
                         </thead>
+                        @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                         <tbody class="divide-y divide-slate-100 text-sm">
+                            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                             @foreach (var item in Model)
                             {
+                                @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                                 <tr class="hover:bg-slate-50/60 transition-colors">
+                                    @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                     <td class="py-4 px-6 font-semibold text-text">
+                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-mono">
                                             @item.StdId
                                         </span>
                                     </td>
+                                    @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                     <td class="py-4 px-6 text-slate-500 font-mono text-xs">
                                         ••••••••
                                     </td>
+                                    @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                     <td class="py-4 px-6 text-text font-medium">
                                         @item.StdName
                                     </td>
+                                    @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                     <td class="py-4 px-6 text-text font-medium">
                                         @item.StdLastname
                                     </td>
+                                    @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                     <td class="py-4 px-6 text-right">
+                                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                         <div class="inline-flex items-center justify-end gap-2">
                                             <!-- ปุ่มแก้ไข (Edit -> Lab 10) -->
                                             <a asp-action="Lab10" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-all cursor-pointer">
+                                                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="@pageConfig.Icons.Edit"></path>
                                                 </svg>
+                                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                                 <span>@pageConfig.Labels.BtnEdit</span>
                                             </a>
 
                                             <!-- ปุ่มลบ (Delete -> Lab 10_1, -->
                                             <form asp-action="Lab10_1" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-block m-0">
+                                                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                                 <button type="submit" onclick="return confirm('คุณต้องการลบข้อมูลนักศึกษารหัส @item.StdId ใช่หรือไม่?');" class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-600 hover:text-white transition-all cursor-pointer">
+                                                    @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                                     <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="@pageConfig.Icons.Delete"></path>
                                                     </svg>
+                                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                                     <span>@pageConfig.Labels.BtnDelete</span>
                                                 </button>
                                             </form>
@@ -155,18 +198,26 @@
             {
                 <!-- กรณีไม่มีข้อมูล -->
                 <div class="p-12 text-center">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="@pageConfig.Icons.Empty"></path>
                         </svg>
                     </div>
+                    @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                     <h3 class="text-base font-bold text-text">@pageConfig.Labels.EmptyTitle</h3>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">@pageConfig.Labels.EmptySubtitle</p>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="mt-5">
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                         <a asp-action="Lab9" asp-controller="Home" class="inline-flex items-center gap-2 py-2.5 px-5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-accent transition-all shadow-md">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="@pageConfig.Icons.Add"></path>
                             </svg>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span>@pageConfig.Labels.AddBtn</span>
                         </a>
                     </div>

@@ -17,36 +17,56 @@
     var recentRestockLogs = ViewBag.RecentRestockLogs as List<Khetsophon_CSI402_8456.Models.Systemlog> ?? new List<Khetsophon_CSI402_8456.Models.Systemlog>();
     bool shouldAutoOpenReceive = ViewBag.OpenReceiveModal == true;
 
-    var lowStockProducts = allProducts.Where(p => (p.Inventory?.QuantityOnHand ?? 0) <= 3).ToList();
-    // ดึงจำนวนสถิติรวมของสินค้าทั้งคลังจาก ViewBag เพื่อแสดงผลบนปุ่มตัวกรองและระบบแบ่งหน้า
+    var lowStockProducts = allModalProducts.Where(p => (p.Inventory?.QuantityOnHand ?? 0) <= (p.Inventory?.SafetyStockLevel ?? 5)).ToList();
+    // ดึงจำนวนสถิติรวมของสินค้าทั้งคลังและตัวกรองปัจจุบันจาก ViewBag
     int totalProductCount = ViewBag.TotalProductCount ?? allProducts.Count;
-    int normalCount = ViewBag.NormalStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 3);
-    int lowCount = ViewBag.LowStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= 3);
+    int filteredCount = ViewBag.FilteredCount ?? allProducts.Count;
+    int normalCount = ViewBag.NormalStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > (p.Inventory?.SafetyStockLevel ?? 5));
+    int lowCount = ViewBag.LowStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= (p.Inventory?.SafetyStockLevel ?? 5));
     int outOfStockCount = ViewBag.OutOfStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) <= 0);
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int pageSize = ViewBag.PageSize ?? 10;
-    int startRow = totalProductCount == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
-    int endRow = Math.Min(currentPage * pageSize, totalProductCount);
+    int startRow = filteredCount == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+    int endRow = Math.Min(currentPage * pageSize, filteredCount);
 
-    var dbCategories = new List<string> { "ทุกหมวดหมู่" };
-    dbCategories.AddRange(allModalProducts.Select(p => p.Category?.CategoryName).Where(c => !string.IsNullOrEmpty(c)).Distinct()!);
+    string selectedStockFilter = (ViewBag.SelectedStockFilter as string ?? "all").ToLowerInvariant();
+    string selectedSearch = ViewBag.SelectedSearch as string ?? string.Empty;
+    string rawSelectedCat = ViewBag.SelectedCategory as string ?? "all";
+    string selectedCategory = (string.IsNullOrWhiteSpace(rawSelectedCat) || rawSelectedCat == "ทุกหมวดหมู่") ? "all" : rawSelectedCat;
+
+    var dbCategories = new List<string>();
+    if (ViewBag.AllCategories is List<string> serverCats && serverCats.Any())
+    {
+        dbCategories.AddRange(serverCats.Where(c => !string.IsNullOrWhiteSpace(c) && c != "ทุกหมวดหมู่").Distinct());
+    }
+    else
+    {
+        dbCategories.AddRange(allModalProducts.Select(p => p.Category?.CategoryName).Where(c => !string.IsNullOrEmpty(c) && c != "ทุกหมวดหมู่").Distinct()!);
+    }
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
     <!-- ส่วนหัวหน้าสต็อกสินค้าและปุ่มเปิดหน้าต่างรับสินค้าเข้าสต็อก -->
     <div class="flex items-center justify-between flex-wrap gap-4">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
+            @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
         </div>
+        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
         <button type="button" onclick="openReceiveStockModal('scan')"
                 class="inline-flex items-center gap-2 bg-[#3027FF] hover:bg-[#261ECC] text-white font-bold px-5 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer text-sm">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
             </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@pageHeader.ReceiveButtonText</span>
         </button>
     </div>
@@ -54,21 +74,28 @@
     <!-- กล่องแจ้งเตือนผลการรับสินค้าเข้าสต็อก -->
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["SuccessMessage"]</span>
         </div>
     }
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["ErrorMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-[#FEF2F2] border border-[#FECACA] p-4 flex items-center gap-3 text-xs text-[#DC2626] shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-5 text-[#DC2626] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["ErrorMessage"]</span>
         </div>
     }
@@ -76,26 +103,37 @@
     <!-- Alert Banner (Matching frame_9_3.png) -->
     @if (lowStockProducts.Any())
     {
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="rounded-2xl border border-[#FCA5A5]/70 bg-[#FFF5F5] p-4 space-y-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 text-[#DC2626]">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs sm:text-sm font-bold">แจ้งเตือนสต็อก — มีสินค้าใกล้หมด/หมดสต็อก @lowStockProducts.Count รายการ ต้องดำเนินการ</span>
             </div>
+            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var alert in lowStockProducts.Take(3))
                 {
                     var qty = alert.Inventory?.QuantityOnHand ?? 0;
                     var badgeCls = qty <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : "bg-[#FEF3C7] text-[#D97706]";
                     var statusLbl = qty <= 0 ? "หมด · 0 ชิ้น" : $"ใกล้หมด · {qty} ชิ้น";
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="bg-white rounded-xl p-3.5 border border-red-100/80 flex items-center justify-between shadow-2xs">
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="min-w-0 pr-2">
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="text-sm font-bold text-[#050315] truncate">@alert.Name</div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="text-xs text-gray-400 font-mono mt-0.5">@alert.Sku</div>
                         </div>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 @badgeCls">
                             @statusLbl
                         </span>
@@ -106,93 +144,215 @@
     }
     else
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 flex items-center gap-2.5 text-emerald-800">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs sm:text-sm font-bold">สต็อกสินค้าทั้งหมดอยู่ในระดับปกติ ไม่มีสินค้าใกล้หมดหรือขาดสต็อก</span>
         </div>
     }
 
-    <!-- Search & Filter Bar (Matching frame_9_3.png) -->
-    @* Form Parameters expected by Controller:
-       [SearchQuery: string, Category: string, StockStatus: string]
-    *@
-    <div class="flex flex-wrap items-center gap-3">
-        <!-- Search Input -->
-        <div class="relative flex-1 min-w-[260px]">
-            <svg class="size-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="stockSearch" placeholder="ค้นหาชื่อสินค้าหรือ SKU..."
-                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 focus:border-[#2F39A9] shadow-2xs" />
-        </div>
+    <!-- Search & Filter Bar (Server-side PRG & GET Query Filter) -->
+    <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+        @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
+        <form asp-controller="Staff" asp-action="Index" class="flex-1 flex flex-wrap items-center gap-2.5">
+            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
+            <input type="hidden" name="stockFilter" value="@selectedStockFilter" />
+            <!-- Search Input -->
+            <div class="relative flex-1 min-w-[220px]">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                <svg class="size-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
+                <input type="text" name="search" id="stockSearch" value="@selectedSearch" placeholder="ค้นหาชื่อสินค้าหรือ SKU (รองรับพิมพ์ติดกันไม่มีขีด)..."
+                       class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 focus:border-[#2F39A9] shadow-2xs" />
+            </div>
 
-        <!-- Category Dropdown -->
-        <div class="relative">
-            <select id="stockCategoryFilter" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none focus:border-[#2F39A9]">
-                @foreach (var c in dbCategories)
-                {
-                    <option value="@c">@c</option>
-                }
-            </select>
-            <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        </div>
+            <!-- Category Dropdown -->
+            <div class="relative">
+                @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
+                <select name="category" id="stockCategoryFilter" onchange="this.form.submit()" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none focus:border-[#2F39A9]">
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+                    @if (selectedCategory == "all")
+                    {
+                        <option value="all" selected>ทุกหมวดหมู่</option>
+                    }
+                    else
+                    {
+                        <option value="all">ทุกหมวดหมู่</option>
+                    }
+                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+                    @foreach (var c in dbCategories)
+                    {
+                        if (string.Equals(c, selectedCategory, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <option value="@c" selected>@c</option>
+                        }
+                        else
+                        {
+                            <option value="@c">@c</option>
+                        }
+                    }
+                </select>
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
 
-        <!-- Status Filter Tabs (Figma Buttons) -->
-        <div class="flex items-center gap-1.5" id="stockStatusButtons">
-            <button type="button" onclick="filterStockStatus('all')" class="status-tab px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-sm font-semibold transition cursor-pointer">
+            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-sm font-semibold transition-colors cursor-pointer">
+                ค้นหา
+            </button>
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+            @if (!string.IsNullOrWhiteSpace(selectedSearch) || selectedCategory != "all" || selectedStockFilter != "all")
+            {
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                <a asp-controller="Staff" asp-action="Index" class="px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-600 transition-colors">
+                    ล้างตัวกรอง
+                </a>
+            }
+        </form>
+
+        <!-- Status Filter Tabs (Server-side Route Filter across Pages) -->
+        <div class="flex flex-wrap items-center gap-1.5" id="stockStatusButtons">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="all" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "all" ? "bg-[#2F39A9] text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-2xs")">
                 ทั้งหมด @totalProductCount
-            </button>
-            <button type="button" onclick="filterStockStatus('ปกติ')" class="status-tab px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium transition cursor-pointer shadow-2xs">
+            </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="normal" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "normal" ? "bg-[#2F39A9] text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-2xs")">
                 ปกติ @normalCount
-            </button>
-            <button type="button" onclick="filterStockStatus('ใกล้หมด')" class="status-tab px-4 py-2 rounded-xl bg-white border border-[#FDE68A] text-[#D97706] hover:bg-amber-50 text-sm font-medium transition cursor-pointer shadow-2xs">
+            </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="low" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "low" ? "bg-[#D97706] text-white" : "bg-white border border-[#FDE68A] text-[#D97706] hover:bg-amber-50 shadow-2xs")">
                 ใกล้หมด @lowCount
-            </button>
-            <button type="button" onclick="filterStockStatus('หมด')" class="status-tab px-4 py-2 rounded-xl bg-white border border-[#FECACA] text-[#DC2626] hover:bg-red-50 text-sm font-medium transition cursor-pointer shadow-2xs">
+            </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+            <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="out" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "out" ? "bg-[#DC2626] text-white" : "bg-white border border-[#FECACA] text-[#DC2626] hover:bg-red-50 shadow-2xs")">
                 หมด @outOfStockCount
-            </button>
+            </a>
         </div>
     </div>
 
-    <!-- Stock Table Card (Exact 5 Columns from Figma frame_9_3.png) -->
+    <!-- Stock Card: Desktop Table & Mobile Cards -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto">
+        <!-- Mobile Card View -->
+        <div class="md:hidden divide-y divide-gray-100">
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+            @if (hasDbProducts)
+            {
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+                @foreach (var p in Model!)
+                {
+                    var totalStock = p.Inventory != null ? p.Inventory.QuantityOnHand : 0;
+                    var safetyLevel = p.Inventory?.SafetyStockLevel ?? 5;
+                    var statusText = totalStock <= 0 ? "หมด" : totalStock <= safetyLevel ? "ใกล้หมด" : "ปกติ";
+                    var statusClass = totalStock <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : totalStock <= safetyLevel ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DCFCE7] text-[#16A34A]";
+                    var stockClass = totalStock <= 0 ? "text-[#DC2626]" : totalStock <= safetyLevel ? "text-[#D97706]" : "text-[#050315]";
+                    var categoryName = p.Category?.CategoryName ?? "ทั่วไป";
+                    var imgPath = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png";
+
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div class="p-4 space-y-2.5 stock-row" data-category="@categoryName" data-status="@statusText">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                        <div class="flex items-start justify-between gap-3">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                            <div class="flex items-center gap-3 min-w-0">
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                <div class="size-11 rounded-xl border border-gray-200 bg-white shrink-0 overflow-hidden">
+                                    @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                                    <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
+                                </div>
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                <div class="min-w-0">
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                    <div class="font-bold text-[#050315] text-sm truncate">@p.Name</div>
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                    <div class="text-xs text-gray-400 mt-0.5">@categoryName · ฿@p.RetailPrice.ToString("N0")</div>
+                                </div>
+                            </div>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 whitespace-nowrap @statusClass">
+                                @statusText
+                            </span>
+                        </div>
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                        <div class="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="font-mono text-gray-500">SKU: @p.Sku</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="font-bold @stockClass">คงเหลือ @totalStock ชิ้น</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                <div class="py-8 text-center text-xs text-gray-400">
+                    ไม่พบรายการสินค้าในคลัง
+                </div>
+            }
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+            @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
             <table class="w-full text-sm min-w-[620px]" id="stockTable">
+                @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                 <thead>
+                    @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                     <tr class="border-b border-gray-100 text-left text-xs font-semibold text-gray-400">
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6">สินค้า</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6">SKU</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-center">คงเหลือ</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-4 px-6 text-center">สถานะ</th>
-                        <th class="py-4 px-6 text-left">รับเข้าล่าสุด</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
+                        <th class="py-4 px-6 text-left">วันที่เพิ่มสินค้า</th>
                     </tr>
                 </thead>
+                @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-gray-100">
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                     @if (hasDbProducts)
                     {
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var p in Model!)
                         {
                             var totalStock = p.Inventory != null ? p.Inventory.QuantityOnHand : 0;
-                            var statusText = totalStock <= 0 ? "หมด" : totalStock <= 3 ? "ใกล้หมด" : "ปกติ";
-                            var statusClass = totalStock <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : totalStock <= 3 ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DCFCE7] text-[#16A34A]";
-                            var stockClass = totalStock <= 0 ? "text-[#DC2626]" : totalStock <= 3 ? "text-[#D97706]" : "text-[#050315]";
+                            var safetyLevel = p.Inventory?.SafetyStockLevel ?? 5;
+                            var statusText = totalStock <= 0 ? "หมด" : totalStock <= safetyLevel ? "ใกล้หมด" : "ปกติ";
+                            var statusClass = totalStock <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : totalStock <= safetyLevel ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DCFCE7] text-[#16A34A]";
+                            var stockClass = totalStock <= 0 ? "text-[#DC2626]" : totalStock <= safetyLevel ? "text-[#D97706]" : "text-[#050315]";
                             var categoryName = p.Category?.CategoryName ?? "ทั่วไป";
+                            var imgPath = !string.IsNullOrEmpty(p.ImageUrl) ? p.ImageUrl : "~/media/images/naruto_hero_fig.png";
 
+                            @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-gray-50/70 transition-colors stock-row" data-category="@categoryName" data-status="@statusText">
-                                <!-- Product Name & SVG Icon -->
+                                <!-- Product Image & Name -->
                                 <td class="py-4 px-6 flex items-center gap-3.5">
-                                    <div class="size-8 rounded-lg bg-[#92EEFF]/25 text-[#2F39A9] flex items-center justify-center shrink-0">
-                                        <svg class="size-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                                        </svg>
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                    <div class="size-11 rounded-xl border border-gray-200 bg-white shrink-0 overflow-hidden">
+                                        @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                                        <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
                                     </div>
+                                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div>
+                                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                         <div class="font-bold text-[#050315] text-sm">@p.Name</div>
+                                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                         <div class="text-xs text-gray-400 mt-0.5">@categoryName · ฿@p.RetailPrice.ToString("N0")</div>
                                     </div>
                                 </td>
@@ -209,21 +369,24 @@
 
                                 <!-- Status Pill -->
                                 <td class="py-4 px-6 text-center">
-                                    <span class="text-xs font-semibold px-3 py-1 rounded-full @statusClass">
+                                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                    <span class="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap @statusClass">
                                         @statusText
                                     </span>
                                 </td>
 
-                                <!-- Last Restocked Date -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @p.CreatedAt.ToString("dd MMM yyyy")
+                                <!-- Created Date -->
+                                <td class="py-4 px-6 text-gray-500 text-xs whitespace-nowrap">
+                                    @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(p.CreatedAt))
                                 </td>
                             </tr>
                         }
                     }
                     else
                     {
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td colspan="5" class="py-8 text-center text-xs text-gray-400">
                                 ไม่พบรายการสินค้าในคลัง
                             </td>
@@ -235,48 +398,71 @@
 
         <!-- แถบแบ่งหน้ารายการสต็อกสินค้า เชื่อมโยงกับ StaffController.Index -->
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4 text-sm">
-            <span class="text-xs text-gray-500">แสดง @startRow–@endRow จากทั้งหมด @totalProductCount รายการ</span>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="text-xs text-gray-500">แสดง @startRow–@endRow จากที่ตรงเงื่อนไข @filteredCount รายการ</span>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-1.5">
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (currentPage > 1)
                 {
-                    <a asp-controller="Staff" asp-action="Index" asp-route-page="@(currentPage - 1)"
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                    <a asp-controller="Staff" asp-action="Index"
+                       asp-route-page="@(currentPage - 1)"
+                       asp-route-stockFilter="@selectedStockFilter"
+                       asp-route-search="@selectedSearch"
+                       asp-route-category="@selectedCategory"
                        class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
                         ก่อนหน้า
                     </a>
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 text-xs font-medium cursor-not-allowed">
                         ก่อนหน้า
                     </span>
                 }
 
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @for (int p = 1; p <= totalPages; p++)
                 {
                     if (p == currentPage)
                     {
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="size-8 rounded-lg bg-[#2F39A9] text-white text-xs font-bold flex items-center justify-center">
                             @p
                         </span>
                     }
                     else
                     {
-                        <a asp-controller="Staff" asp-action="Index" asp-route-page="@p"
+                        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                        <a asp-controller="Staff" asp-action="Index"
+                           asp-route-page="@p"
+                           asp-route-stockFilter="@selectedStockFilter"
+                           asp-route-search="@selectedSearch"
+                           asp-route-category="@selectedCategory"
                            class="size-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium flex items-center justify-center cursor-pointer">
                             @p
                         </a>
                     }
                 }
 
+                @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (currentPage < totalPages)
                 {
-                    <a asp-controller="Staff" asp-action="Index" asp-route-page="@(currentPage + 1)"
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                    <a asp-controller="Staff" asp-action="Index"
+                       asp-route-page="@(currentPage + 1)"
+                       asp-route-stockFilter="@selectedStockFilter"
+                       asp-route-search="@selectedSearch"
+                       asp-route-category="@selectedCategory"
                        class="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium cursor-pointer">
                         ถัดไป
                     </a>
                 }
                 else
                 {
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 text-xs font-medium cursor-not-allowed">
                         ถัดไป
                     </span>
@@ -285,42 +471,95 @@
         </div>
     </div>
 
-    <!-- ประวัติการรับสินค้าเข้าสต็อกล่าสุดจากฐานข้อมูลจริง -->
+    <!-- ประวัติการรับสินค้าเข้าสต็อกล่าสุด -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4.5 text-[#2F39A9]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>ประวัติการรับสินค้าเข้าคลังล่าสุด</span>
             </div>
-            <span class="text-xs text-gray-400">ดึงข้อมูลตรงจากบันทึกคลังสินค้า</span>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+            <span class="text-xs text-gray-400">แสดง @recentRestockLogs.Count รายการล่าสุด</span>
         </div>
-        <div class="overflow-x-auto">
+
+        <!-- Mobile Card View -->
+        <div class="md:hidden divide-y divide-gray-100">
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
+            @if (recentRestockLogs.Any())
+            {
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
+                @foreach (var log in recentRestockLogs)
+                {
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                    <div class="p-4 space-y-1.5">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                        <div class="flex items-center justify-between gap-2 text-xs">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="font-mono text-[#2F39A9] font-semibold">@log.LogCode</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                            <span class="text-gray-400 whitespace-nowrap">@Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</span>
+                        </div>
+                        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+                        <p class="text-xs text-[#050315] font-medium leading-relaxed">@log.Message</p>
+                    </div>
+                }
+            }
+            else
+            {
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                <div class="py-6 text-center text-xs text-gray-400">
+                    ยังไม่มีประวัติการรับสินค้าเข้าคลังในรอบล่าสุด
+                </div>
+            }
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+            @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
             <table class="w-full text-xs min-w-[540px]">
+                @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
                 <thead>
+                    @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                     <tr class="text-left font-semibold text-gray-400 border-b border-gray-100 bg-[#FBFBFE]">
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-3 px-6">วันและเวลา</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-3 px-6">รหัสรายการ</th>
+                        @* เซลล์หัวตารางระบุชื่อหัวข้อคอลัมน์ *@
                         <th class="py-3 px-6">รายละเอียดการรับเข้าคลัง</th>
                     </tr>
                 </thead>
+                @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-gray-100">
+                    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                     @if (recentRestockLogs.Any())
                     {
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var log in recentRestockLogs)
                         {
+                            @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-gray-50/70 transition-colors">
-                                <td class="py-3 px-6 text-gray-500 font-mono whitespace-nowrap">@log.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
+                                <td class="py-3 px-6 text-gray-500 whitespace-nowrap">@Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</td>
+                                @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                 <td class="py-3 px-6 font-mono text-[#2F39A9] font-semibold whitespace-nowrap">@log.LogCode</td>
+                                @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                 <td class="py-3 px-6 text-[#050315] font-medium">@log.Message</td>
                             </tr>
                         }
                     }
                     else
                     {
+                        @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
+                            @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                             <td colspan="3" class="py-6 text-center text-gray-400">
                                 ยังไม่มีประวัติการรับสินค้าเข้าคลังในรอบล่าสุด
                             </td>
@@ -331,27 +570,35 @@
         </div>
     </div>
 
-    <!-- Staff Console Shift Footer (Matching Figma frame_9_3.png) -->
+    <!-- Staff Console Shift Footer -->
     <div class="pt-6 border-t border-gray-200/60 flex items-center justify-between flex-wrap gap-2 text-xs text-gray-400">
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
-            FriendHouse Staff Console · เข้าสู่ระบบเป็น ณัฐชา ใจดี (พนักงานสต็อก) · กะ 09:00–18:00
+            FriendHouse Staff Console · ผู้ใช้งานปัจจุบัน: @(Context.Session.GetString("UserName") ?? "พนักงานหน้าร้าน")
         </div>
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
-            อัปเดตล่าสุด @DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+            อัปเดตล่าสุด @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(DateTime.Now)) @DateTime.Now.ToString("HH:mm") น.
         </div>
     </div>
 </div>
 
 <!-- ==================== หน้าต่างรับสินค้าเข้าสต็อก (รวมโหมดสแกนและกรอกเอง) ==================== -->
 <div id="receiveStockModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8">
         <!-- ส่วนหัวหน้าต่างรับสินค้า -->
         <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-lg font-bold text-[#050315]">รับสินค้าเข้าสต็อก</h2>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs text-slate-500 mt-0.5">เลือกรับสินค้าโดยการสแกนบาร์โค้ด หรือเลือกกรอกรหัสสินค้าด้วยตนเอง</p>
             </div>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -361,30 +608,40 @@
 
         <!-- แถบเลือกโหมดภายในหน้าต่าง: สแกน หรือ กรอกเอง -->
         <div class="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100 p-1">
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" id="tabBtnScanMode" onclick="switchReceiveMode('scan')"
                     class="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold bg-white text-[#2F39A9] shadow-xs transition cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                     <circle cx="12" cy="13" r="4"></circle>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>สแกนรหัสสินค้า</span>
             </button>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" id="tabBtnManualMode" onclick="switchReceiveMode('manual')"
                     class="flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-slate-500 hover:text-[#050315] transition cursor-pointer">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
                 </svg>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>กรอกรับเข้าด้วยตนเอง</span>
             </button>
         </div>
 
         <!-- โหมดที่ 1: สแกนผ่านกล้องเว็บแคมหรือเครื่องยิงบาร์โค้ด -->
         <div id="receivePanelScan" class="space-y-4">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="rounded-2xl border-2 border-dashed border-[#92EEFF] bg-[#FBFBFE] p-4 text-center space-y-3">
                 <video id="barcodeCameraVideo" class="hidden w-full h-44 rounded-xl object-cover bg-slate-900" playsinline muted></video>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div id="cameraPlaceholderBox" class="py-4 space-y-2">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="size-11 rounded-xl bg-[#2F39A9] text-white mx-auto flex items-center justify-center shadow-xs">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
                             <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
@@ -393,14 +650,19 @@
                             <line x1="7" y1="12" x2="17" y2="12"></line>
                         </svg>
                     </div>
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-xs font-bold text-[#050315]">พร้อมรับรหัสจากเครื่องยิงบาร์โค้ดหรือกล้องเว็บแคม</div>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p id="cameraStatusText" class="text-[11px] text-slate-500">ยิงบาร์โค้ดลงในช่องด้านล่าง หรือกดเปิดกล้องเพื่ออ่านรหัสบนกล่องสินค้าอัตโนมัติ</p>
                 </div>
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center justify-center gap-2">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" id="btnStartCamera" onclick="startBarcodeCamera()"
                             class="rounded-xl bg-[#2F39A9]/10 hover:bg-[#2F39A9]/20 text-[#2F39A9] px-3.5 py-2 text-xs font-bold transition cursor-pointer">
                         เปิดกล้องสแกนบาร์โค้ด
                     </button>
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" id="btnStopCamera" onclick="stopBarcodeCamera()"
                             class="hidden rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 px-3.5 py-2 text-xs font-bold transition cursor-pointer">
                         ปิดกล้อง
@@ -408,20 +670,29 @@
                 </div>
             </div>
 
+            @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
             <form asp-controller="Staff" asp-action="ScanReceive" class="space-y-4">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="currentPage" value="@currentPage" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-[#050315] block mb-1.5">รหัสบาร์โค้ด หรือรหัสสินค้าที่สแกนได้</label>
+                    @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                     <input type="text" name="sku" id="scanModeSkuInput" required placeholder="สแกนบาร์โค้ดหรือพิมพ์รหัส เช่น FIG-NARUTO-001"
                            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
                 </div>
 
                 <!-- ปุ่มเลือกสินค้ายอดนิยมจากฐานข้อมูลจริงเพื่อทดสอบหรือกรอกเร็ว -->
                 <div class="space-y-1.5">
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-[11px] font-semibold text-slate-400">รหัสสินค้าในคลังด่วน:</div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex flex-wrap gap-1.5">
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var qp in allModalProducts.Take(4))
                         {
+                            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                             <button type="button" onclick="fillScanSku('@qp.Sku')"
                                     class="rounded-lg border border-slate-200 bg-slate-50 hover:border-[#2F39A9] hover:text-[#2F39A9] px-2.5 py-1 text-[11px] font-mono text-slate-600 transition cursor-pointer">
                                 @qp.Sku
@@ -430,15 +701,21 @@
                     </div>
                 </div>
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-[#050315] block mb-1.5">จำนวนที่รับเข้า</label>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2">
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="adjustModalQty('scanModeQtyInput', -1)"
                                 class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
                             −
                         </button>
+                        @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                         <input type="number" name="quantity" id="scanModeQtyInput" value="5" min="1" required
                                class="flex-1 text-center py-2 rounded-xl border border-slate-200 font-bold text-base text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="adjustModalQty('scanModeQtyInput', 1)"
                                 class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
                             +
@@ -446,10 +723,13 @@
                     </div>
                 </div>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="rounded-xl bg-[#3027FF] hover:bg-[#261ECC] px-5 py-2.5 text-xs font-bold text-white shadow-xs cursor-pointer">
                         ยืนยันรับสินค้าเข้าสต็อก
                     </button>
@@ -459,13 +739,19 @@
 
         <!-- โหมดที่ 2: กรอกรับเข้าด้วยตนเองและเลือกจากรายชื่อสินค้าทั้งหมดในฐานข้อมูล -->
         <div id="receivePanelManual" class="hidden space-y-4">
+            @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
             <form asp-controller="Staff" asp-action="ScanReceive" class="space-y-4">
+                @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                 <input type="hidden" name="currentPage" value="@currentPage" />
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-[#050315] block mb-1.5">เลือกรายการสินค้าจากฐานข้อมูล</label>
+                    @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select id="manualProductPicker" onchange="syncPickerToManualSku(this.value)"
                             class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-[#050315] focus:border-[#2F39A9] focus:outline-none">
                         <option value="">-- เลือกสินค้าที่ต้องการเติมสต็อก --</option>
+                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var mp in allModalProducts)
                         {
                             var qoh = mp.Inventory?.QuantityOnHand ?? 0;
@@ -474,21 +760,30 @@
                     </select>
                 </div>
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-[#050315] block mb-1.5">หรือกรอกรหัสสินค้าด้วยตนเอง</label>
+                    @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                     <input type="text" name="sku" id="manualModeSkuInput" required placeholder="ระบุรหัสสินค้าหรือบาร์โค้ด"
                            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
                 </div>
 
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-[#050315] block mb-1.5">จำนวนที่รับเข้า</label>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2">
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="adjustModalQty('manualModeQtyInput', -1)"
                                 class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
                             −
                         </button>
+                        @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                         <input type="number" name="quantity" id="manualModeQtyInput" value="10" min="1" required
                                class="flex-1 text-center py-2 rounded-xl border border-slate-200 font-bold text-base text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
+                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                         <button type="button" onclick="adjustModalQty('manualModeQtyInput', 1)"
                                 class="size-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 font-bold text-slate-700 cursor-pointer">
                             +
@@ -496,10 +791,13 @@
                     </div>
                 </div>
 
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="closeReceiveStockModal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">
                         ยกเลิก
                     </button>
+                    @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] px-5 py-2.5 text-xs font-bold text-white shadow-xs cursor-pointer">
                         ยืนยันรับสินค้าเข้าสต็อก
                     </button>
@@ -510,8 +808,11 @@
 </div>
 
 @section Scripts {
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         let cameraStream = null;
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         let scanAnimationTimer = null;
 
         // ฟังก์ชันเปิดหน้าต่างรับสินค้าเข้าสต็อกพร้อมเลือกโหมดเริ่มต้น
@@ -528,24 +829,35 @@
 
         // ฟังก์ชันสลับระหว่างแท็บสแกนและแท็บกรอกด้วยตนเอง
         function switchReceiveMode(mode) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const scanPanel = document.getElementById('receivePanelScan');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const manualPanel = document.getElementById('receivePanelManual');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const scanBtn = document.getElementById('tabBtnScanMode');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const manualBtn = document.getElementById('tabBtnManualMode');
 
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const activeCls = 'flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold bg-white text-[#2F39A9] shadow-xs transition cursor-pointer';
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const inactiveCls = 'flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-slate-500 hover:text-[#050315] transition cursor-pointer';
 
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (mode === 'manual') {
                 stopBarcodeCamera();
                 scanPanel?.classList.add('hidden');
                 manualPanel?.classList.remove('hidden');
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (scanBtn) scanBtn.className = inactiveCls;
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (manualBtn) manualBtn.className = activeCls;
             } else {
                 manualPanel?.classList.add('hidden');
                 scanPanel?.classList.remove('hidden');
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (scanBtn) scanBtn.className = activeCls;
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (manualBtn) manualBtn.className = inactiveCls;
                 setTimeout(() => document.getElementById('scanModeSkuInput')?.focus(), 50);
             }
@@ -553,7 +865,9 @@
 
         // ฟังก์ชันเติมรหัสสินค้าจากการกดปุ่มด่วนในโหมดสแกน
         function fillScanSku(sku) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const input = document.getElementById('scanModeSkuInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (input) {
                 input.value = sku;
                 input.focus();
@@ -562,7 +876,9 @@
 
         // ฟังก์ชันเชื่อมต่อรายชื่อสินค้าจากดรอปดาวน์เข้ากับช่องกรอกรหัสในโหมดกรอกเอง
         function syncPickerToManualSku(sku) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const input = document.getElementById('manualModeSkuInput');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (input && sku) {
                 input.value = sku;
             }
@@ -570,27 +886,39 @@
 
         // ฟังก์ชันเพิ่มหรือลดจำนวนสินค้าที่รับเข้าในหน้าต่างรับสินค้า
         function adjustModalQty(inputId, delta) {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const input = document.getElementById(inputId);
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (!input) return;
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const currentVal = parseInt(input.value, 10) || 1;
             input.value = Math.max(1, currentVal + delta);
         }
 
         // ฟังก์ชันเปิดกล้องเว็บแคมและตรวจจับรหัสบาร์โค้ดหรือคิวอาร์โค้ดจริงผ่านเบราว์เซอร์
         async function startBarcodeCamera() {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const video = document.getElementById('barcodeCameraVideo');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const placeholder = document.getElementById('cameraPlaceholderBox');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const statusText = document.getElementById('cameraStatusText');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const btnStart = document.getElementById('btnStartCamera');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const btnStop = document.getElementById('btnStopCamera');
 
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (statusText) statusText.innerText = 'เบราว์เซอร์หรืออุปกรณ์นี้ไม่รองรับการเปิดกล้อง สามารถยิงบาร์โค้ดเข้าช่องกรอกด้านล่างได้ทันที';
+                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                 return;
             }
 
             try {
                 cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (video) {
                     video.srcObject = cameraStream;
                     await video.play();
@@ -602,14 +930,20 @@
 
                 // ตรวจสอบความพร้อมของตัวถอดรหัสบาร์โค้ดมาตรฐานบนเบราว์เซอร์
                 if ('BarcodeDetector' in window) {
+                    // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                     const detector = new window.BarcodeDetector({ formats: ['qr_code', 'ean_13', 'code_128', 'code_39'] });
+                    // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                     const detectFrame = async () => {
+                        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                         if (!cameraStream || !video) return;
                         try {
+                            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
                             const codes = await detector.detect(video);
+                            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                             if (codes && codes.length > 0 && codes[0].rawValue) {
                                 fillScanSku(codes[0].rawValue);
                                 stopBarcodeCamera();
+                                // ส่งคืนค่าหรือจบการทำงานของฟังก์ชัน
                                 return;
                             }
                         } catch (_) { }
@@ -618,21 +952,26 @@
                     scanAnimationTimer = requestAnimationFrame(detectFrame);
                 }
             } catch (_) {
+                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
                 if (statusText) statusText.innerText = 'ไม่สามารถเข้าถึงกล้องได้ กรุณาอนุญาตสิทธิ์กล้องหรือยิงรหัสจากเครื่องสแกนบาร์โค้ดลงในช่องด้านล่าง';
             }
         }
 
         // ฟังก์ชันหยุดการทำงานของกล้องเว็บแคมและคืนพื้นที่หน้าจอ
         function stopBarcodeCamera() {
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (scanAnimationTimer) {
                 cancelAnimationFrame(scanAnimationTimer);
                 scanAnimationTimer = null;
             }
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (cameraStream) {
                 cameraStream.getTracks().forEach(t => t.stop());
                 cameraStream = null;
             }
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const video = document.getElementById('barcodeCameraVideo');
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (video) {
                 video.srcObject = null;
                 video.classList.add('hidden');
@@ -648,52 +987,6 @@
             {
                 <text>openReceiveStockModal('scan');</text>
             }
-        });
-
-        function filterStockStatus(status) {
-            const rows = document.querySelectorAll('.stock-row');
-            const buttons = document.querySelectorAll('.status-tab');
-
-            buttons.forEach(btn => {
-                if (btn.innerText.includes(status === 'all' ? 'ทั้งหมด' : status)) {
-                    btn.className = 'status-tab px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-sm font-semibold transition cursor-pointer';
-                } else {
-                    btn.className = 'status-tab px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium transition cursor-pointer shadow-2xs';
-                }
-            });
-
-            rows.forEach(r => {
-                if (status === 'all' || r.getAttribute('data-status') === status) {
-                    r.style.display = '';
-                } else {
-                    r.style.display = 'none';
-                }
-            });
-        }
-
-        document.getElementById('stockSearch')?.addEventListener('input', function (e) {
-            // รองรับการค้นหารหัสสินค้าและชื่อสินค้าโดยไม่ต้องพิมพ์เครื่องหมายขีด (-) หรือ #
-            const q = e.target.value.toLowerCase().trim();
-            const qNoHyphen = q.replace(/[-#\s]/g, '');
-            const rows = document.querySelectorAll('.stock-row');
-            rows.forEach(r => {
-                const text = r.innerText.toLowerCase();
-                const textNoHyphen = text.replace(/[-#\s]/g, '');
-                const matched = !q || text.includes(q) || (qNoHyphen.length > 0 && textNoHyphen.includes(qNoHyphen));
-                r.style.display = matched ? '' : 'none';
-            });
-        });
-
-        document.getElementById('stockCategoryFilter')?.addEventListener('change', function (e) {
-            const cat = e.target.value;
-            const rows = document.querySelectorAll('.stock-row');
-            rows.forEach(r => {
-                if (cat === 'ทุกหมวดหมู่' || r.getAttribute('data-category') === cat) {
-                    r.style.display = '';
-                } else {
-                    r.style.display = 'none';
-                }
-            });
         });
     </script>
 }

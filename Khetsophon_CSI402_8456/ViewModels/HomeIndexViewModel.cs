@@ -47,6 +47,9 @@ public class HeroProductViewModel
     // ป้ายข้อความกำกับสถานะ เช่น ฟิกเกอร์คอลเลกชัน · มีสินค้า
     public string BadgeText { get; set; } = string.Empty;
 
+    // ระบุว่ามีสินค้าพร้อมส่งหน้าร้านหรือไม่
+    public bool InStock { get; set; } = true;
+
     // ข้อความแจ้งเตือนเงื่อนไขการรับสินค้า
     public string NoticeText { get; set; } = string.Empty;
 
@@ -68,6 +71,12 @@ public class HomePromotionCardViewModel
 
     // รหัสคูปองส่วนลดถ้ามี
     public string? Code { get; set; }
+
+    // ขอบเขตสินค้าที่ร่วมรายการสำหรับเชื่อมลิงก์ไปยังหน้าคอลเลกชัน
+    public string? ApplicableScope { get; set; }
+
+    // ประเภทโปรโมชั่น
+    public string? PromoType { get; set; }
 
     // วันหมดอายุของโปรโมชั่น
     public string? ExpiryText { get; set; }

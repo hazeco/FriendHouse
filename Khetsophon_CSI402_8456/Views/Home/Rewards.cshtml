@@ -24,51 +24,72 @@
                       string.Equals(sessionRole, "customer", StringComparison.OrdinalIgnoreCase);
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span>/</span>
+        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span class="text-text font-semibold">แคตตาล็อกแลกแต้มสะสม</span>
     </nav>
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["SuccessMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["SuccessMessage"]</span>
         </div>
     }
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (TempData["ErrorMessage"] != null)
     {
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2 shadow-xs">
+            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-4 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>@TempData["ErrorMessage"]</span>
         </div>
     }
 
+    @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (!isCustomer)
     {
         <!-- Guest Gate / Member-only Notification -->
         <div class="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-12 text-center shadow-xs max-w-2xl mx-auto space-y-6">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="mx-auto flex size-20 items-center justify-center rounded-3xl bg-secondary/30 text-primary shadow-sm">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="space-y-2">
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-text">สิทธิพิเศษสำหรับสมาชิก FriendHouse</h1>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
                     หน้าแคตตาล็อกแลกแต้มสะสมเปิดให้เฉพาะสมาชิกเท่านั้น กรุณาเข้าสู่ระบบเพื่อตรวจสอบแต้มสะสมและแลกรับของรางวัลพรีเมียมลิขสิทธิ์แท้
                 </p>
             </div>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                 <a asp-controller="Account" asp-action="Login"
                    class="w-full sm:w-auto rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-xs hover:opacity-90 transition-opacity text-center">
                     เข้าสู่ระบบเพื่อแลกแต้ม
                 </a>
+                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                 <a asp-controller="Account" asp-action="Register"
                    class="w-full sm:w-auto rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors text-center">
                     สมัครสมาชิกใหม่
@@ -80,31 +101,43 @@
     {
         <!-- Points Summary Card Banner -->
         <div class="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-r from-blue-50 via-indigo-50/70 to-secondary/15 p-6 sm:p-8 shadow-xs">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                 <!-- Points Info -->
                 <div class="space-y-2">
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2 text-primary font-bold text-sm">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex size-7 items-center justify-center rounded-full bg-primary text-white">
+                            @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                             <svg class="size-4 fill-current" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
                             </svg>
                         </div>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>คะแนนสะสมของคุณ</span>
                     </div>
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-baseline gap-2">
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span id="currentPointsDisplay" class="text-4xl sm:text-5xl font-extrabold text-primary">@userPointsFormatted</span>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span class="text-sm sm:text-base font-bold text-primary/70">แต้มสะสม</span>
                     </div>
+                    @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                     <p class="text-xs sm:text-sm text-slate-600">คุณสามารถใช้แต้มเพื่อแลกรับสินค้าสุดพิเศษและของพรีเมียมได้ที่นี่ โดยไม่มีค่าใช้จ่าย</p>
                 </div>
 
                 <!-- History Button -->
                 <div>
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="openHistoryModal()" class="rounded-xl border border-primary/30 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-primary shadow-xs transition-colors hover:bg-slate-50 cursor-pointer flex items-center gap-2">
+                        @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
+                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                         <span>ประวัติการแลกแต้ม (@redemptionsList.Count รายการ)</span>
                     </button>
                 </div>
@@ -113,60 +146,82 @@
 
         <!-- Category Filters -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var cat in rewardCategories)
                 {
+                    @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="filterRewardCategory('@cat.Label', this)"
                             class="reward-cat-btn rounded-xl @(cat.IsActive ? "bg-primary text-white" : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50") px-4 py-2 text-xs font-semibold shadow-xs cursor-pointer whitespace-nowrap transition-colors">
                         @cat.Label
                     </button>
                 }
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-xs text-slate-500">
-                แสดงของรางวัลจริงจากฐานข้อมูลทั้งหมด <span id="visibleRewardCount">@rewardsList.Count</span> รายการ
+                แสดงของรางวัลทั้งหมด <span id="visibleRewardCount">@rewardsList.Count</span> รายการ
             </div>
         </div>
 
         <!-- Rewards Grid (Real Database Rows) -->
         <div id="rewardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var item in rewardsList)
             {
-                <div class="reward-card group flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all hover:-translate-y-1 hover:shadow-lg"
+                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                <div class="reward-card group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all hover:border-primary/40 hover:shadow-md"
                      data-category="@item.CategoryTag"
                      data-available="@(item.IsAvailable ? "true" : "false")"
                      data-afford="@(item.CanAfford ? "true" : "false")">
+                    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
-                        <!-- Thumbnail with Tag -->
-                        <div class="relative block aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
-                            <span class="absolute top-3 left-3 z-10 rounded-md bg-primary px-2.5 py-1 text-[10px] font-bold text-white shadow-xs backdrop-blur-xs">
-                                @item.CategoryTag
-                            </span>
-                            <span class="absolute top-3 right-3 z-10 rounded-md @(item.IsAvailable ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800") px-2 py-0.5 text-[10px] font-bold shadow-xs">
-                                @(item.IsAvailable ? $"คงเหลือ {item.StockQuantity} ชิ้น" : "หมดชั่วคราว")
-                            </span>
-
-                            <img src="@Url.Content(item.ImageUrl)" alt="@item.Title"
-                                 class="size-full object-cover"
+                        <!-- รูปภาพของแลกแต้มเต็มกรอบครึ่งบนการ์ด -->
+                        <div class="aspect-square w-full overflow-hidden bg-white border-b border-slate-100">
+                            @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
+                            <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(item.ImageUrl))" alt="@item.Title"
+                                 class="size-full object-cover object-top"
                                  loading="lazy" />
                         </div>
 
-                        <!-- Details -->
-                        <div class="mt-4 space-y-1">
-                            <span class="text-[11px] font-semibold text-primary">@item.Brand</span>
-                            <h3 class="text-sm font-bold text-text leading-snug line-clamp-2">
-                                @item.Title
-                            </h3>
+                        <!-- Badges & Details (Below Photo) -->
+                        <div class="p-4 pb-0 space-y-2">
+                            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+                            <div class="flex flex-wrap items-center justify-between gap-1.5">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                    @item.CategoryTag
+                                </span>
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="rounded-md @(item.IsAvailable ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200") px-2 py-0.5 text-[10px] font-bold">
+                                    @(item.IsAvailable ? $"คงเหลือ {item.StockQuantity} ชิ้น" : "หมดชั่วคราว")
+                                </span>
+                            </div>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                            <div class="space-y-1">
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                <span class="text-[11px] font-semibold text-primary block">@item.Brand</span>
+                                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
+                                <h3 class="text-sm font-bold text-text leading-snug line-clamp-2">
+                                    @item.Title
+                                </h3>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Points & Action Buttons -->
-                    <div class="mt-5 pt-3 border-t border-slate-100 space-y-3">
+                    <div class="mt-4 p-4 pt-3 border-t border-slate-100 space-y-3">
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-[10px] font-semibold text-slate-400">แต้มที่ต้องใช้</span>
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-base font-extrabold text-primary">@item.PointsText</span>
                         </div>
 
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="w-full">
+                            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                             @if (item.IsAvailable)
                             {
                                 if (item.CanAfford)
@@ -185,6 +240,7 @@
                                 }
                                 else
                                 {
+                                    @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
                                     <button type="button" disabled
                                        class="w-full flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 border border-slate-200 py-2.5 px-3 text-xs font-bold cursor-not-allowed">
                                         แต้มสะสมไม่เพียงพอ
@@ -193,6 +249,7 @@
                             }
                             else
                             {
+                                @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
                                 <button type="button" disabled
                                    class="w-full flex items-center justify-center rounded-xl bg-slate-200 py-2.5 px-3 text-xs font-bold text-slate-400 cursor-not-allowed">
                                     ของรางวัลหมดชั่วคราว
@@ -203,6 +260,27 @@
                 </div>
             }
         </div>
+
+        <!-- Empty Filter State (แสดงเมื่อตัวกรองหมวดหมู่ไม่พบรายการ) -->
+        <div id="rewardsEmptyFilterState" class="hidden rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-10 text-center space-y-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
+            <div class="mx-auto size-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
+                <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+            <div class="text-sm font-bold text-text">ไม่พบของรางวัลในหมวดหมู่นี้</div>
+            @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
+            <p class="text-xs text-slate-500">ลองเลือกหมวดหมู่อื่นหรือดูรายการของรางวัลทั้งหมด</p>
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
+            <button type="button" onclick="resetRewardFilter()"
+                    class="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-accent transition cursor-pointer">
+                แสดงของรางวัลทั้งหมด
+            </button>
+        </div>
     }
 </div>
 
@@ -210,13 +288,20 @@
 
 <!-- Redemptions History Modal -->
 <div id="historyModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto animate-scale-up">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-lg font-bold text-text">ประวัติการแลกของรางวัล</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs text-slate-500">รายการรหัสแลกของรางวัลของคุณที่บันทึกในระบบฐานข้อมูลจริง</p>
             </div>
-            <button type="button" onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
+            <button type="button" onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer" aria-label="ปิดหน้าต่าง">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -224,18 +309,26 @@
             </button>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="space-y-3">
+            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (redemptionsList.Any())
             {
                 foreach (var red in redemptionsList)
                 {
+                    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200/80 bg-slate-50/60">
+                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div class="space-y-0.5 min-w-0">
+                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="text-xs font-mono font-bold text-primary">@red.RedemptionCode</span>
                             <h4 class="text-sm font-bold text-text truncate">@red.RewardTitle</h4>
+                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                             <div class="text-[11px] text-slate-400">แลกเมื่อ: @red.RedeemedAtFormatted · ใช้ @red.PointsSpentFormatted</div>
+                            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                             @if (!string.IsNullOrEmpty(red.PickupDateFormatted) || !string.IsNullOrEmpty(red.ContactPhone))
                             {
+                                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="text-[11px] font-semibold text-slate-600">
                                     @(string.IsNullOrEmpty(red.PickupDateFormatted) ? "" : $"นัดรับ: {red.PickupDateFormatted}")
                                     @((!string.IsNullOrEmpty(red.PickupDateFormatted) && !string.IsNullOrEmpty(red.ContactPhone)) ? " · " : "")
@@ -243,21 +336,26 @@
                                 </div>
                             }
                         </div>
+                        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center gap-2 shrink-0">
+                            @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                             @if (red.IsCompleted)
                             {
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                                     @red.StatusText
                                 </span>
                             }
                             else if (red.IsCancelled)
                             {
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
                                     @red.StatusText
                                 </span>
                             }
                             else
                             {
+                                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-[#2F39A9]">
                                     @red.StatusText
                                 </span>
@@ -278,12 +376,14 @@
             }
             else
             {
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-center py-8 text-slate-400 text-xs">
                     ยังไม่มีประวัติการแลกของรางวัล
                 </div>
             }
         </div>
 
+        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
         <button type="button" onclick="closeHistoryModal()" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
             ปิด
         </button>
@@ -292,65 +392,98 @@
 
 <!-- Confirm Redeem Validate Alert Modal (ป้องกันลูกค้ากดแลกผิดพลาด) -->
 <div id="confirmRedeemModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-start gap-3.5">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base sm:text-lg font-extrabold text-text">ยืนยันการแลกของรางวัล</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p class="text-xs text-slate-500 mt-0.5">โปรดตรวจสอบรายละเอียดก่อนตัดแต้มสะสมและจองสินค้า</p>
             </div>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-2.5 text-xs">
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-slate-400 block">ของรางวัลที่เลือก</span>
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span id="redeemModalTitle" class="text-sm font-extrabold text-text"></span>
             </div>
+            @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
             <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200/80">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400 block">แต้มปัจจุบัน</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="redeemModalUserPoints" class="font-bold text-text"></span>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400 block">แต้มที่หัก</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="redeemModalCost" class="font-extrabold text-rose-600"></span>
                 </div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="text-slate-400 block">คงเหลือ</span>
+                    @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span id="redeemModalRemaining" class="font-extrabold text-primary"></span>
                 </div>
             </div>
         </div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div id="redeemValidateWarning" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700"></div>
 
+        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 leading-relaxed">
             ระบบจะตัดแต้มสะสมและสำรองสต็อกของรางวัลให้คุณทันทีหลังกดยืนยัน กรุณาระบุวันที่สะดวกรับและเบอร์โทรติดต่อ (สินค้าแลกแต้มไม่สามารถใช้โค้ดส่วนลดโปรโมชั่นร่วมได้)
         </div>
 
         @* ฟอร์มยืนยันส่งคำขอแลกของรางวัลไปยัง HomeController แอ็กชัน RedeemReward พร้อมวันรับและเบอร์โทร (ไม่ใส่ method) *@
         <form id="confirmRedeemForm" asp-controller="Home" asp-action="RedeemReward" class="space-y-3 pt-1">
+            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" id="redeemModalRewardId" name="rewardId" value="" />
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label for="redeemModalPickupDate" class="block text-xs font-bold text-slate-700 mb-1">วันที่สะดวกเข้ารับของรางวัลที่หน้าร้าน</label>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                 <input type="date" id="redeemModalPickupDate" name="pickupDate" min="@minPickupDate" required autocomplete="off"
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label for="redeemModalPhone" class="block text-xs font-bold text-slate-700 mb-1">เบอร์โทรศัพท์สำหรับแจ้งรับของรางวัล</label>
+                @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                 <input type="tel" id="redeemModalPhone" name="contactPhone" value="@userPhone" placeholder="08x-xxx-xxxx" required
                        class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs font-semibold text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20" />
             </div>
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2.5 pt-1">
+                @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                 <button type="button" onclick="closeConfirmRedeemModal()" class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                     ยกเลิก
                 </button>
+                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                 <button type="submit" id="redeemModalSubmitBtn" class="flex-1 rounded-xl bg-accent py-2.5 text-xs font-bold text-white hover:opacity-90 transition-opacity cursor-pointer shadow-xs">
                     ยืนยันการแลกแต้ม
                 </button>
@@ -361,30 +494,42 @@
 
 <!-- Confirm Cancel Redemption Modal -->
 <div id="confirmCancelRedeemModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-start gap-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
+                @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base font-extrabold text-text">ยืนยันยกเลิกการจองแลกของรางวัล</h3>
+                @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                 <p id="cancelRedeemModalCode" class="text-xs font-mono text-primary font-bold mt-0.5"></p>
             </div>
         </div>
+        @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
         <p class="text-xs text-slate-600 leading-relaxed">
             ต้องการยกเลิกการจอง "<span id="cancelRedeemModalTitle" class="font-bold text-text"></span>" ใช่หรือไม่? ระบบจะคืนแต้มสะสมจำนวน <span id="cancelRedeemModalPoints" class="font-bold text-emerald-700"></span> แต้ม และคืนสต็อกสินค้ากลับเข้าสู่ระบบทันที
         </p>
 
         @* ฟอร์มยกเลิกการจองแลกของรางวัล ส่งไปยัง HomeController แอ็กชัน CancelRedemption *@
         <form asp-controller="Home" asp-action="CancelRedemption" class="flex items-center gap-2.5 pt-1">
+            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" id="cancelRedeemModalId" name="redemptionId" value="" />
+            @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="returnAction" value="Rewards" />
+            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeCancelRedeemModal()" class="flex-1 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer">
                 ย้อนกลับ
             </button>
+            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
             <button type="submit" class="flex-1 rounded-xl bg-rose-600 py-2.5 text-xs font-bold text-white hover:bg-rose-700 cursor-pointer shadow-xs">
                 ยืนยันยกเลิกและคืนแต้ม
             </button>
@@ -393,14 +538,19 @@
 </div>
 
 @section Scripts {
+@* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
 <script>
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     function openHistoryModal() {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('historyModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     function closeHistoryModal() {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('historyModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -408,11 +558,17 @@
 
     // เปิดหน้าต่าง Validate Alert ยืนยันก่อนตัดแต้มและจองของรางวัล
     function openConfirmRedeemModal(btn) {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const rewardId = btn.dataset.rewardId || '';
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const title = btn.dataset.rewardTitle || '';
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const cost = parseInt(btn.dataset.rewardPoints || '0', 10);
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const stock = parseInt(btn.dataset.rewardStock || '0', 10);
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const userPts = parseInt(btn.dataset.userPoints || '0', 10);
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const remaining = userPts - cost;
 
         document.getElementById('redeemModalRewardId').value = rewardId;
@@ -421,8 +577,11 @@
         document.getElementById('redeemModalCost').textContent = '-' + cost.toLocaleString('th-TH') + ' แต้ม';
         document.getElementById('redeemModalRemaining').textContent = Math.max(0, remaining).toLocaleString('th-TH') + ' แต้ม';
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const warningEl = document.getElementById('redeemValidateWarning');
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const submitBtn = document.getElementById('redeemModalSubmitBtn');
+        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
         if (stock <= 0) {
             warningEl.textContent = 'ขออภัย ของรางวัลชิ้นนี้หมดสต็อกชั่วคราว ไม่สามารถทำรายการได้';
             warningEl.classList.remove('hidden');
@@ -439,12 +598,15 @@
             submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('confirmRedeemModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     function closeConfirmRedeemModal() {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('confirmRedeemModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -457,12 +619,15 @@
         document.getElementById('cancelRedeemModalTitle').textContent = btn.dataset.rewardTitle || '';
         document.getElementById('cancelRedeemModalPoints').textContent = parseInt(btn.dataset.pointsSpent || '0', 10).toLocaleString('th-TH');
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('confirmCancelRedeemModal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
     function closeCancelRedeemModal() {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const modal = document.getElementById('confirmCancelRedeemModal');
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -475,23 +640,47 @@
         });
         clickedBtn.className = 'reward-cat-btn rounded-xl bg-primary text-white px-4 py-2 text-xs font-semibold shadow-xs cursor-pointer whitespace-nowrap transition-colors';
 
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         let visibleCount = 0;
         document.querySelectorAll('.reward-card').forEach(card => {
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const cat = (card.dataset.category || '').toLowerCase();
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const avail = card.dataset.available === 'true';
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const afford = card.dataset.afford === 'true';
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             const isFigure = cat.includes('ฟิกเกอร์') || cat.includes('figure');
+            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
             let show = false;
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (label === 'ทั้งหมด') show = true;
             else if (label === 'แลกได้ทันที') show = avail && afford;
             else if (label === 'ฟิกเกอร์สะสม') show = isFigure;
             else show = cat.includes(label.toLowerCase()) || (label === 'ของสะสมพรีเมียม' && !isFigure);
 
             card.classList.toggle('hidden', !show);
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
             if (show) visibleCount++;
         });
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
         const countEl = document.getElementById('visibleRewardCount');
+        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
         if (countEl) countEl.textContent = visibleCount;
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+        const emptyEl = document.getElementById('rewardsEmptyFilterState');
+        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+        if (emptyEl) emptyEl.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
+    function resetRewardFilter() {
+        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+        const allBtn = document.querySelector('.reward-cat-btn');
+        // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+        if (allBtn) {
+            filterRewardCategory('ทั้งหมด', allBtn);
+        }
     }
 </script>
 }

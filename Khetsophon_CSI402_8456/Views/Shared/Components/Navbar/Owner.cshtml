@@ -2,9 +2,9 @@
     var brand = new {
         LogoUrl = "~/logo/logo.png",
         Name = "FriendHouse",
-        UserName = "จอห์น หงษ์ทอง",
+        UserName = ViewBag.RoleUserName as string ?? "เจ้าของร้าน",
         UserRole = "เจ้าของร้าน",
-        UserInitials = "จอ"
+        UserInitials = ViewBag.RoleUserInitials as string ?? "จอ"
     };
 
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -19,36 +19,51 @@
     }
 }
 
+@* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="bg-[#2F39A9] text-white">
+    @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         <!-- Brand -->
         <a asp-controller="Owner" asp-action="Promotions" class="flex items-center gap-3 shrink-0 cursor-pointer">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
+                @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
                 <img src="@Url.Content(brand.LogoUrl)" alt="@brand.Name" class="size-full object-cover" onerror="this.outerHTML='<span class=\'text-[#2F39A9] font-black text-xs\'>FH</span>'" />
             </div>
+            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
         <!-- Center Nav Items (Figma frame_9_7.png) -->
         <nav class="hidden md:flex items-center gap-2">
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>สินค้าและของรางวัล</span>
             </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Owner" asp-action="Promotions" class="@NavClass("Promotions")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>โปรโมชั่น</span>
             </a>
+            @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Owner" asp-action="MonthlyReport" class="@NavClass("MonthlyReport")">
+                @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>รายงาน</span>
             </a>
         </nav>
 
         <!-- Right User (Figma frame_9_7.png: "จอห์น หงษ์ทอง / เจ้าของร้าน", initials "จอ") -->
         <div class="flex items-center gap-3">
+            @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-full bg-[#3E4AB8] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                 @brand.UserInitials
             </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="hidden sm:block text-left">
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-xs font-bold leading-tight text-white">@brand.UserName</div>
+                @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="text-[10px] text-white/70 leading-tight">@brand.UserRole</div>
             </div>
             @* ลิงก์ออกจากระบบ สไตล์เดียวกับ Customer พร้อมเอฟเฟกต์ hover สีแดง นำทางไปยัง AccountController แอ็กชัน Logout *@
@@ -59,15 +74,13 @@
         </div>
     </div>
 
-    <!-- Mobile Sub-navigation Bar -->
+    <!-- Mobile Sub-navigation Bar (ไม่ซ้ำปุ่มออกจากระบบ) -->
     <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog") text-xs py-1.5 px-3 shrink-0">สินค้าและของรางวัล</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Owner" asp-action="Promotions" class="@NavClass("Promotions") text-xs py-1.5 px-3 shrink-0">โปรโมชั่น</a>
+        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Owner" asp-action="MonthlyReport" class="@NavClass("MonthlyReport") text-xs py-1.5 px-3 shrink-0">รายงาน</a>
-        @* ลิงก์ออกจากระบบสำหรับหน้าจอมือถือ พร้อม hover สีแดง *@
-        <a asp-controller="Account" asp-action="Logout" asp-route-role="owner"
-           class="text-xs font-semibold text-white/70 hover:text-red-400 transition-colors cursor-pointer py-1.5 px-3 shrink-0 ml-auto">
-            ออกจากระบบ
-        </a>
     </div>
 </div>
