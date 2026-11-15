@@ -1,9 +1,99 @@
+@* กำหนดโมเดลข้อมูลสำหรับเคาน์เตอร์พรีออเดอร์หน้าร้าน *@
 @model Khetsophon_CSI402_8456.ViewModels.CounterPreorderViewModel;
+@* กำหนดฟังก์ชันช่วยเหลือและการประมวลผลสำหรับหน้าเคาน์เตอร์พรีออเดอร์ *@
 @{
+
+    // ฟังก์ชันแปลงวันที่นัดรับสินค้าเป็นภาษาไทย
+    string FormatPickupDateThai(string? isoDate)
+    {
+        if (!string.IsNullOrWhiteSpace(isoDate) &&
+            DateOnly.TryParseExact(isoDate.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed))
+        {
+            return parsed.ToString("d MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("th-TH"));
+        }
+        return "-";
+    }
+
+    // ฟังก์ชันสกัดข้อมูลสถานะและเหตุผลการไม่รับสินค้า/ไม่มารับสินค้า/ยกเลิกคำสั่งจองจากตาราง Systemlogs
+    (string BadgeTitle, string StepTitle, string NoticeText, string ReasonDetail) ResolveOrderCancelMeta(
+        IEnumerable<Systemlog>? logs,
+        string? referenceCode,
+        bool isReward = false)
+    {
+        // กำหนดหัวข้อเริ่มต้นตามประเภทรายการ
+        string defaultTitle = isReward ? "ยกเลิกการแลกของรางวัล" : "ยกเลิกคำสั่งจอง";
+        // กำหนดข้อความแจ้งเตือนเริ่มต้นสำหรับของรางวัลหรือสินค้าพรีออเดอร์
+        string defaultNotice = isReward
+            ? "รายการแลกของรางวัลนี้ถูกยกเลิกแล้ว ระบบได้คืนแต้มสะสมและคืนสต็อกของรางวัลเรียบร้อยแล้ว"
+            : "รายการนี้ถูกยกเลิกตามคำขอของลูกค้า และระบบได้คืนสิทธิ์สต็อกสินค้าเรียบร้อยแล้ว";
+        // หากไม่มีข้อมูลประวัติการทำงานหรือไม่มีรหัสอ้างอิง ให้ส่งคืนค่าเริ่มต้น
+        if (logs == null || string.IsNullOrWhiteSpace(referenceCode))
+            return (defaultTitle, defaultTitle, defaultNotice, "ลูกค้าแจ้งยกเลิกรายการ");
+        // ตัดช่องว่างของรหัสอ้างอิงเพื่อใช้เปรียบเทียบ
+        string cleanCode = referenceCode.Trim();
+        // ค้นหาบันทึกประวัติการยกเลิกหรือปฏิเสธรับสินค้าที่ตรงกับรหัสอ้างอิง
+        var matchedLog = logs
+            .Where(l => !string.IsNullOrEmpty(l.Message) &&
+                        l.Message.Contains(cleanCode, StringComparison.OrdinalIgnoreCase) &&
+                        (l.Module == "CounterPreorder" || l.Module == "preorder.cancel" || l.Module == "reward.cancel" ||
+                         l.LogCode.StartsWith("REJECT", StringComparison.OrdinalIgnoreCase) ||
+                         l.LogCode.StartsWith("NOSHOW", StringComparison.OrdinalIgnoreCase) ||
+                         l.LogCode.StartsWith("PO-CAN", StringComparison.OrdinalIgnoreCase) ||
+                         l.LogCode.StartsWith("RWD-CAN", StringComparison.OrdinalIgnoreCase)))
+            .OrderByDescending(l => l.Timestamp)
+            .FirstOrDefault();
+        // หากไม่พบบันทึกประวัติที่ตรงกัน ให้ส่งคืนค่าเริ่มต้น
+        if (matchedLog == null)
+            return (defaultTitle, defaultTitle, defaultNotice, "ลูกค้าแจ้งยกเลิกรายการ");
+        // ข้อความรายละเอียดในบันทึกระบบ
+        string msg = matchedLog.Message ?? string.Empty;
+        // ตัวแปรเก็บข้อความสาเหตุการยกเลิก
+        string reasonPart = string.Empty;
+        // ค้นหาตำแหน่งคำว่า สาเหตุ: ในข้อความ
+        int reasonIdx = msg.IndexOf("สาเหตุ:", StringComparison.OrdinalIgnoreCase);
+        // สกัดข้อความสาเหตุหากพบในบันทึก
+        if (reasonIdx >= 0)
+        {
+            // ดึงข้อความตั้งแต่ตำแหน่งคำว่า สาเหตุ:
+            reasonPart = msg[reasonIdx..].Trim();
+            // ค้นหาตำแหน่งข้อความการคืนเงินหรือคืนแต้มเพื่อตัดออก
+            int refundIdx = reasonPart.IndexOf("| คืน", StringComparison.OrdinalIgnoreCase);
+            // ตัดข้อความส่วนเกินออกให้เหลือเฉพาะสาเหตุหลัก
+            if (refundIdx > 0) reasonPart = reasonPart[..refundIdx].Trim();
+            // ลบข้อความที่ระบุว่า ไม่มี ออกเพื่อให้กระชับ
+            reasonPart = reasonPart.Replace("| รายละเอียด: ไม่มี", "").Replace("| หมายเหตุ: ไม่มี", "").Trim();
+        }
+        // ตรวจสอบกรณีลูกค้าปฏิเสธไม่รับสินค้าที่หน้าร้าน
+        if (matchedLog.LogCode.StartsWith("REJECT", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("ลูกค้าไม่รับ", StringComparison.OrdinalIgnoreCase))
+        {
+            // กำหนดหัวข้อตามประเภทของรางวัลหรือสินค้า
+            string title = isReward ? "ลูกค้าไม่รับของรางวัล" : "ลูกค้าไม่รับสินค้า";
+            // กำหนดรายละเอียดสาเหตุการปฏิเสธ
+            string detail = !string.IsNullOrWhiteSpace(reasonPart) ? reasonPart : "สาเหตุ: ลูกค้าปฏิเสธไม่รับสินค้าที่เคาน์เตอร์หน้าร้าน";
+            // ส่งคืนข้อมูลสถานะและข้อความแจ้งเตือนกรณีไม่รับสินค้า
+            return (title, title, $"รายการนี้{title}ที่หน้าร้าน — {detail} (คืนสต็อกเรียบร้อยแล้ว)", detail);
+        }
+        // ตรวจสอบกรณีลูกค้าไม่มารับสินค้าตามกำหนดนัดหมาย
+        if (matchedLog.LogCode.StartsWith("NOSHOW", StringComparison.OrdinalIgnoreCase) ||
+            msg.Contains("ลูกค้าไม่มารับ", StringComparison.OrdinalIgnoreCase))
+        {
+            // กำหนดหัวข้อตามประเภทของรางวัลหรือสินค้า
+            string title = isReward ? "ลูกค้าไม่มารับของรางวัล" : "ลูกค้าไม่มารับสินค้า";
+            // กำหนดรายละเอียดสาเหตุที่ไม่มารับตามนัด
+            string detail = !string.IsNullOrWhiteSpace(reasonPart) ? reasonPart : "สาเหตุ: ลูกค้าไม่มารับตามกำหนดนัดหมาย";
+            // ส่งคืนข้อมูลสถานะและข้อความแจ้งเตือนกรณีไม่มารับสินค้า
+            return (title, title, $"รายการนี้ถูกยกเลิกเนื่องจาก{title}ตามกำหนด — {detail} (คืนสต็อกเรียบร้อยแล้ว)", detail);
+        }
+        // กรณีลูกค้ากดยกเลิกรายการด้วยตนเอง
+        string cancelDetail = !string.IsNullOrWhiteSpace(reasonPart) ? reasonPart : "สาเหตุ: ลูกค้ากดยกเลิกคำสั่งจองด้วยตนเอง";
+        // ส่งคืนข้อมูลสถานะและข้อความแจ้งเตือนกรณีลูกค้ายกเลิก
+        return (defaultTitle, defaultTitle, $"รายการนี้ถูกยกเลิกตามคำขอของลูกค้า — {cancelDetail} (คืนสิทธิ์สต็อกเรียบร้อยแล้ว)", cancelDetail);
+    }
     ViewData["Title"] = "เคาน์เตอร์พรีออเดอร์";
     Layout = "_StaffLayout";
 
-    // Top-of-file Media & Content Configuration
+    // การกำหนดค่าข้อความส่วนหัวของหน้าเคาน์เตอร์พรีออเดอร์ตามกฎโครงการ
     var pageHeader = new {
         Title = "เคาน์เตอร์พรีออเดอร์",
         Subtitle = "ค้นหาลูกค้าเพื่อเช็คสถานะรับสินค้าที่จองไว้"
@@ -11,25 +101,32 @@
 
     var preorderResult = ViewBag.SearchResult as Khetsophon_CSI402_8456.Models.Preorder;
     var redemptionResult = ViewBag.SearchResultRedemption as Khetsophon_CSI402_8456.Models.Rewardredemption;
-    var redemptionMetaMap = ViewBag.RedemptionMetaMap as Dictionary<string, Khetsophon_CSI402_8456.Helpers.RedemptionMetaPayload>;
-    var preorderPromoMap = ViewBag.PreorderPromoMap as Dictionary<string, Khetsophon_CSI402_8456.Helpers.PreorderPromoPayload>;
-    Khetsophon_CSI402_8456.Helpers.RedemptionMetaPayload? activeRedemptionMeta = null;
+    var redemptionMetaMap = ViewBag.RedemptionMetaMap as Dictionary<string, Khetsophon_CSI402_8456.ViewModels.RedemptionMetaPayload>;
+    var preorderPromoMap = ViewBag.PreorderPromoMap as Dictionary<string, Khetsophon_CSI402_8456.ViewModels.PreorderPromoPayload>;
+    Khetsophon_CSI402_8456.ViewModels.RedemptionMetaPayload? activeRedemptionMeta = null;
     if (redemptionResult != null && redemptionMetaMap != null)
     {
         redemptionMetaMap.TryGetValue(redemptionResult.RedemptionCode, out activeRedemptionMeta);
     }
-    Khetsophon_CSI402_8456.Helpers.PreorderPromoPayload? activePreorderPromo = null;
+    Khetsophon_CSI402_8456.ViewModels.PreorderPromoPayload? activePreorderPromo = null;
     if (preorderResult != null && preorderPromoMap != null)
     {
         preorderPromoMap.TryGetValue(preorderResult.ReservationNumber, out activePreorderPromo);
     }
     string currentContactPhone = preorderResult?.ContactPhone ?? preorderResult?.User?.Phone ?? "";
     string? memberNotFoundPhone = TempData["MemberNotFoundPhone"] as string;
+    var cancelLogs = ViewBag.CancelLogs as IEnumerable<Khetsophon_CSI402_8456.Models.Systemlog>;
+    var preorderCancelMeta = preorderResult != null
+        ? ResolveOrderCancelMeta(cancelLogs, preorderResult.ReservationNumber, isReward: false)
+        : (BadgeTitle: "ยกเลิกคำสั่งจอง", StepTitle: "ยกเลิกคำสั่งจอง", NoticeText: "รายการนี้ถูกยกเลิกแล้ว", ReasonDetail: "");
+    var redemptionCancelMeta = redemptionResult != null
+        ? ResolveOrderCancelMeta(cancelLogs, redemptionResult.RedemptionCode, isReward: true)
+        : (BadgeTitle: "ยกเลิกการแลกของรางวัล", StepTitle: "ยกเลิกการแลกของรางวัล", NoticeText: "รายการแลกของรางวัลนี้ถูกยกเลิกแล้ว", ReasonDetail: "");
 
-    // แปลงสถานะของใบสั่งจองเป็นข้อความภาษาไทยสำหรับการแสดงผล
+    // แปลงสถานะของใบสั่งจองเป็นข้อความภาษาไทยสำหรับการแสดงผล (แสดงสถานะไม่รับสินค้า/ไม่มารับสินค้า/ยกเลิกตามจริง)
     string statusBadgeThai = preorderResult?.CurrentStatus switch {
         "Completed" => "รับสินค้าแล้ว",
-        "Cancelled" => "ยกเลิกรายการ",
+        "Cancelled" => preorderCancelMeta.BadgeTitle,
         "ReadyForPickup" => "พร้อมรับสินค้า",
         "PendingConfirm" => "รอยืนยัน",
         _ => preorderResult?.CurrentStatus ?? "รอมารับสินค้า"
@@ -60,7 +157,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="max-w-3xl mx-auto space-y-6">
-    <!-- Header Center -->
+    @* ส่วนหัวหน้าเพจแสดงชื่อเรื่องและคำอธิบาย *@
     <div class="text-center space-y-1">
         @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
         <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
@@ -68,7 +165,7 @@
         <p class="text-sm text-gray-500">@pageHeader.Subtitle</p>
     </div>
 
-    <!-- Notification Messages (Flash TempData) -->
+    @* กล่องแสดงข้อความแจ้งเตือนผลการดำเนินงาน *@
     @if (TempData["SuccessMessage"] != null)
     {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -145,7 +242,7 @@
         </div>
     }
 
-    <!-- 1. กรณีพบรายการแลกของรางวัลในระบบ -->
+    @* แสดงรายละเอียดรายการแลกของรางวัลเมื่อค้นพบในระบบ *@
     @if (redemptionResult != null)
     {
         string redeemBadgeClass = redemptionResult.Status switch {
@@ -226,14 +323,14 @@
                         @if (!string.IsNullOrEmpty(activeRedemptionMeta?.PickupDate))
                         {
                             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                            <span class="text-primary">นัดรับ @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatPickupDateThai(activeRedemptionMeta.PickupDate) · </span>
+                            <span class="text-primary">นัดรับ @FormatPickupDateThai(activeRedemptionMeta.PickupDate) · </span>
                         }
                         @(redemptionResult.CompletedAt.HasValue ? $"ส่งมอบเมื่อ {redemptionResult.CompletedAt.Value:dd MMM yyyy HH:mm น.}" : redemptionResult.Status == "Cancelled" ? "ยกเลิกและคืนแต้มสะสมแล้ว" : "ยังไม่ได้ส่งมอบ")
                     </div>
                 </div>
             </div>
 
-            <!-- สถานะและแถบปุ่มดำเนินการ 3 ปุ่มสำหรับสินค้าแลกแต้ม -->
+            @* กล่องแสดงสถานะและปุ่มดำเนินการ 3 ปุ่มสำหรับรายการแลกของรางวัล *@
             @if (redemptionResult.Status == "Completed")
             {
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -276,15 +373,15 @@
                         </div>
                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
-                            <h4 class="text-sm font-extrabold text-rose-950">รายการแลกของรางวัลนี้ถูกยกเลิกแล้ว</h4>
+                            <h4 class="text-sm font-extrabold text-rose-950">@redemptionCancelMeta.BadgeTitle</h4>
                             @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
-                            <p class="text-xs text-rose-700 mt-0.5">ลูกค้าไม่รับสินค้าหรือไม่ได้มารับตามกำหนด ระบบได้คืน @redemptionResult.PointsSpent.ToString("N0") แต้มสะสมและคืนสต็อกของรางวัลเรียบร้อยแล้ว</p>
+                            <p class="text-xs text-rose-700 mt-0.5">@redemptionCancelMeta.NoticeText (คืน @redemptionResult.PointsSpent.ToString("N0") แต้มสะสมแล้ว)</p>
                         </div>
                     </div>
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0 shadow-xs">
                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                        <span>ยกเลิก / คืนแต้มแล้ว</span>
+                        <span>@redemptionCancelMeta.BadgeTitle</span>
                     </span>
                 </div>
             }
@@ -355,12 +452,12 @@
         </div>
     }
 
-    <!-- 2. การแสดงรายการพรีออเดอร์ -->
+    @* แสดงรายละเอียดคำสั่งจองพรีออเดอร์เมื่อค้นพบในระบบ *@
     @if (preorderResult != null)
     {
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-5">
-            <!-- Top Status Header -->
+            @* แถบแสดงสถานะและหมายเลขใบสั่งจองพรีออเดอร์ด้านบน *@
             <div class="flex items-center justify-between flex-wrap gap-2">
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-2 text-sm font-bold text-[#050315]">
@@ -385,7 +482,7 @@
                 </span>
             </div>
 
-            <!-- Product Items List Block -->
+            @* รายการสินค้าฟิกเกอร์ในใบสั่งจองพรีออเดอร์ *@
             <div class="space-y-3">
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (preorderResult.Preorderitems != null && preorderResult.Preorderitems.Any())
@@ -462,7 +559,7 @@
                 }
             </div>
 
-            <!-- Details Grid -->
+            @* ตารางแสดงข้อมูลรายละเอียดคำสั่งจอง วันที่รับสินค้า และช่องทางติดต่อ *@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 pt-2 border-t border-gray-100">
                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div>
@@ -494,10 +591,10 @@
                 </div>
             </div>
 
-            <!-- สถานะของคำสั่งจอง และฟอร์มการดำเนินการ -->
+            @* กล่องแสดงสถานะคำสั่งจองและฟอร์มดำเนินการส่งมอบสินค้า *@
             @if (preorderResult.CurrentStatus == "Completed")
             {
-                <!-- ป้องกันการกดซ้ำ: ออเดอร์ที่ Completed จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
+                @* แบนเนอร์แจ้งเตือนคำสั่งจองที่รับสินค้าเรียบร้อยแล้ว ป้องกันการกดซ้ำ *@
                 <div class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
@@ -530,7 +627,7 @@
             }
             else if (preorderResult.CurrentStatus == "Cancelled")
             {
-                <!-- ออเดอร์ที่ Cancelled จะแสดงเฉพาะแบนเนอร์แจ้งเตือน ไม่แสดงปุ่มใดๆ ทั้งสิ้น -->
+                @* แบนเนอร์แจ้งเตือนคำสั่งจองที่ถูกยกเลิก ไม่แสดงปุ่มดำเนินการใดๆ *@
                 <div class="rounded-2xl border border-rose-200 bg-rose-50/90 p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-3.5">
@@ -544,15 +641,15 @@
                         </div>
                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                         <div>
-                            <h4 class="text-sm font-extrabold text-rose-950">รายการนี้ถูกยกเลิกแล้ว</h4>
+                            <h4 class="text-sm font-extrabold text-rose-950">@preorderCancelMeta.BadgeTitle</h4>
                             @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
-                            <p class="text-xs text-rose-700 mt-0.5">ลูกค้าไม่รับสินค้าหรือไม่ได้มารับสินค้าตามกำหนด และระบบได้คืนสต็อกเรียบร้อยแล้ว</p>
+                            <p class="text-xs text-rose-700 mt-0.5">@preorderCancelMeta.NoticeText</p>
                         </div>
                     </div>
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shrink-0 shadow-xs">
                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                        <span>ยกเลิกรายการแล้ว</span>
+                        <span>@preorderCancelMeta.BadgeTitle</span>
                     </span>
                 </div>
             }
@@ -598,7 +695,7 @@
     }
     else if (redemptionResult == null)
     {
-        <!-- กล่องกรณีค้นหาไม่พบ หรือยังไม่ได้ค้นหา -->
+        @* กล่องแสดงสถานะเมื่อยังไม่ได้ค้นหา หรือค้นหาไม่พบข้อมูลในระบบ *@
         <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-10 text-center space-y-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-16 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
@@ -617,7 +714,7 @@
         </div>
     }
 
-    <!-- Recent Searches Card (ทางลัดค้นหาด่วนทั้งใบจองพรีออเดอร์และรายการแลกของรางวัล) -->
+    @* การ์ดรายการค้นหาล่าสุดเป็นทางลัดสำหรับพนักงานหน้าร้าน *@
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>

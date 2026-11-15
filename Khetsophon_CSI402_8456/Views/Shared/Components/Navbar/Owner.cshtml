@@ -23,8 +23,8 @@
 <div class="bg-[#2F39A9] text-white">
     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <!-- Brand -->
-        <a asp-controller="Owner" asp-action="Promotions" class="flex items-center gap-3 shrink-0 cursor-pointer">
+        @* ตราสินค้าและโลโก้ร้าน *@
+<a asp-controller="Owner" asp-action="Promotions" class="flex items-center gap-3 shrink-0 cursor-pointer">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
@@ -34,8 +34,8 @@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
-        <!-- Center Nav Items (Figma frame_9_7.png) -->
-        <nav class="hidden md:flex items-center gap-2">
+        @* เมนูนำทางหลักส่วนกลาง (Figma frame_9_7.png) *@
+<nav class="hidden md:flex items-center gap-2">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog")">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -53,8 +53,8 @@
             </a>
         </nav>
 
-        <!-- Right User (Figma frame_9_7.png: "จอห์น หงษ์ทอง / เจ้าของร้าน", initials "จอ") -->
-        <div class="flex items-center gap-3">
+        @* ข้อมูลผู้ใช้งานด้านขวา (Figma frame_9_7.png: "จอห์น หงษ์ทอง / เจ้าของร้าน", initials "จอ") *@
+<div class="flex items-center gap-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-full bg-[#3E4AB8] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                 @brand.UserInitials
@@ -74,8 +74,8 @@
         </div>
     </div>
 
-    <!-- Mobile Sub-navigation Bar (ไม่ซ้ำปุ่มออกจากระบบ) -->
-    <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+    @* แถบเมนูนำทางย่อยสำหรับมือถือ (ไม่ซ้ำปุ่มออกจากระบบ) *@
+<div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Owner" asp-action="Catalog" class="@NavClass("Catalog") text-xs py-1.5 px-3 shrink-0">สินค้าและของรางวัล</a>
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@

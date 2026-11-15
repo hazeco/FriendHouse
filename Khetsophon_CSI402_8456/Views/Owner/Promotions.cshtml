@@ -1,6 +1,65 @@
-@using Khetsophon_CSI402_8456.Helpers
+@* กำหนดโมเดลข้อมูลรายการโปรโมชั่นทั้งหมดในร้าน *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Promotion>
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าจัดการโปรโมชั่น *@
 @{
+
+    // ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทย
+    string FormatThaiDate(DateOnly date)
+    {
+        int year = date.Year;
+        if (year > 0 && year < 1900) year += 543;
+        else if (year >= 2400) year -= 543;
+        var gregorian = new DateOnly(year, date.Month, date.Day);
+        return gregorian.ToString("d MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("th-TH"));
+    }
+
+    // ฟังก์ชันดึงวันที่ปัจจุบันตามปีคริสต์ศักราช
+    DateOnly TodayGregorian() => new DateOnly(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
+
+    // ฟังก์ชันปรับปีของวันที่ให้เป็นคริสต์ศักราชมาตรฐาน
+    DateOnly NormalizeGregorianDate(DateOnly date)
+    {
+        int year = date.Year;
+        if (year > 0 && year < 1900) year += 543;
+        else if (year >= 2400) year -= 543;
+        return new DateOnly(year, date.Month, date.Day);
+    }
+
+    // ฟังก์ชันแปลงประเภทโปรโมชั่นเป็นข้อความภาษาไทย
+    string GetPromoTypeThaiLabel(string? promoType) =>
+        (promoType ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "percent" or "percentage" => "ส่วนลดเปอร์เซ็นต์",
+            "fixed" => "ส่วนลดมูลค่าคงที่",
+            "bogo" => "ซื้อ 1 แถม 1",
+            "bundle" => "ชุดเซ็ตสุดคุ้ม",
+            "double_points" => "แต้มสะสมสองเท่า",
+            _ => "โปรโมชั่นพิเศษ"
+        };
+
+    // ฟังก์ชันแปลงขอบเขตสินค้าที่ร่วมรายการโปรโมชั่นเป็นภาษาไทย
+    string GetScopeThaiLabel(string? scope) =>
+        (scope ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "all" or "" => "สินค้าทุกหมวดหมู่ในร้าน",
+            "figures" => "สินค้าหมวดฟิกเกอร์",
+            "clearance" => "สินค้าลดล้างสต๊อก / พร้อมส่ง",
+            _ => scope!
+        };
+
+    // ฟังก์ชันสรุปสิทธิประโยชน์ของโปรโมชั่นเป็นภาษาไทย
+    string FormatPromoBenefitSummary(Promotion promo)
+    {
+        decimal val = promo.DiscountValue ?? 0m;
+        return (promo.PromoType ?? "percent").Trim().ToLowerInvariant() switch
+        {
+            "percent" or "percentage" => $"ลด {val:0.#}%",
+            "bogo" => val > 0 ? $"ซื้อ 1 แถม 1 (สูงสุด ฿{val:N0})" : "ซื้อ 1 แถม 1",
+            "double_points" => "รับแต้มสะสม x2",
+            "bundle" => $"ชุดเซ็ตสุดคุ้ม ลด ฿{val:N0}",
+            _ => $"ลด ฿{val:N0}"
+        };
+    }
     // กำหนดชื่อหัวข้อของหน้าจัดการโปรโมชั่น
     ViewData["Title"] = "จัดการโปรโมชั่น";
     // กำหนด Layout หลักของฝั่งเจ้าของร้าน
@@ -11,7 +70,7 @@
     // ตรวจสอบว่ามีข้อมูลโปรโมชั่นในฐานข้อมูลหรือไม่
     var hasDbData = promoList.Count > 0;
     // ดึงวันที่ปัจจุบันตามปฏิทินสากลผ่าน Helper
-    var today = PromoAndRedemptionHelper.TodayGregorian();
+    var today = TodayGregorian();
     // คำนวณวันหมดเขตใกล้สุดล่วงหน้า 7 วัน
     var expiringLimit = today.AddDays(7);
 
@@ -33,7 +92,7 @@
         ExpiringSoon = promoList.Count(p =>
         {
             if (p.IsActive != true) return false;
-            var end = PromoAndRedemptionHelper.NormalizeGregorianDate(p.EndDate);
+            var end = NormalizeGregorianDate(p.EndDate);
             return end >= today && end <= expiringLimit;
         })
     };
@@ -118,11 +177,11 @@
             @foreach (var p in promoList)
             {
                 // ดึงชื่อประเภทโปรโมชั่นภาษาไทย
-                string typeLabel = PromoAndRedemptionHelper.GetPromoTypeThaiLabel(p.PromoType);
+                string typeLabel = GetPromoTypeThaiLabel(p.PromoType);
                 // ดึงข้อความสรุปสิทธิประโยชน์ของโปรโมชั่น
-                string benefitText = PromoAndRedemptionHelper.FormatPromoBenefitSummary(p);
+                string benefitText = FormatPromoBenefitSummary(p);
                 // จัดรูปแบบช่วงวันที่เริ่มต้นและสิ้นสุดเป็นภาษาไทย
-                string dateRangeText = $"{PromoAndRedemptionHelper.FormatThaiDate(p.StartDate)} - {PromoAndRedemptionHelper.FormatThaiDate(p.EndDate)}";
+                string dateRangeText = $"{FormatThaiDate(p.StartDate)} - {FormatThaiDate(p.EndDate)}";
 
                 @* กรอบการ์ดโปรโมชั่นบนมือถือ *@
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-4 space-y-3">
@@ -153,7 +212,7 @@
                     </div>
                     @* กล่องข้อมูลเงื่อนไขและระยะเวลาของโปรโมชั่น *@
                     <div class="text-xs text-gray-600 bg-[#FBFBFE] rounded-xl p-3 space-y-1 border border-gray-100">
-                        <div>@benefitText · ขั้นต่ำ @((p.MinimumSpend ?? 0m).ToString("N0")) บาท (@PromoAndRedemptionHelper.GetScopeThaiLabel(p.ApplicableScope))</div>
+                        <div>@benefitText · ขั้นต่ำ @((p.MinimumSpend ?? 0m).ToString("N0")) บาท (@GetScopeThaiLabel(p.ApplicableScope))</div>
                         <div class="text-gray-500">ระยะเวลา: @dateRangeText</div>
                     </div>
                     @* กลุ่มปุ่มแก้ไขและลบโปรโมชั่น *@
@@ -214,11 +273,11 @@
                         @foreach (var p in promoList)
                         {
                             // ดึงชื่อประเภทโปรโมชั่นภาษาไทย
-                            string typeLabel = PromoAndRedemptionHelper.GetPromoTypeThaiLabel(p.PromoType);
+                            string typeLabel = GetPromoTypeThaiLabel(p.PromoType);
                             // ดึงข้อความสรุปสิทธิประโยชน์ของโปรโมชั่น
-                            string benefitText = PromoAndRedemptionHelper.FormatPromoBenefitSummary(p);
+                            string benefitText = FormatPromoBenefitSummary(p);
                             // จัดรูปแบบช่วงวันที่เริ่มต้นและสิ้นสุดเป็นภาษาไทย
-                            string dateRangeText = $"{PromoAndRedemptionHelper.FormatThaiDate(p.StartDate)} - {PromoAndRedemptionHelper.FormatThaiDate(p.EndDate)}";
+                            string dateRangeText = $"{FormatThaiDate(p.StartDate)} - {FormatThaiDate(p.EndDate)}";
 
                             @* แถวข้อมูลโปรโมชั่น *@
                             <tr class="hover:bg-gray-50/70 transition-colors">
@@ -238,7 +297,7 @@
                                 @* คอลัมน์เงื่อนไขและระยะเวลา *@
                                 <td class="py-4 px-6 text-xs text-gray-600 leading-relaxed">
                                     <div>@benefitText (ยอดซื้อขั้นต่ำ @((p.MinimumSpend ?? 0m).ToString("N0")) บาท)</div>
-                                    <div class="text-gray-400 mt-0.5">@PromoAndRedemptionHelper.GetScopeThaiLabel(p.ApplicableScope) · @dateRangeText</div>
+                                    <div class="text-gray-400 mt-0.5">@GetScopeThaiLabel(p.ApplicableScope) · @dateRangeText</div>
                                 </td>
 
                                 @* คอลัมน์สวิตช์เปิด/ปิดสถานะโปรโมชั่น (ไม่ใส่ method attribute) *@

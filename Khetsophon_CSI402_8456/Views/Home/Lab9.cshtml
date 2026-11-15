@@ -1,3 +1,4 @@
+@* กำหนดโมเดลข้อมูลแบบฟอร์มนักศึกษา *@
 @model Khetsophon_CSI402_8456.Models.Labstudent
 @{
     ViewData["Title"] = "เพิ่มข้อมูลนักศึกษา ปฏิบัติการที่ 9";
@@ -28,8 +29,8 @@
 <div class="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="max-w-xl mx-auto">
-        <!-- การ์ดส่วนหัวแบบฟอร์ม -->
-        <div class="mb-6 flex items-center justify-between">
+        @* การ์ดส่วนหัวแบบฟอร์ม *@
+<div class="mb-6 flex items-center justify-between">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-action="Lab9_1" asp-controller="Home" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-accent transition-colors">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
@@ -47,8 +48,8 @@
 
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <!-- หัวข้อการ์ด -->
-            <div class="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-r from-primary/5 via-white to-secondary/10">
+            @* หัวข้อการ์ด *@
+<div class="p-6 sm:p-8 border-b border-slate-100 bg-gradient-to-r from-primary/5 via-white to-secondary/10">
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center gap-4">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -70,8 +71,8 @@
 
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="p-6 sm:p-8 space-y-6">
-                <!-- กล่องข้อความแจ้งเตือนสถานะ -->
-                @if (ViewBag.Status != null)
+                @* กล่องข้อความแจ้งเตือนสถานะ *@
+@if (ViewBag.Status != null)
                 {
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="rounded-xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-rose-700 text-sm">
@@ -84,10 +85,10 @@
                     </div>
                 }
 
-                <!-- ฟอร์มลงทะเบียน  -->
-                <form class="space-y-5" asp-action="Lab9" asp-controller="Home">
-                    <!-- รหัสนักศึกษา -->
-                    <div>
+                @* ฟอร์มลงทะเบียน *@
+<form class="space-y-5" asp-action="Lab9" asp-controller="Home">
+                    @* รหัสนักศึกษา *@
+<div>
                         @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdId</label>
                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -104,8 +105,8 @@
                         </div>
                     </div>
 
-                    <!-- รหัสผ่าน -->
-                    <div>
+                    @* รหัสผ่าน *@
+<div>
                         @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdPassword</label>
                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -124,16 +125,16 @@
 
                     @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- ชื่อ -->
-                        <div>
+                        @* ชื่อ *@
+<div>
                             @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                             <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdName</label>
                             @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
                             <input type="text" asp-for="StdName" placeholder="ชื่อจริง" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm text-text placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                         </div>
 
-                        <!-- นามสกุล -->
-                        <div>
+                        @* นามสกุล *@
+<div>
                             @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                             <label class="block text-xs font-semibold text-text mb-1.5">@pageConfig.Labels.StdLastname</label>
                             @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
@@ -141,8 +142,8 @@
                         </div>
                     </div>
 
-                    <!-- ปุ่มส่งข้อมูล -->
-                    <div class="pt-3">
+                    @* ปุ่มส่งข้อมูล *@
+<div class="pt-3">
                         @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                         <button type="submit" class="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-primary text-white font-semibold text-sm hover:bg-accent focus:outline-none focus:ring-4 focus:ring-primary/20 shadow-md hover:shadow-lg transition-all cursor-pointer">
                             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@

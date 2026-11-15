@@ -1,5 +1,34 @@
+@* กำหนดโมเดลข้อมูลรายละเอียดสินค้าและโมเดล 3 มิติ *@
 @model Khetsophon_CSI402_8456.ViewModels.ProductDetailViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้ารายละเอียดสินค้า *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     // กำหนดชื่อหัวข้อของหน้าเว็บรายละเอียดสินค้า
     ViewData["Title"] = $"{Model.Name} — FriendHouse";
 
@@ -274,8 +303,8 @@
                 </a>
             </div>
 
-            @* กริดแสดงการ์ดสินค้าแนะนำ 5 คอลัมน์บนเดสก์ท็อป และ 1-3 คอลัมน์บนจอมือถือ/แท็บเล็ตตามข้อกำหนด R1 *@
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            @* กริดแสดงการ์ดสินค้าแนะนำ 2 คอลัมน์บนจอมือถือ 3 คอลัมน์บนแท็บเล็ต และ 5 คอลัมน์บนเดสก์ท็อป *@
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 @* วนลูปแสดงการ์ดสินค้าแนะนำแต่ละรายการจาก RelatedProducts *@
                 @foreach (var item in Model.RelatedProducts)
                 {
@@ -286,7 +315,7 @@
                             <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.ProductId"
                                class="block aspect-square w-full bg-white border-b border-slate-100 overflow-hidden">
                                 @* รูปภาพสินค้า 1:1 ขนาดเต็มช่องพร้อม object-cover และ object-top *@
-                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(!string.IsNullOrEmpty(item.ImageUrl) ? item.ImageUrl : pageConfig.FallbackImage))"
+                                <img src="@Url.Content(ResolveCardImageUrl(!string.IsNullOrEmpty(item.ImageUrl) ? item.ImageUrl : pageConfig.FallbackImage))"
                                      alt="@item.Name" class="size-full object-cover object-top" loading="lazy" />
                             </a>
 

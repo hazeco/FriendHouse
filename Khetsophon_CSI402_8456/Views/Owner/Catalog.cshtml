@@ -1,5 +1,34 @@
+@* กำหนดโมเดลข้อมูลสำหรับหน้าจัดการสินค้าและของรางวัล *@
 @model Khetsophon_CSI402_8456.ViewModels.OwnerCatalogViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าแคตตาล็อกสินค้า *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     ViewData["Title"] = "จัดการสินค้าและของรางวัล";
     Layout = "_OwnerLayout";
 
@@ -176,7 +205,7 @@
         </div>
     </div>
 
-    <!-- แถบค้นหาและตัวกรองข้อมูลตามแท็บที่เลือก (ส่งค่าผ่านฟอร์ม MVC มาตรฐานโดยไม่ระบุ method) -->
+    @* แถบค้นหาและตัวกรองข้อมูลตามแท็บที่เลือก ส่งค่าผ่านฟอร์ม MVC มาตรฐานโดยไม่ระบุ method *@
     @* แบบฟอร์มแถบค้นหาและตัวกรองข้อมูลตามแท็บที่เลือก (ไม่ใส่ method attribute) *@
     <form asp-controller="Owner" asp-action="Catalog" class="bg-white rounded-2xl border border-slate-100 shadow-xs p-4">
         @* ตัวแปรซ่อนเก็บสถานะแท็บปัจจุบัน (สินค้า หรือ ของรางวัล) *@
@@ -262,12 +291,12 @@
         </div>
     </form>
 
-    <!-- ตารางแสดงข้อมูลตามแท็บที่เลือก (แยกการ์ดมือถือ md:hidden + ตารางเดสก์ท็อป hidden md:block) -->
+    @* ตารางแสดงข้อมูลตามแท็บที่เลือก แยกการ์ดมือถือและการ์ดเดสก์ท็อป *@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
         @if (isProductsTab)
         {
-            <!-- Mobile Product Cards (md:hidden) -->
+            @* การ์ดรายการสินค้าสำหรับหน้าจอมือถือ *@
             @* ส่วนแสดงรายการสินค้าในรูปแบบการ์ดบนหน้าจอมือถือ *@
             <div class="divide-y divide-slate-100 md:hidden">
                 @* ตรวจสอบว่ามีรายการสินค้าในระบบหรือไม่ *@
@@ -276,7 +305,7 @@
                     @* วนลูปแสดงข้อมูลสินค้าแต่ละรายการในการ์ดมือถือ *@
                     @foreach (var p in Model.Products)
                     {
-                        var stockQty = p.Inventory?.QuantityOnHand ?? 0;
+                        var stockQty = p.IsPreorder ? 0 : Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0));
                         var safetyQty = p.Inventory?.SafetyStockLevel ?? 5;
                         var storageLoc = p.Inventory?.StorageLocation ?? "โซน A-01";
                         bool isSaleActive = p.IsActive == true;
@@ -290,7 +319,7 @@
                                 @* กรอบรูปภาพขนาดย่อของสินค้า *@
                                 <div class="size-14 rounded-xl border border-slate-100 bg-white shrink-0 overflow-hidden">
                                     @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                    <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(string.IsNullOrEmpty(p.ImageUrl) ? pageConfig.FallbackImage : p.ImageUrl))"
+                                    <img src="@Url.Content(ResolveCardImageUrl(string.IsNullOrEmpty(p.ImageUrl) ? pageConfig.FallbackImage : p.ImageUrl))"
                                          alt="@p.Name" class="size-full object-cover object-top" />
                                 </div>
                                 @* กล่องชื่อสินค้า รหัส SKU และป้ายสถานะ *@
@@ -472,7 +501,7 @@
                             @* วนลูปแสดงข้อมูลสินค้าแต่ละรายการในตาราง *@
                             @foreach (var p in Model.Products)
                             {
-                                var stockQty = p.Inventory?.QuantityOnHand ?? 0;
+                                var stockQty = p.IsPreorder ? 0 : Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0));
                                 var safetyQty = p.Inventory?.SafetyStockLevel ?? 5;
                                 var storageLoc = p.Inventory?.StorageLocation ?? "โซน A-01";
                                 bool isSaleActive = p.IsActive == true;
@@ -488,7 +517,7 @@
                                             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                             <div class="size-12 rounded-xl border border-slate-100 bg-white shrink-0 overflow-hidden">
                                                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(string.IsNullOrEmpty(p.ImageUrl) ? pageConfig.FallbackImage : p.ImageUrl))"
+                                                <img src="@Url.Content(ResolveCardImageUrl(string.IsNullOrEmpty(p.ImageUrl) ? pageConfig.FallbackImage : p.ImageUrl))"
                                                      alt="@p.Name" class="size-full object-cover object-top" />
                                             </div>
                                             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -667,7 +696,7 @@
         }
         else
         {
-            <!-- Mobile Reward Cards (md:hidden) -->
+            @* การ์ดรายการของแลกแต้มสำหรับหน้าจอมือถือ *@
             <div class="divide-y divide-slate-100 md:hidden">
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (Model.Rewards.Any())
@@ -683,7 +712,7 @@
                                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="size-14 rounded-xl border border-slate-100 bg-white shrink-0 overflow-hidden">
                                     @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                    <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(string.IsNullOrEmpty(r.ImageUrl) ? pageConfig.FallbackImage : r.ImageUrl))"
+                                    <img src="@Url.Content(ResolveCardImageUrl(string.IsNullOrEmpty(r.ImageUrl) ? pageConfig.FallbackImage : r.ImageUrl))"
                                          alt="@r.Title" class="size-full object-cover object-top" />
                                 </div>
                                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -798,7 +827,7 @@
                 }
             </div>
 
-            <!-- ตารางรายการของแลกแต้มสะสมสำหรับสมาชิก (Desktop) -->
+            @* ตารางรายการของแลกแต้มสะสมสำหรับสมาชิกบนเดสก์ท็อป *@
             @* ส่วนตารางรายการของรางวัลสำหรับหน้าจอเดสก์ท็อป *@
             <div class="hidden md:block overflow-x-auto">
                 @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
@@ -839,7 +868,7 @@
                                             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                             <div class="size-12 rounded-xl border border-slate-100 bg-white shrink-0 overflow-hidden">
                                                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(string.IsNullOrEmpty(r.ImageUrl) ? pageConfig.FallbackImage : r.ImageUrl))"
+                                                <img src="@Url.Content(ResolveCardImageUrl(string.IsNullOrEmpty(r.ImageUrl) ? pageConfig.FallbackImage : r.ImageUrl))"
                                                      alt="@r.Title" class="size-full object-cover object-top" />
                                             </div>
                                             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -979,7 +1008,7 @@
             </div>
         }
 
-        <!-- แถบแบ่งหน้าตารางเจ้าของร้าน เชื่อมโยงกับ OwnerController.Catalog -->
+        @* แถบแบ่งหน้าตารางเจ้าของร้าน เชื่อมโยงกับ OwnerController.Catalog *@
         @* คอนเทนเนอร์แสดงการแบ่งหน้า (Pagination) และสรุปจำนวนรายการ *@
         <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
             @* ข้อความสรุปช่วงลำดับรายการที่กำลังแสดงผล *@
@@ -1008,8 +1037,14 @@
                     </span>
                 }
 
-                @* วนลูปสร้างปุ่มตัวเลขหน้าตามจำนวนหน้าทั้งหมด *@
-                @for (int p = 1; p <= Model.TotalPages; p++)
+                @{
+                    // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                    int startPage = Math.Clamp(Model.CurrentPage - 1, 1, Math.Max(1, Model.TotalPages - 2));
+                    // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                    int endPage = Math.Min(Model.TotalPages, startPage + 2);
+                }
+                @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                @for (int p = startPage; p <= endPage; p++)
                 {
                     if (p == Model.CurrentPage)
                     {
@@ -1059,9 +1094,9 @@
     </div>
 </div>
 
-<!-- ==================== หน้าต่างป๊อปอัปจัดการสินค้าและของแลกแต้ม ==================== -->
+@* หน้าต่างโมดัลจัดการสินค้าและของแลกแต้ม *@
 
-<!-- 1. หน้าต่างเพิ่มสินค้าใหม่ -->
+@* หน้าต่างโมดัลที่ 1 เพิ่มสินค้าใหม่ *@
 @* หน้าต่างป๊อปอัปสำหรับสร้างและเพิ่มสินค้าใหม่เข้าสู่ระบบฐานข้อมูล *@
 <div id="createProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     @* กล่องการ์ดเนื้อหาของหน้าต่างป๊อปอัปแบบปรับเลื่อนแนวตั้งได้ *@
@@ -1280,7 +1315,7 @@
     </div>
 </div>
 
-<!-- 2. หน้าต่างแก้ไขข้อมูลสินค้า -->
+@* หน้าต่างโมดัลที่ 2 แก้ไขข้อมูลสินค้า *@
 @* หน้าต่างป๊อปอัปสำหรับแก้ไขรายละเอียด ราคา และสต็อกของสินค้าเดิม *@
 <div id="editProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     @* กล่องการ์ดเนื้อหาหน้าต่างแก้ไขสินค้า *@
@@ -1442,7 +1477,7 @@
     </div>
 </div>
 
-<!-- 3. หน้าต่างกำหนดสินค้าให้เป็นของแลกแต้ม (ของขาย หรือ ของไว้แลกแต้ม) -->
+@* หน้าต่างโมดัลที่ 3 กำหนดสินค้าให้เป็นของแลกแต้ม *@
 @* หน้าต่างป๊อปอัปสำหรับกำหนดสินค้าขายให้เป็นของรางวัลแลกแต้มสะสม *@
 <div id="convertRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     @* กล่องการ์ดเนื้อหาหน้าต่างแปลงสินค้าเป็นของแลกแต้ม *@
@@ -1524,7 +1559,7 @@
     </div>
 </div>
 
-<!-- 4. หน้าต่างยืนยันการลบสินค้า -->
+@* หน้าต่างโมดัลที่ 4 ยืนยันการลบสินค้า *@
 @* หน้าต่างป๊อปอัปยืนยันการลบสินค้าออกจากฐานข้อมูล *@
 <div id="deleteProductModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องการ์ดยืนยันการลบ *@
@@ -1551,7 +1586,7 @@
     </div>
 </div>
 
-<!-- 5. หน้าต่างเพิ่มของแลกแต้มใหม่ -->
+@* หน้าต่างโมดัลที่ 5 เพิ่มของแลกแต้มใหม่ *@
 @* หน้าต่างป๊อปอัปสำหรับสร้างรายการของรางวัลแลกแต้มใหม่ *@
 <div id="createRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     @* กล่องการ์ดเนื้อหาหน้าต่างเพิ่มของแลกแต้ม *@
@@ -1678,7 +1713,7 @@
     </div>
 </div>
 
-<!-- 6. หน้าต่างแก้ไขของแลกแต้ม -->
+@* หน้าต่างโมดัลที่ 6 แก้ไขของแลกแต้ม *@
 @* หน้าต่างป๊อปอัปสำหรับแก้ไขข้อมูลของรางวัลแลกแต้ม *@
 <div id="editRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     @* กล่องการ์ดเนื้อหาหน้าต่างแก้ไขของแลกแต้ม *@
@@ -1801,7 +1836,7 @@
     </div>
 </div>
 
-<!-- 7. หน้าต่างยืนยันการลบของแลกแต้ม -->
+@* หน้าต่างโมดัลที่ 7 ยืนยันการลบของแลกแต้ม *@
 @* หน้าต่างป๊อปอัปยืนยันการลบของรางวัลแลกแต้มออกจากระบบ *@
 <div id="deleteRewardModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องการ์ดยืนยันการลบของรางวัล *@

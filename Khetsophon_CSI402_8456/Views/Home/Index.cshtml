@@ -1,5 +1,34 @@
+@* กำหนดโมเดลข้อมูลหน้าแรกของระบบ FriendHouse *@
 @model Khetsophon_CSI402_8456.ViewModels.HomeIndexViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าแรก *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     // กำหนดชื่อหัวข้อของหน้าแรก
     ViewData["Title"] = "หน้าแรก — FriendHouse";
 
@@ -341,8 +370,8 @@
         @* ตรวจสอบว่ามีรายการการ์ดโปรโมชั่นหรือไม่ *@
         @if (promoCards.Length > 0)
         {
-            @* กริดแสดงการ์ดโปรโมชั่น 4 คอลัมน์บนเดสก์ท็อป *@
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            @* กริดแสดงการ์ดโปรโมชั่น 2 คอลัมน์บนจอมือถือ และ 4 คอลัมน์บนเดสก์ท็อป *@
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var promo in promoCards)
                 {
@@ -401,19 +430,22 @@
             </div>
 
             @* ปุ่มตัวกรองนำทางไปยังหมวดหมู่รวมสินค้า *@
-            <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                <a asp-controller="Home" asp-action="Collection"
-                   class="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-xs whitespace-nowrap">
-                    ทั้งหมด
-                </a>
-                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                <a asp-controller="Home" asp-action="Collection" asp-route-status="มีสินค้า"
-                   class="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap">
-                    มีสินค้าพร้อมส่ง
-                </a>
-                @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                <a asp-controller="Home" asp-action="Collection" class="ml-2 hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline whitespace-nowrap">
+            <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2 pb-1 sm:pb-0">
+                @* กล่องจัดวางปุ่มตัวกรองหมวดหมู่ย่อย *@
+                <div class="flex items-center gap-2">
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                    <a asp-controller="Home" asp-action="Collection"
+                       class="rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white shadow-xs whitespace-nowrap">
+                        ทั้งหมด
+                    </a>
+                    @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
+                    <a asp-controller="Home" asp-action="Collection" asp-route-status="มีสินค้า"
+                       class="rounded-full bg-slate-100 px-4 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors whitespace-nowrap">
+                        มีสินค้าพร้อมส่ง
+                    </a>
+                </div>
+                @* ลิงก์นำทางไปยังหน้าคอลเลกชันทั้งหมด แสดงครบทุกขนาดหน้าจอรวมถึงจอมือถือ *@
+                <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-primary hover:underline whitespace-nowrap">
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span>ดูคอลเลกชันทั้งหมด</span>
                     @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
@@ -424,8 +456,8 @@
             </div>
         </div>
 
-        @* กริดแสดงการ์ดสินค้า 4 คอลัมน์บนเดสก์ท็อป *@
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        @* กริดแสดงการ์ดสินค้า 2 คอลัมน์บนจอมือถือ และ 4 คอลัมน์บนเดสก์ท็อป *@
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var prod in featuredProducts)
             {
@@ -437,7 +469,7 @@
                         <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@prod.Id"
                            class="block aspect-square w-full bg-white border-b border-slate-100 overflow-hidden">
                             @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                            <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(prod.ImageUrl))" alt="@prod.Title"
+                            <img src="@Url.Content(ResolveCardImageUrl(prod.ImageUrl))" alt="@prod.Title"
                                  class="size-full object-cover object-top"
                                  loading="lazy" />
                         </a>

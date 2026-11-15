@@ -1,4 +1,6 @@
+@* กำหนดโมเดลข้อมูลรายงานภาพรวมการเงินและบัญชี *@
 @model Khetsophon_CSI402_8456.ViewModels.FinancialReportViewModel
+@* กำหนดการตั้งค่าข้อมูลหน้าภาพรวมการเงินสำหรับนักบัญชี *@
 @{
     ViewData["Title"] = "ภาพรวมการเงินร้าน";
     Layout = "_AccountantLayout";
@@ -53,8 +55,8 @@
         </div>
     }
 
-    <!-- ส่วนหัวหน้าภาพรวมการเงินและตัวเลือกช่วงเดือนจากฐานข้อมูลจริง -->
-    <div class="flex items-center justify-between flex-wrap gap-4">
+    @* ส่วนหัวหน้าภาพรวมการเงินและตัวเลือกช่วงเดือนจากฐานข้อมูลจริง *@
+<div class="flex items-center justify-between flex-wrap gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
             @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
@@ -63,8 +65,8 @@
             <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
         </div>
 
-        <!-- ตัวควบคุมเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง -->
-        <div class="flex items-center gap-2">
+        @* ตัวควบคุมเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง *@
+<div class="flex items-center gap-2">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-gray-500 font-medium">เลือกช่วงเวลา:</span>
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -97,10 +99,10 @@
         </div>
     </div>
 
-    <!-- การ์ดสถิติทางการเงิน 4 ใบจากฐานข้อมูลจริง -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- รายได้รวม -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+    @* การ์ดสถิติทางการเงิน 4 ใบจากฐานข้อมูลจริง *@
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        @* รายได้รวม *@
+<div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -114,8 +116,8 @@
             <div class="text-xs font-semibold text-[#16A34A]">@financeStats.RevenueDelta</div>
         </div>
 
-        <!-- รายจ่าย/ต้นทุนที่บันทึก -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+        @* รายจ่าย/ต้นทุนที่บันทึก *@
+<div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -134,14 +136,16 @@
             <div class="text-xs text-gray-400">@financeStats.CostSubtext</div>
         </div>
 
-        <!-- กำไรขั้นต้น -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+        @* กำไรขั้นต้น *@
+<div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-xs text-gray-400 font-medium">กำไรขั้นต้น</span>
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                <span class="size-6 rounded-lg bg-green-50 text-[#16A34A] text-xs font-bold flex items-center justify-center">▲</span>
+                <span class="size-6 rounded-lg bg-green-50 text-[#16A34A] text-xs font-bold flex items-center justify-center">
+                    <svg class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                </span>
             </div>
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="text-3xl font-extrabold @(Model.GrossProfit >= 0 ? "text-[#16A34A]" : "text-rose-600")">@financeStats.GrossProfit</div>
@@ -149,8 +153,8 @@
             <div class="text-xs text-gray-400">@financeStats.GrossProfitSubtext</div>
         </div>
 
-        <!-- อัตรากำไรขั้นต้น -->
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
+        @* อัตรากำไรขั้นต้น *@
+<div class="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-2">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -171,8 +175,8 @@
         </div>
     </div>
 
-    <!-- แถบข้อมูลอธิบายการเชื่อมโยงยอดจริงและสิทธิ์อ่านอย่างเดียว -->
-    <div class="rounded-2xl bg-[#F0FDF4]/70 border border-[#BAF2FF] p-4 flex items-center gap-3 text-xs text-gray-600 leading-relaxed">
+    @* แถบข้อมูลอธิบายการเชื่อมโยงยอดจริงและสิทธิ์อ่านอย่างเดียว *@
+<div class="rounded-2xl bg-[#F0FDF4]/70 border border-[#BAF2FF] p-4 flex items-center gap-3 text-xs text-gray-600 leading-relaxed">
         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
         <svg class="size-5 shrink-0 text-[#0E7490]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"></circle>
@@ -185,10 +189,10 @@
         </span>
     </div>
 
-    <!-- กราฟรายได้เทียบต้นทุนจริง 6 เดือนล่าสุด และสรุปรายได้ตามหมวดหมู่สินค้าจริงในร้าน -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <!-- คอลัมน์ซ้าย: รายได้เทียบรายจ่าย 6 เดือนล่าสุดจากฐานข้อมูลจริง -->
-        <div class="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
+    @* กราฟรายได้เทียบต้นทุนจริง 6 เดือนล่าสุด และสรุปรายได้ตามหมวดหมู่สินค้าจริงในร้าน *@
+<div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        @* คอลัมน์ซ้าย: รายได้เทียบรายจ่าย 6 เดือนล่าสุดจากฐานข้อมูลจริง *@
+<div class="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 space-y-4">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center justify-between">
                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
@@ -231,8 +235,8 @@
             </div>
         </div>
 
-        <!-- คอลัมน์ขวา: สรุปรายได้ตามหมวดหมู่สินค้าจริงจากฐานข้อมูล -->
-        <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 flex flex-col justify-between space-y-4">
+        @* คอลัมน์ขวา: สรุปรายได้ตามหมวดหมู่สินค้าจริงจากฐานข้อมูล *@
+<div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-xs p-6 flex flex-col justify-between space-y-4">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@

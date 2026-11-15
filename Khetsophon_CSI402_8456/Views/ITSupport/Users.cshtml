@@ -1,43 +1,66 @@
+@* กำหนดโมเดลข้อมูลสำหรับหน้าจัดการผู้ใช้งาน *@
+@* กำหนดโมเดลข้อมูลสำหรับหน้าจัดการผู้ใช้งาน *@
 @model Khetsophon_CSI402_8456.ViewModels.UserManagementViewModel
+@* กำหนดค่าเริ่มต้นและการตั้งค่าสำหรับหน้าจัดการผู้ใช้งาน *@
 @{
-    // กำหนดชื่อหน้าเว็บและโครงร่างหน้าผู้ดูแลระบบไอที
+    // กำหนดชื่อหัวข้อของหน้าเว็บใน ViewData
     ViewData["Title"] = "จัดการบัญชีผู้ใช้งาน — FriendHouse";
+    // กำหนดโครงร่างหน้าเว็บหลักสำหรับฝ่ายไอทีซัพพอร์ต
     Layout = "_ITSupportLayout";
 
-    // READ: การตั้งค่าข้อมูลเนื้อหา ข้อความ ตัวเลือกการกรอง และไอคอน SVG ที่ส่วนบนสุดของไฟล์
-    // WHY: รวมศูนย์ข้อความภาษาไทยทั้งหมดไว้ด้านบนสุดตามกฎของโปรเจกต์ ห้ามมีภาษาอังกฤษในวงเล็บ และห้ามใช้อีโมจิ
+    // กำหนดค่าข้อความส่วนหัวและคำอธิบายหน้าจัดการผู้ใช้
     var pageHeader = new {
+        // ชื่อเรื่องของหน้าจัดการบัญชี
         Title = "จัดการบัญชีผู้ใช้งานและสมาชิก",
+        // คำอธิบายขอบเขตการทำงานของหน้า
         Subtitle = "สำหรับตรวจสอบ ค้นหา เพิ่ม แก้ไข รีเซ็ตรหัสผ่าน และจัดการสถานะบัญชีของลูกค้าและพนักงาน",
+        // ข้อความแถบแนะนำการใช้งาน
         InfoBanner = "หน้านี้ใช้สำหรับดูข้อมูลบัญชี ช่วยเหลือเรื่องรหัสผ่าน แก้ไขข้อมูลสมาชิก ลบบัญชี หรือปรับสิทธิ์ผู้ใช้งานผ่านฟอร์มมาตรฐาน"
     };
 
+    // กำหนดรายการตัวเลือกบทบาทสำหรับเมนูดรอปดาวน์
     var roleOptions = new[] {
+        // ตัวเลือกทุกบทบาท
         new { Value = "all", Label = "ทุกบทบาทผู้ใช้งาน" },
+        // ตัวเลือกลูกค้าทั่วไป
         new { Value = "customer", Label = "ลูกค้าทั่วไป" },
+        // ตัวเลือกพนักงานหน้าร้าน
         new { Value = "staff", Label = "พนักงานหน้าร้าน" },
+        // ตัวเลือกเจ้าของร้าน
         new { Value = "owner", Label = "เจ้าของร้าน" },
+        // ตัวเลือกผู้ดูแลระบบไอที
         new { Value = "itsupport", Label = "ผู้ดูแลระบบไอที" },
+        // ตัวเลือกฝ่ายบัญชีและการเงิน
         new { Value = "accountant", Label = "ฝ่ายบัญชีและการเงิน" }
     };
 
+    // กำหนดรายการตัวเลือกสถานะบัญชี
     var statusOptions = new[] {
+        // ตัวเลือกสถานะทั้งหมด
         new { Value = "all", Label = "สถานะบัญชีทั้งหมด" },
+        // ตัวเลือกสถานะปกติ
         new { Value = "ปกติ", Label = "ปกติ" },
+        // ตัวเลือกสถานะถูกล็อก
         new { Value = "ถูกล็อก", Label = "ถูกล็อก" }
     };
 
+    // ดึงรายการข้อมูลผู้ใช้งานทั้งหมดจากโมเดล
     var userItems = Model?.UserItems ?? new List<Khetsophon_CSI402_8456.ViewModels.UserAccountItemViewModel>();
+    // ดึงคำค้นหาปัจจุบัน
     var currentSearch = Model?.SearchQuery ?? (ViewBag.SearchQuery as string) ?? string.Empty;
+    // ดึงสถานะบัญชีที่เลือกกรอง
     var currentStatus = Model?.StatusFilter ?? (ViewBag.StatusFilter as string) ?? "all";
+    // ดึงบทบาทที่เลือกกรอง
     var currentRole = Model?.RoleFilter ?? (ViewBag.RoleFilter as string) ?? "all";
+    // ดึงอีเมลที่เพิ่งรีเซ็ตรหัสผ่านชั่วคราว
     var tempResetEmail = Model?.TempResetEmail;
+    // ดึงรหัสผ่านชั่วคราวที่เพิ่งสร้าง
     var tempResetPassword = Model?.TempResetPassword;
 }
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
-    <!-- ส่วนหัวของหน้าจัดการบัญชีผู้ใช้งาน -->
+    @* ส่วนหัวของหน้าจัดการบัญชีผู้ใช้งาน *@
     <div>
         @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
         <h1 class="text-2xl font-bold text-[#050315]">@pageHeader.Title</h1>
@@ -45,62 +68,44 @@
         <p class="text-sm text-gray-500 mt-1">@pageHeader.Subtitle</p>
     </div>
 
-    <!-- แถบข้อมูลแนะนำการใช้งาน -->
+    @* แถบข้อมูลแนะนำการใช้งาน *@
     <div class="rounded-2xl bg-[#EFF6FF] border border-[#BFDBFE] p-4 flex items-center gap-3 text-xs text-[#1E40AF]">
         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-        <svg class="size-4.5 shrink-0 text-[#2563EB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-        </svg>
+        <svg class="size-4.5 shrink-0 text-[#2563EB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
         <span class="font-medium">@pageHeader.InfoBanner</span>
     </div>
 
-    <!-- แสดงข้อความแจ้งเตือนผลสำเร็จหรือข้อผิดพลาดจาก TempData -->
-    @if (TempData["SuccessMessage"] != null)
-    {
+    @* แสดงข้อความแจ้งเตือนผลสำเร็จหรือข้อผิดพลาดจาก TempData *@
+    @if (TempData["SuccessMessage"] != null) {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["SuccessMessage"]</span>
         </div>
     }
 
     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-    @if (TempData["ErrorMessage"] != null)
-    {
+    @if (TempData["ErrorMessage"] != null) {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-[#FEF2F2] border border-[#FECACA] p-4 flex items-center gap-3 text-xs text-[#991B1B] shadow-xs">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-5 text-[#EF4444] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+            <svg class="size-5 text-[#EF4444] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["ErrorMessage"]</span>
         </div>
     }
 
-    <!-- READ: ฟอร์มค้นหาและกรองบัญชีผู้ใช้งานตามมาตรฐาน MVC (ไม่มีแอตทริบิวต์ method) -->
+    @* READ: ฟอร์มค้นหาและกรองบัญชีผู้ใช้งานตามมาตรฐาน MVC (ไม่มีแอตทริบิวต์ method) *@
     <form asp-controller="ITSupport" asp-action="Users" class="flex flex-wrap items-center gap-3">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="relative flex-1 min-w-[280px]">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
+            <svg class="size-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-            <input type="text"
-                   name="searchQuery"
-                   value="@currentSearch"
-                   placeholder="ค้นหาด้วยชื่อ-นามสกุล อีเมล รหัสผู้ใช้ หรือเบอร์โทรศัพท์..."
-                   class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
+            <input type="text" name="searchQuery" value="@currentSearch" placeholder="ค้นหาด้วยชื่อ-นามสกุล อีเมล รหัสผู้ใช้ หรือเบอร์โทรศัพท์..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
         </div>
 
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -108,22 +113,21 @@
             @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
             <select name="roleFilter" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none">
                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                @foreach (var rOpt in roleOptions)
-                {
-                    if (string.Equals(currentRole, rOpt.Value, StringComparison.OrdinalIgnoreCase))
-                    {
+                @foreach (var rOpt in roleOptions) {
+                    @* ตรวจสอบว่าตรงกับบทบาทที่เลือกอยู่หรือไม่ *@
+                    if (string.Equals(currentRole, rOpt.Value, StringComparison.OrdinalIgnoreCase)) {
+                        @* ตัวเลือกบทบาทที่กำลังเลือกใช้งาน *@
                         <option value="@rOpt.Value" selected>@rOpt.Label</option>
                     }
-                    else
-                    {
+                    @* กรณีเป็นตัวเลือกบทบาทอื่น *@
+                    else {
+                        @* ตัวเลือกบทบาททั่วไป *@
                         <option value="@rOpt.Value">@rOpt.Label</option>
                     }
                 }
             </select>
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -131,45 +135,37 @@
             @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
             <select name="statusFilter" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none">
                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                @foreach (var sOpt in statusOptions)
-                {
-                    if (string.Equals(currentStatus, sOpt.Value, StringComparison.OrdinalIgnoreCase))
-                    {
+                @foreach (var sOpt in statusOptions) {
+                    @* ตรวจสอบว่าตรงกับสถานะที่เลือกอยู่หรือไม่ *@
+                    if (string.Equals(currentStatus, sOpt.Value, StringComparison.OrdinalIgnoreCase)) {
+                        @* ตัวเลือกสถานะที่กำลังเลือกใช้งาน *@
                         <option value="@sOpt.Value" selected>@sOpt.Label</option>
                     }
-                    else
-                    {
+                    @* กรณีเป็นตัวเลือกสถานะอื่น *@
+                    else {
+                        @* ตัวเลือกสถานะทั่วไป *@
                         <option value="@sOpt.Value">@sOpt.Label</option>
                     }
                 }
             </select>
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
 
         @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-        <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#242D87] text-white font-bold text-sm shadow-xs transition-colors cursor-pointer">
-            ค้นหา
-        </button>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#242D87] text-white font-bold text-sm shadow-xs transition-colors cursor-pointer">ค้นหา</button>
 
         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-        @if (!string.IsNullOrWhiteSpace(currentSearch) || currentStatus != "all" || currentRole != "all")
-        {
+        @if (!string.IsNullOrWhiteSpace(currentSearch) || currentStatus != "all" || currentRole != "all") {
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-            <a asp-controller="ITSupport" asp-action="Users" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm transition-colors">
-                ล้างตัวกรอง
-            </a>
+            <a asp-controller="ITSupport" asp-action="Users" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-sm transition-colors">ล้างตัวกรอง</a>
         }
 
         @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-        <button type="button" onclick="openAddUserModal()" class="px-5 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#242D87] text-white font-bold text-sm shadow-xs transition-colors cursor-pointer ml-auto">
-            เพิ่มผู้ใช้งาน
-        </button>
+        <button type="button" onclick="openAddUserModal()" class="px-5 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#242D87] text-white font-bold text-sm shadow-xs transition-colors cursor-pointer ml-auto">เพิ่มผู้ใช้งาน</button>
     </form>
 
-    <!-- ตารางแสดงข้อมูลบัญชีผู้ใช้งาน -->
+    @* ตารางแสดงข้อมูลบัญชีผู้ใช้งาน *@
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="overflow-x-auto">
@@ -198,189 +194,140 @@
                 @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-gray-100">
                     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                    @if (userItems.Any())
-                    {
+                    @if (userItems.Any()) {
                         @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                        @foreach (var u in userItems)
-                        {
+                        @foreach (var u in userItems) {
                             @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-gray-50/70 transition-colors user-row">
-                                <!-- อีเมลและรายละเอียดบทบาทภาษาไทย -->
+                                @* อีเมลและรายละเอียดบทบาทภาษาไทย *@
                                 <td class="py-4 px-6 font-semibold text-[#050315]">
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div>@u.Email</div>
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-                                    <div class="text-xs text-gray-500 font-normal mt-0.5">
-                                        @u.DisplayName · <span class="text-[#2F39A9] font-semibold">@u.RoleDisplayThai</span>
-                                    </div>
+                                    <div class="text-xs text-gray-500 font-normal mt-0.5">@u.DisplayName · <span class="text-[#2F39A9] font-semibold">@u.RoleDisplayThai</span></div>
                                 </td>
 
-                                <!-- เบอร์โทรศัพท์ -->
-                                <td class="py-4 px-6 text-gray-500 font-mono text-xs">
-                                    @u.Phone
-                                </td>
+                                @* เบอร์โทรศัพท์ *@
+                                <td class="py-4 px-6 text-gray-500 font-mono text-xs">@u.Phone</td>
 
-                                <!-- ป้ายกำกับสถานะบัญชี -->
+                                @* ป้ายกำกับสถานะบัญชี *@
                                 <td class="py-4 px-6 text-center">
                                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full @(u.IsActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]")">
-                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                        <span class="size-1.5 rounded-full bg-current"></span>
-                                        @u.StatusText
-                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full @(u.IsActive ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#FEE2E2] text-[#DC2626]")"><span class="size-1.5 rounded-full bg-current"></span>@u.StatusText</span>
                                 </td>
 
-                                <!-- แต้มสะสม -->
-                                <td class="py-4 px-6 text-center font-bold text-xs text-[#2F39A9]">
-                                    @u.Points.ToString("N0") แต้ม
-                                </td>
+                                @* แต้มสะสม *@
+                                <td class="py-4 px-6 text-center font-bold text-xs text-[#2F39A9]">@u.Points.ToString("N0") แต้ม</td>
 
-                                <!-- วันที่สมัครสมาชิก -->
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    @u.CreatedAt.ToString("dd/MM/yyyy")
-                                </td>
+                                @* วันที่สมัครสมาชิก *@
+                                <td class="py-4 px-6 text-gray-500 text-xs">@u.CreatedAt.ToString("dd/MM/yyyy")</td>
 
-                                <!-- ปุ่มแก้ไขและลบบัญชี -->
+                                @* ปุ่มแก้ไขและลบบัญชี *@
                                 <td class="py-4 px-6 text-center">
                                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                     <div class="inline-flex items-center gap-1.5">
                                         @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
-                                        <button type="button"
-                                                onclick="openEditUserModal('@u.Email', '@u.Phone', '@(u.FullName ?? "")', '@u.RoleName', @u.Points, '@(u.IsActive ? "ปกติ" : "ถูกล็อก")')"
-                                                class="size-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] flex items-center justify-center transition cursor-pointer"
-                                                title="แก้ไขข้อมูล">
+                                        <button type="button" onclick="openEditUserModal('@u.Email', '@u.Phone', '@(u.FullName ?? "")', '@u.RoleName', @u.Points, '@(u.IsActive ? "ปกติ" : "ถูกล็อก")')" class="size-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] flex items-center justify-center transition cursor-pointer" title="แก้ไขข้อมูล">
                                             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M12 20h9"></path>
-                                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
-                                            </svg>
+                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
                                         </button>
                                         @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
-                                        <button type="button"
-                                                onclick="openDeleteUserModal('@u.Email')"
-                                                class="size-8 rounded-lg bg-red-50 hover:bg-red-100 text-[#DC2626] flex items-center justify-center transition cursor-pointer"
-                                                title="ลบบัญชี">
+                                        <button type="button" onclick="openDeleteUserModal('@u.Email')" class="size-8 rounded-lg bg-red-50 hover:bg-red-100 text-[#DC2626] flex items-center justify-center transition cursor-pointer" title="ลบบัญชี">
                                             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                            </svg>
+                                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                         </button>
                                     </div>
                                 </td>
 
-                                <!-- ปุ่มช่วยรีเซ็ตรหัสผ่าน -->
+                                @* ปุ่มช่วยรีเซ็ตรหัสผ่าน *@
                                 <td class="py-4 px-6 text-right">
                                     @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
-                                    <button type="button"
-                                            onclick="openResetPasswordModal('@u.Email', @u.UserId)"
-                                            class="px-3.5 py-1.5 rounded-lg bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] text-xs font-semibold transition cursor-pointer">
-                                        ช่วยรีเซ็ตรหัสผ่าน
-                                    </button>
+                                    <button type="button" onclick="openResetPasswordModal('@u.Email', @u.UserId)" class="px-3.5 py-1.5 rounded-lg bg-[#EFF6FF] hover:bg-blue-100 text-[#2563EB] text-xs font-semibold transition cursor-pointer">ช่วยรีเซ็ตรหัสผ่าน</button>
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
+                    @* กรณีไม่พบรายชื่อผู้ใช้งานในระบบ *@
+                    else {
                         @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
                             @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
-                            <td colspan="7" class="py-8 text-center text-xs text-gray-400">
-                                ไม่พบรายชื่อบัญชีผู้ใช้งานที่ตรงกับเงื่อนไขการค้นหา
-                            </td>
+                            <td colspan="7" class="py-8 text-center text-xs text-gray-400">ไม่พบรายชื่อบัญชีผู้ใช้งานที่ตรงกับเงื่อนไขการค้นหา</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
+        @* คำนวณข้อมูลสถิติสำหรับการแบ่งหน้าของตารางผู้ใช้ *@
         @{
             // คำนวณลำดับรายการเริ่มต้นและสิ้นสุดที่แสดงอยู่ในหน้านี้
             var totalUserCount = Model?.TotalCount ?? userItems.Count;
+            // ดึงหมายเลขหน้าปัจจุบัน
             var currentPage = Model?.CurrentPage ?? 1;
+            // ดึงจำนวนหน้าทั้งหมด
             var totalPages = Model?.TotalPages ?? 1;
+            // กำหนดขนาดรายการต่อหน้า
             var pageSize = Model?.PageSize ?? 10;
+            // คำนวณลำดับแถวเริ่มต้น
             var startRow = totalUserCount == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+            // คำนวณลำดับแถวสิ้นสุด
             var endRow = Math.Min(currentPage * pageSize, totalUserCount);
         }
-        <!-- แถบแบ่งหน้าและส่วนท้ายตารางแสดงจำนวนบัญชีทั้งหมด เชื่อมโยงกับ ITSupportController.Users -->
+        @* แถบแบ่งหน้าและส่วนท้ายตารางแสดงจำนวนบัญชีทั้งหมด เชื่อมโยงกับ ITSupportController.Users *@
         <div class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-gray-500">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>แสดง @startRow–@endRow จากทั้งหมด @totalUserCount บัญชี</span>
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-1.5">
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                @if (currentPage > 1)
-                {
+                @if (currentPage > 1) {
                     @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                    <a asp-controller="ITSupport" asp-action="Users"
-                       asp-route-searchQuery="@currentSearch"
-                       asp-route-roleFilter="@currentRole"
-                       asp-route-statusFilter="@currentStatus"
-                       asp-route-page="@(currentPage - 1)"
-                       class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                        ก่อนหน้า
-                    </a>
+                    <a asp-controller="ITSupport" asp-action="Users" asp-route-searchQuery="@currentSearch" asp-route-roleFilter="@currentRole" asp-route-statusFilter="@currentStatus" asp-route-page="@(currentPage - 1)" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ก่อนหน้า</a>
                 }
-                else
-                {
+                @* กรณีอยู่ที่หน้าแรก ปิดการใช้งานปุ่มก่อนหน้า *@
+                else {
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                        ก่อนหน้า
-                    </span>
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ก่อนหน้า</span>
                 }
 
-                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                @for (int p = 1; p <= totalPages; p++)
-                {
-                    if (p == currentPage)
-                    {
+                @* คำนวณช่วงหมายเลขหน้า 3 หมายเลข *@
+                @{
+                    // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                    int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                    // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                    int endPage = Math.Min(totalPages, startPage + 2);
+                }
+                @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                @for (int p = startPage; p <= endPage; p++) {
+                    @* ตรวจสอบว่าตรงกับหน้าปัจจุบันหรือไม่ *@
+                    if (p == currentPage) {
                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
-                            @p
-                        </span>
+                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">@p</span>
                     }
-                    else
-                    {
+                    @* กรณีเป็นหมายเลขหน้าอื่น *@
+                    else {
                         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                        <a asp-controller="ITSupport" asp-action="Users"
-                           asp-route-searchQuery="@currentSearch"
-                           asp-route-roleFilter="@currentRole"
-                           asp-route-statusFilter="@currentStatus"
-                           asp-route-page="@p"
-                           class="size-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">
-                            @p
-                        </a>
+                        <a asp-controller="ITSupport" asp-action="Users" asp-route-searchQuery="@currentSearch" asp-route-roleFilter="@currentRole" asp-route-statusFilter="@currentStatus" asp-route-page="@p" class="size-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">@p</a>
                     }
                 }
 
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                @if (currentPage < totalPages)
-                {
+                @if (currentPage < totalPages) {
                     @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                    <a asp-controller="ITSupport" asp-action="Users"
-                       asp-route-searchQuery="@currentSearch"
-                       asp-route-roleFilter="@currentRole"
-                       asp-route-statusFilter="@currentStatus"
-                       asp-route-page="@(currentPage + 1)"
-                       class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                        ถัดไป
-                    </a>
+                    <a asp-controller="ITSupport" asp-action="Users" asp-route-searchQuery="@currentSearch" asp-route-roleFilter="@currentRole" asp-route-statusFilter="@currentStatus" asp-route-page="@(currentPage + 1)" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ถัดไป</a>
                 }
-                else
-                {
+                @* กรณีอยู่ที่หน้าสุดท้าย ปิดการใช้งานปุ่มถัดไป *@
+                else {
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                        ถัดไป
-                    </span>
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ถัดไป</span>
                 }
             </div>
         </div>
     </div>
 </div>
 
-<!-- 1. CREATE MODAL: หน้าต่างเพิ่มผู้ใช้งานใหม่ด้วยฟอร์ม MVC มาตรฐาน -->
+@* 1. CREATE MODAL: หน้าต่างเพิ่มผู้ใช้งานใหม่ด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="addUserModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
@@ -391,10 +338,7 @@
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
         @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
@@ -405,10 +349,15 @@
                 <label class="text-xs font-bold text-gray-700 block mb-1">บทบาทผู้ใช้งาน</label>
                 @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select name="role" id="newUserRole" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
+                    @* ตัวเลือกลูกค้าทั่วไป *@
                     <option value="Customer">ลูกค้าทั่วไป</option>
+                    @* ตัวเลือกพนักงานหน้าร้าน *@
                     <option value="Staff">พนักงานหน้าร้าน</option>
+                    @* ตัวเลือกเจ้าของร้าน *@
                     <option value="Owner">เจ้าของร้าน</option>
+                    @* ตัวเลือกผู้ดูแลระบบไอที *@
                     <option value="ITSupport">ผู้ดูแลระบบไอที</option>
+                    @* ตัวเลือกฝ่ายบัญชีและการเงิน *@
                     <option value="Accountant">ฝ่ายบัญชีและการเงิน</option>
                 </select>
             </div>
@@ -443,19 +392,15 @@
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 pt-2">
                 @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                    ยกเลิก
-                </button>
+                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                    สร้างบัญชี
-                </button>
+                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">สร้างบัญชี</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- 2. UPDATE MODAL: หน้าต่างแก้ไขข้อมูลผู้ใช้งานด้วยฟอร์ม MVC มาตรฐาน (ไม่มี fetch) -->
+@* 2. UPDATE MODAL: หน้าต่างแก้ไขข้อมูลผู้ใช้งานด้วยฟอร์ม MVC มาตรฐาน (ไม่มี fetch) *@
 <div id="editUserModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
@@ -466,10 +411,7 @@
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
         @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
@@ -513,10 +455,15 @@
                     <label class="text-xs font-bold text-gray-700 block mb-1">บทบาทผู้ใช้งาน</label>
                     @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="role" id="editUserRole" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
+                        @* ตัวเลือกลูกค้าทั่วไป *@
                         <option value="customer">ลูกค้าทั่วไป</option>
+                        @* ตัวเลือกพนักงานหน้าร้าน *@
                         <option value="staff">พนักงานหน้าร้าน</option>
+                        @* ตัวเลือกเจ้าของร้าน *@
                         <option value="owner">เจ้าของร้าน</option>
+                        @* ตัวเลือกผู้ดูแลระบบไอที *@
                         <option value="itsupport">ผู้ดูแลระบบไอที</option>
+                        @* ตัวเลือกฝ่ายบัญชีและการเงิน *@
                         <option value="accountant">ฝ่ายบัญชีและการเงิน</option>
                     </select>
                 </div>
@@ -526,7 +473,9 @@
                     <label class="text-xs font-bold text-gray-700 block mb-1">สถานะบัญชี</label>
                     @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="status" id="editUserStatus" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9]">
+                        @* ตัวเลือกสถานะปกติ *@
                         <option value="ปกติ">ปกติ</option>
+                        @* ตัวเลือกสถานะถูกล็อก *@
                         <option value="ถูกล็อก">ถูกล็อก</option>
                     </select>
                 </div>
@@ -534,30 +483,22 @@
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 pt-2">
                 @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                    ยกเลิก
-                </button>
+                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                    บันทึกการแก้ไข
-                </button>
+                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">บันทึกการแก้ไข</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- 3. RESET PASSWORD MODAL: หน้าต่างยืนยันการรีเซ็ตรหัสผ่านด้วยฟอร์ม MVC มาตรฐาน -->
+@* 3. RESET PASSWORD MODAL: หน้าต่างยืนยันการรีเซ็ตรหัสผ่านด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="resetPasswordModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-2xl space-y-4 text-center border border-slate-100">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="size-14 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+            <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         </div>
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -566,29 +507,22 @@
             @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-xs font-mono font-bold text-[#2F39A9] mt-1 bg-indigo-50 py-1 px-3 rounded-lg inline-block" id="resetTargetEmail"></p>
             @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
-            <p class="text-xs text-slate-500 mt-2 leading-relaxed">
-                คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตรหัสผ่านสำหรับบัญชีนี้ ระบบจะสร้างรหัสผ่านชั่วคราวใหม่เพื่อให้เจ้าหน้าที่นำไปส่งมอบให้แก่ผู้ใช้งาน
-            </p>
+            <p class="text-xs text-slate-500 mt-2 leading-relaxed">คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตรหัสผ่านสำหรับบัญชีนี้ ระบบจะสร้างรหัสผ่านชั่วคราวใหม่เพื่อให้เจ้าหน้าที่นำไปส่งมอบให้แก่ผู้ใช้งาน</p>
         </div>
         @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
         <form asp-controller="ITSupport" asp-action="ResetPassword" class="flex items-center gap-2 pt-2">
             @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="userId" id="resetTargetUserId" />
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                ยกเลิก
-            </button>
+            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
             @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-            <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                ยืนยันสร้างรหัส
-            </button>
+            <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">ยืนยันสร้างรหัส</button>
         </form>
     </div>
 </div>
 
-<!-- 3.1 หน้าต่างแสดงรหัสผ่านชั่วคราวที่เพิ่งสร้างเสร็จจาก TempData -->
-@if (!string.IsNullOrEmpty(tempResetPassword))
-{
+@* 3.1 หน้าต่างแสดงรหัสผ่านชั่วคราวที่เพิ่งสร้างเสร็จจาก TempData *@
+@if (!string.IsNullOrEmpty(tempResetPassword)) {
     @* หน้าต่างป๊อปอัพ (Modal Overlay) จัดกึ่งกลางหน้าจอและจำกัดความสูงไม่ให้ล้นจอ *@
     <div id="passwordGeneratedModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -596,18 +530,14 @@
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-14 rounded-full bg-emerald-50 text-emerald-500 mx-auto flex items-center justify-center">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+                <svg class="size-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-lg font-bold text-[#050315]">สร้างรหัสผ่านชั่วคราวสำเร็จ</h3>
                 @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
-                <p class="text-xs text-slate-500 mt-1">
-                    สำหรับผู้ใช้งาน: <span class="font-bold text-[#050315]">@tempResetEmail</span>
-                </p>
+                <p class="text-xs text-slate-500 mt-1">สำหรับผู้ใช้งาน: <span class="font-bold text-[#050315]">@tempResetEmail</span></p>
             </div>
 
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -617,40 +547,29 @@
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex items-center justify-center gap-3">
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                    <span class="font-mono text-xl font-black text-[#2F39A9] tracking-wider select-all" id="generatedPasswordBox">
-                        @tempResetPassword
-                    </span>
+                    <span class="font-mono text-xl font-black text-[#2F39A9] tracking-wider select-all" id="generatedPasswordBox">@tempResetPassword</span>
                     @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                    <button type="button" onclick="copyGeneratedPassword()"
-                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition cursor-pointer">
-                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                        <span id="copyPassLabel">คัดลอก</span>
-                    </button>
+                    <button type="button" onclick="copyGeneratedPassword()" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition cursor-pointer"><span id="copyPassLabel">คัดลอก</span></button>
                 </div>
             </div>
 
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="pt-2">
                 @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                    เสร็จสิ้น
-                </button>
+                <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#2F39A9]/90 text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">เสร็จสิ้น</button>
             </div>
         </div>
     </div>
 }
 
-<!-- 4. DELETE MODAL: หน้าต่างยืนยันการลบบัญชีผู้ใช้ด้วยฟอร์ม MVC มาตรฐาน -->
+@* 4. DELETE MODAL: หน้าต่างยืนยันการลบบัญชีผู้ใช้ด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="deleteUserModal" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl space-y-4 text-center">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="size-12 rounded-full bg-red-100 text-[#DC2626] mx-auto flex items-center justify-center">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </div>
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -666,71 +585,84 @@
             @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="email" id="deleteTargetEmailInput" />
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                ยกเลิก
-            </button>
+            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
             @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                ยืนยันลบ
-            </button>
+            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">ยืนยันลบ</button>
         </form>
     </div>
 </div>
 
+@* ส่วนสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบหน้าเว็บ *@
 @section Scripts {
     @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
-        // เปิดหน้าต่างเพิ่มผู้ใช้งานใหม่
+        // ฟังก์ชันเปิดหน้าต่างเพิ่มผู้ใช้งานใหม่
         function openAddUserModal() {
+            // แสดงหน้าต่างโมดอลเพิ่มผู้ใช้ใหม่
             document.getElementById('addUserModal')?.classList.remove('hidden');
         }
 
-        // เปิดหน้าต่างแก้ไขข้อมูลผู้ใช้งานและเติมค่าปัจจุบันลงในฟอร์ม
+        // ฟังก์ชันเปิดหน้าต่างแก้ไขข้อมูลผู้ใช้งานและเติมค่าปัจจุบันลงในฟอร์ม
         function openEditUserModal(email, phone, fullName, role, points, status) {
+            // กำหนดค่าอีเมลเดิมลงในช่องอินพุต
             document.getElementById('editUserEmail').value = email;
+            // กำหนดค่าเบอร์โทรศัพท์เดิมลงในช่องอินพุต
             document.getElementById('editUserPhone').value = phone || '';
+            // กำหนดค่าชื่อ-นามสกุลเดิมลงในช่องอินพุต
             document.getElementById('editUserFullName').value = fullName || '';
+            // กำหนดค่าแต้มสะสมเดิมลงในช่องอินพุต
             document.getElementById('editUserPoints').value = points || 0;
-            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะบทบาท
             if (role) {
+                // กำหนดค่าบทบาทผู้ใช้งานลงในช่องดรอปดาวน์
                 document.getElementById('editUserRole').value = role.toLowerCase();
             }
+            // กำหนดค่าสถานะบัญชีลงในช่องดรอปดาวน์
             document.getElementById('editUserStatus').value = status || 'ปกติ';
+            // แสดงหน้าต่างโมดอลแก้ไขข้อมูลผู้ใช้
             document.getElementById('editUserModal')?.classList.remove('hidden');
         }
 
-        // เปิดหน้าต่างยืนยันการรีเซ็ตรหัสผ่าน
+        // ฟังก์ชันเปิดหน้าต่างยืนยันการรีเซ็ตรหัสผ่าน
         function openResetPasswordModal(email, userId) {
+            // แสดงอีเมลเป้าหมายที่ต้องการรีเซ็ตรหัสผ่าน
             document.getElementById('resetTargetEmail').innerText = email;
+            // บันทึกรหัสผู้ใช้เป้าหมายลงในฟิลด์ซ่อน
             document.getElementById('resetTargetUserId').value = userId;
+            // แสดงหน้าต่างโมดอลยืนยันรีเซ็ตรหัสผ่าน
             document.getElementById('resetPasswordModal')?.classList.remove('hidden');
         }
 
-        // คัดลอกรหัสผ่านชั่วคราวลงคลิปบอร์ด
+        // ฟังก์ชันคัดลอกรหัสผ่านชั่วคราวลงคลิปบอร์ด
         function copyGeneratedPassword() {
-            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+            // อ้างอิงกล่องแสดงรหัสผ่านชั่วคราว
             const passBox = document.getElementById('generatedPasswordBox');
-            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+            // ตรวจสอบว่าพบกล่องรหัสผ่านหรือไม่
             if (!passBox) return;
-            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+            // อ่านค่ารหัสผ่านชั่วคราว
             const pass = passBox.innerText.trim();
+            // บันทึกรหัสผ่านลงในคลิปบอร์ด
             navigator.clipboard.writeText(pass).then(() => {
-                // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+                // อ้างอิงป้ายกำกับปุ่มคัดลอก
                 const label = document.getElementById('copyPassLabel');
-                // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+                // เปลี่ยนข้อความแจ้งสถานะว่าคัดลอกสำเร็จ
                 if (label) label.innerText = 'คัดลอกแล้ว';
             });
         }
 
-        // เปิดหน้าต่างยืนยันการลบบัญชีผู้ใช้งาน
+        // ฟังก์ชันเปิดหน้าต่างยืนยันการลบบัญชีผู้ใช้งาน
         function openDeleteUserModal(email) {
+            // แสดงอีเมลเป้าหมายที่ต้องการลบ
             document.getElementById('deleteTargetEmailLabel').innerText = email;
+            // บันทึกอีเมลเป้าหมายลงในฟิลด์ซ่อนของฟอร์ม
             document.getElementById('deleteTargetEmailInput').value = email;
+            // แสดงหน้าต่างโมดอลยืนยันการลบบัญชี
             document.getElementById('deleteUserModal')?.classList.remove('hidden');
         }
 
-        // ปิดหน้าต่าง Modal ทั้งหมดในหน้านี้
+        // ฟังก์ชันปิดหน้าต่าง Modal ทั้งหมดในหน้านี้
         function closeAllModals() {
+            // ค้นหาและซ่อนหน้าต่างโมดอลทั้งหมดบนหน้าเว็บ
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
         }
     </script>

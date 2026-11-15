@@ -1,9 +1,52 @@
+@* กำหนดโมเดลข้อมูลรายการสินค้าในคลังสินค้า *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Product>
+@* กำหนดฟังก์ชันช่วยเหลือและการประมวลผลข้อมูลสำหรับหน้าสต็อกสินค้า *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
+
+    // ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทย
+    string FormatThaiDate(DateOnly date)
+    {
+        int year = date.Year;
+        if (year > 0 && year < 1900) year += 543;
+        else if (year >= 2400) year -= 543;
+        var gregorian = new DateOnly(year, date.Month, date.Day);
+        return gregorian.ToString("d MMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("th-TH"));
+    }
+    // กำหนดชื่อหัวข้อของหน้าเว็บ
     ViewData["Title"] = "สต็อกสินค้า";
+    // กำหนดเค้าโครงหลักสำหรับพนักงาน
     Layout = "_StaffLayout";
 
+    // ตรวจสอบว่ามีรายการสินค้าในฐานข้อมูลหรือไม่
     var hasDbProducts = Model != null && Model.Any();
+    // แปลงโมเดลสินค้าเป็นรายการ List
     var allProducts = Model?.ToList() ?? new List<Khetsophon_CSI402_8456.Models.Product>();
 
     // การกำหนดค่าเนื้อหา ไอคอน และข้อมูลสำหรับหน้าต่างรับสินค้าไว้ส่วนบนสุดของไฟล์ตามมาตรฐาน
@@ -17,13 +60,13 @@
     var recentRestockLogs = ViewBag.RecentRestockLogs as List<Khetsophon_CSI402_8456.Models.Systemlog> ?? new List<Khetsophon_CSI402_8456.Models.Systemlog>();
     bool shouldAutoOpenReceive = ViewBag.OpenReceiveModal == true;
 
-    var lowStockProducts = allModalProducts.Where(p => (p.Inventory?.QuantityOnHand ?? 0) <= (p.Inventory?.SafetyStockLevel ?? 5)).ToList();
+    var lowStockProducts = allModalProducts.Where(p => Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= (p.Inventory?.SafetyStockLevel ?? 5)).ToList();
     // ดึงจำนวนสถิติรวมของสินค้าทั้งคลังและตัวกรองปัจจุบันจาก ViewBag
     int totalProductCount = ViewBag.TotalProductCount ?? allProducts.Count;
     int filteredCount = ViewBag.FilteredCount ?? allProducts.Count;
-    int normalCount = ViewBag.NormalStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > (p.Inventory?.SafetyStockLevel ?? 5));
-    int lowCount = ViewBag.LowStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) > 0 && (p.Inventory?.QuantityOnHand ?? 0) <= (p.Inventory?.SafetyStockLevel ?? 5));
-    int outOfStockCount = ViewBag.OutOfStockCount ?? allProducts.Count(p => (p.Inventory?.QuantityOnHand ?? 0) <= 0);
+    int normalCount = ViewBag.NormalStockCount ?? allProducts.Count(p => Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) > (p.Inventory?.SafetyStockLevel ?? 5));
+    int lowCount = ViewBag.LowStockCount ?? allProducts.Count(p => Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) > 0 && Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= (p.Inventory?.SafetyStockLevel ?? 5));
+    int outOfStockCount = ViewBag.OutOfStockCount ?? allProducts.Count(p => Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) <= 0);
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     int pageSize = ViewBag.PageSize ?? 10;
@@ -48,7 +91,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
-    <!-- ส่วนหัวหน้าสต็อกสินค้าและปุ่มเปิดหน้าต่างรับสินค้าเข้าสต็อก -->
+    @* ส่วนหัวหน้าสต็อกสินค้าและปุ่มเปิดหน้าต่างรับสินค้าเข้าสต็อก *@
     <div class="flex items-center justify-between flex-wrap gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -71,7 +114,7 @@
         </button>
     </div>
 
-    <!-- กล่องแจ้งเตือนผลการรับสินค้าเข้าสต็อก -->
+    @* กล่องแจ้งเตือนผลการรับสินค้าเข้าสต็อก *@
     @if (TempData["SuccessMessage"] != null)
     {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -100,7 +143,7 @@
         </div>
     }
 
-    <!-- Alert Banner (Matching frame_9_3.png) -->
+    @* แถบแจ้งเตือนสถานะเมื่อมีสินค้าที่สต็อกใกล้หมดหรือต่ำกว่าจุดปลอดภัย *@
     @if (lowStockProducts.Any())
     {
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -121,7 +164,7 @@
                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var alert in lowStockProducts.Take(3))
                 {
-                    var qty = alert.Inventory?.QuantityOnHand ?? 0;
+                    var qty = Math.Max(0, (alert.Inventory?.QuantityOnHand ?? 0) - (alert.Inventory?.ReservedQuantity ?? 0));
                     var badgeCls = qty <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : "bg-[#FEF3C7] text-[#D97706]";
                     var statusLbl = qty <= 0 ? "หมด · 0 ชิ้น" : $"ใกล้หมด · {qty} ชิ้น";
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -153,13 +196,13 @@
         </div>
     }
 
-    <!-- Search & Filter Bar (Server-side PRG & GET Query Filter) -->
+    @* แถบค้นหาและตัวกรองข้อมูลสินค้า ส่งข้อมูลแบบฝั่งเซิร์ฟเวอร์ *@
     <div class="flex flex-col lg:flex-row lg:items-center gap-3">
         @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
         <form asp-controller="Staff" asp-action="Index" class="flex-1 flex flex-wrap items-center gap-2.5">
             @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="stockFilter" value="@selectedStockFilter" />
-            <!-- Search Input -->
+            @* ช่องกรอกคำค้นหาชื่อสินค้าหรือรหัสสินค้า *@
             <div class="relative flex-1 min-w-[220px]">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                 <svg class="size-4.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -171,7 +214,7 @@
                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 focus:border-[#2F39A9] shadow-2xs" />
             </div>
 
-            <!-- Category Dropdown -->
+            @* เมนูดรอปดาวน์สำหรับเลือกหมวดหมู่สินค้า *@
             <div class="relative">
                 @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select name="category" id="stockCategoryFilter" onchange="this.form.submit()" class="appearance-none pr-9 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 shadow-2xs focus:outline-none focus:border-[#2F39A9]">
@@ -217,7 +260,7 @@
             }
         </form>
 
-        <!-- Status Filter Tabs (Server-side Route Filter across Pages) -->
+        @* แท็บเลือกสถานะสต็อกสินค้าสำหรับกรองข้อมูลข้ามหน้า *@
         <div class="flex flex-wrap items-center gap-1.5" id="stockStatusButtons">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="all" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
@@ -231,20 +274,20 @@
             </a>
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="low" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
-               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "low" ? "bg-[#D97706] text-white" : "bg-white border border-[#FDE68A] text-[#D97706] hover:bg-amber-50 shadow-2xs")">
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "low" ? "bg-[#2F39A9] text-white" : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-2xs")">
                 ใกล้หมด @lowCount
             </a>
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Staff" asp-action="Index" asp-route-stockFilter="out" asp-route-search="@selectedSearch" asp-route-category="@selectedCategory"
-               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "out" ? "bg-[#DC2626] text-white" : "bg-white border border-[#FECACA] text-[#DC2626] hover:bg-red-50 shadow-2xs")">
+               class="status-tab px-4 py-2 rounded-xl text-sm font-semibold transition @(selectedStockFilter == "out" ? "bg-[#2F39A9] text-white" : "bg-white border border-gray-2000 text-gray-700 hover:bg-gray-50 shadow-2xs")">
                 หมด @outOfStockCount
             </a>
         </div>
     </div>
 
-    <!-- Stock Card: Desktop Table & Mobile Cards -->
+    @* ตารางแสดงรายการสต็อกสินค้าสำหรับเดสก์ท็อปและการ์ดสำหรับมือถือ *@
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <!-- Mobile Card View -->
+        @* มุมมองการ์ดรายการสินค้าสำหรับหน้าจอมือถือ *@
         <div class="md:hidden divide-y divide-gray-100">
             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (hasDbProducts)
@@ -252,7 +295,7 @@
                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                 @foreach (var p in Model!)
                 {
-                    var totalStock = p.Inventory != null ? p.Inventory.QuantityOnHand : 0;
+                    var totalStock = p.IsPreorder ? 0 : Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0));
                     var safetyLevel = p.Inventory?.SafetyStockLevel ?? 5;
                     var statusText = totalStock <= 0 ? "หมด" : totalStock <= safetyLevel ? "ใกล้หมด" : "ปกติ";
                     var statusClass = totalStock <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : totalStock <= safetyLevel ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DCFCE7] text-[#16A34A]";
@@ -269,7 +312,7 @@
                                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="size-11 rounded-xl border border-gray-200 bg-white shrink-0 overflow-hidden">
                                     @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                    <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
+                                    <img src="@Url.Content(ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
                                 </div>
                                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                 <div class="min-w-0">
@@ -303,7 +346,7 @@
             }
         </div>
 
-        <!-- Desktop Table View -->
+        @* มุมมองตารางรายการสินค้าสำหรับหน้าจอคอมพิวเตอร์ *@
         <div class="hidden md:block overflow-x-auto">
             @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
             <table class="w-full text-sm min-w-[620px]" id="stockTable">
@@ -331,7 +374,7 @@
                         @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var p in Model!)
                         {
-                            var totalStock = p.Inventory != null ? p.Inventory.QuantityOnHand : 0;
+                            var totalStock = p.IsPreorder ? 0 : Math.Max(0, (p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0));
                             var safetyLevel = p.Inventory?.SafetyStockLevel ?? 5;
                             var statusText = totalStock <= 0 ? "หมด" : totalStock <= safetyLevel ? "ใกล้หมด" : "ปกติ";
                             var statusClass = totalStock <= 0 ? "bg-[#FEE2E2] text-[#DC2626]" : totalStock <= safetyLevel ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DCFCE7] text-[#16A34A]";
@@ -341,12 +384,12 @@
 
                             @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-gray-50/70 transition-colors stock-row" data-category="@categoryName" data-status="@statusText">
-                                <!-- Product Image & Name -->
+                                @* คอลัมน์แสดงรูปภาพและชื่อสินค้า *@
                                 <td class="py-4 px-6 flex items-center gap-3.5">
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="size-11 rounded-xl border border-gray-200 bg-white shrink-0 overflow-hidden">
                                         @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                        <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
+                                        <img src="@Url.Content(ResolveCardImageUrl(imgPath))" alt="@p.Name" class="size-full object-cover object-top" loading="lazy" />
                                     </div>
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div>
@@ -357,17 +400,17 @@
                                     </div>
                                 </td>
 
-                                <!-- SKU -->
+                                @* คอลัมน์แสดงรหัสสินค้า SKU *@
                                 <td class="py-4 px-6 font-mono text-xs text-gray-500">
                                     @p.Sku
                                 </td>
 
-                                <!-- Stock Count -->
+                                @* คอลัมน์แสดงจำนวนสต็อกคงเหลือ *@
                                 <td class="py-4 px-6 text-center font-bold text-base @stockClass">
                                     @totalStock
                                 </td>
 
-                                <!-- Status Pill -->
+                                @* คอลัมน์แสดงป้ายกำกับสถานะสต็อกสินค้า *@
                                 <td class="py-4 px-6 text-center">
                                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                     <span class="text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap @statusClass">
@@ -375,9 +418,9 @@
                                     </span>
                                 </td>
 
-                                <!-- Created Date -->
+                                @* คอลัมน์แสดงวันที่สร้างหรือรับเข้าสินค้า *@
                                 <td class="py-4 px-6 text-gray-500 text-xs whitespace-nowrap">
-                                    @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(p.CreatedAt))
+                                    @FormatThaiDate(DateOnly.FromDateTime(p.CreatedAt))
                                 </td>
                             </tr>
                         }
@@ -396,7 +439,7 @@
             </table>
         </div>
 
-        <!-- แถบแบ่งหน้ารายการสต็อกสินค้า เชื่อมโยงกับ StaffController.Index -->
+        @* แถบแบ่งหน้ารายการสต็อกสินค้า เชื่อมโยงกับ StaffController.Index *@
         <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between flex-wrap gap-4 text-sm">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs text-gray-500">แสดง @startRow–@endRow จากที่ตรงเงื่อนไข @filteredCount รายการ</span>
@@ -423,8 +466,14 @@
                     </span>
                 }
 
-                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                @for (int p = 1; p <= totalPages; p++)
+                @{
+                    // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                    int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                    // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                    int endPage = Math.Min(totalPages, startPage + 2);
+                }
+                @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                @for (int p = startPage; p <= endPage; p++)
                 {
                     if (p == currentPage)
                     {
@@ -471,7 +520,7 @@
         </div>
     </div>
 
-    <!-- ประวัติการรับสินค้าเข้าสต็อกล่าสุด -->
+    @* ส่วนแสดงประวัติการรับสินค้าเข้าสต็อกล่าสุด *@
     <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
@@ -489,7 +538,7 @@
             <span class="text-xs text-gray-400">แสดง @recentRestockLogs.Count รายการล่าสุด</span>
         </div>
 
-        <!-- Mobile Card View -->
+        @* มุมมองการ์ดรายการสินค้าสำหรับหน้าจอมือถือ *@
         <div class="md:hidden divide-y divide-gray-100">
             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (recentRestockLogs.Any())
@@ -504,7 +553,7 @@
                             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                             <span class="font-mono text-[#2F39A9] font-semibold">@log.LogCode</span>
                             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                            <span class="text-gray-400 whitespace-nowrap">@Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</span>
+                            <span class="text-gray-400 whitespace-nowrap">@FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</span>
                         </div>
                         @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
                         <p class="text-xs text-[#050315] font-medium leading-relaxed">@log.Message</p>
@@ -520,7 +569,7 @@
             }
         </div>
 
-        <!-- Desktop Table View -->
+        @* มุมมองตารางรายการสินค้าสำหรับหน้าจอคอมพิวเตอร์ *@
         <div class="hidden md:block overflow-x-auto">
             @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
             <table class="w-full text-xs min-w-[540px]">
@@ -547,7 +596,7 @@
                             @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                             <tr class="hover:bg-gray-50/70 transition-colors">
                                 @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
-                                <td class="py-3 px-6 text-gray-500 whitespace-nowrap">@Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</td>
+                                <td class="py-3 px-6 text-gray-500 whitespace-nowrap">@FormatThaiDate(DateOnly.FromDateTime(log.Timestamp)) @log.Timestamp.ToString("HH:mm") น.</td>
                                 @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                                 <td class="py-3 px-6 font-mono text-[#2F39A9] font-semibold whitespace-nowrap">@log.LogCode</td>
                                 @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
@@ -570,24 +619,24 @@
         </div>
     </div>
 
-    <!-- Staff Console Shift Footer -->
+    @* ส่วนท้ายแสดงข้อมูลกะการทำงานและผู้ใช้งานปัจจุบันของระบบจัดการพนักงาน *@
     <div class="pt-6 border-t border-gray-200/60 flex items-center justify-between flex-wrap gap-2 text-xs text-gray-400">
-        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+        @* แสดงชื่อระบบจัดการพนักงานและชื่อบัญชีพนักงานที่เข้าสู่ระบบ *@
         <div>
-            FriendHouse Staff Console · ผู้ใช้งานปัจจุบัน: @(Context.Session.GetString("UserName") ?? "พนักงานหน้าร้าน")
+            ระบบจัดการพนักงาน FriendHouse · ผู้ใช้งานปัจจุบัน: @(Context.Session.GetString("UserName") ?? "พนักงานหน้าร้าน")
         </div>
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
-            อัปเดตล่าสุด @Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.FormatThaiDate(DateOnly.FromDateTime(DateTime.Now)) @DateTime.Now.ToString("HH:mm") น.
+            อัปเดตล่าสุด @FormatThaiDate(DateOnly.FromDateTime(DateTime.Now)) @DateTime.Now.ToString("HH:mm") น.
         </div>
     </div>
 </div>
 
-<!-- ==================== หน้าต่างรับสินค้าเข้าสต็อก (รวมโหมดสแกนและกรอกเอง) ==================== -->
+@* หน้าต่างรับสินค้าเข้าสต็อก รวมโหมดสแกนและกรอกข้อมูลเอง *@
 <div id="receiveStockModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 my-8">
-        <!-- ส่วนหัวหน้าต่างรับสินค้า -->
+        @* ส่วนหัวหน้าต่างรับสินค้าและปุ่มปิด *@
         <div class="flex items-center justify-between border-b border-slate-100 pb-4">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
@@ -606,7 +655,7 @@
             </button>
         </div>
 
-        <!-- แถบเลือกโหมดภายในหน้าต่าง: สแกน หรือ กรอกเอง -->
+        @* แถบเลือกโหมดการรับเข้าสินค้า สแกนบาร์โค้ดหรือกรอกข้อมูลเอง *@
         <div class="grid grid-cols-2 gap-1.5 rounded-2xl bg-slate-100 p-1">
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" id="tabBtnScanMode" onclick="switchReceiveMode('scan')"
@@ -632,7 +681,7 @@
             </button>
         </div>
 
-        <!-- โหมดที่ 1: สแกนผ่านกล้องเว็บแคมหรือเครื่องยิงบาร์โค้ด -->
+        @* โหมดที่ 1 สแกนบาร์โค้ดผ่านกล้องหรือเครื่องอ่านบาร์โค้ด *@
         <div id="receivePanelScan" class="space-y-4">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="rounded-2xl border-2 border-dashed border-[#92EEFF] bg-[#FBFBFE] p-4 text-center space-y-3">
@@ -683,7 +732,7 @@
                            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#050315] focus:border-[#2F39A9] focus:outline-none" />
                 </div>
 
-                <!-- ปุ่มเลือกสินค้ายอดนิยมจากฐานข้อมูลจริงเพื่อทดสอบหรือกรอกเร็ว -->
+                @* ปุ่มเลือกสินค้ายอดนิยมจากฐานข้อมูลจริงเพื่อทดสอบรับเข้าด่วน *@
                 <div class="space-y-1.5">
                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div class="text-[11px] font-semibold text-slate-400">รหัสสินค้าในคลังด่วน:</div>
@@ -737,7 +786,7 @@
             </form>
         </div>
 
-        <!-- โหมดที่ 2: กรอกรับเข้าด้วยตนเองและเลือกจากรายชื่อสินค้าทั้งหมดในฐานข้อมูล -->
+        @* โหมดที่ 2 กรอกข้อมูลรับเข้าและเลือกสินค้าจากฐานข้อมูลด้วยตนเอง *@
         <div id="receivePanelManual" class="hidden space-y-4">
             @* แบบฟอร์มส่งข้อมูลไปยัง Controller ตามมาตรฐาน ASP.NET Core MVC (ไม่ระบุ method) *@
             <form asp-controller="Staff" asp-action="ScanReceive" class="space-y-4">
@@ -754,7 +803,7 @@
                         @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
                         @foreach (var mp in allModalProducts)
                         {
-                            var qoh = mp.Inventory?.QuantityOnHand ?? 0;
+                            var qoh = mp.IsPreorder ? 0 : Math.Max(0, (mp.Inventory?.QuantityOnHand ?? 0) - (mp.Inventory?.ReservedQuantity ?? 0));
                             <option value="@mp.Sku">@mp.Name (@mp.Sku) · คงเหลือ @qoh ชิ้น</option>
                         }
                     </select>

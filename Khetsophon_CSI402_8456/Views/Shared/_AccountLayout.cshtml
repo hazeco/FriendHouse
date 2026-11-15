@@ -8,14 +8,18 @@
     @* กำหนดขนาด Viewport ให้รองรับการแสดงผลแบบ Responsive ทุกขนาดหน้าจอ *@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @* แสดงหัวข้อหน้าเว็บจาก ViewData *@
-    <!-- กำหนดชื่อหน้าเว็บและโหลดสไตล์ชีตหลักของระบบ -->
-    <title>@ViewData["Title"] — FriendHouse</title>
+    @* กำหนดชื่อหน้าเว็บและโหลดสไตล์ชีตหลักของระบบ *@
+<title>@ViewData["Title"] — FriendHouse</title>
     @* นำเข้าไฟล์ CSS สไตล์หลักของโครงการ *@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+@* ส่วนบอดี้ของเอกสาร พร้อมคุณสมบัติซิงค์เซสชัน 1 เบราว์เซอร์ 1 บทบาท *@
+<body data-session-role="@(Context.Session.GetString("Role")?.ToLowerInvariant() ?? "guest")" data-session-uid="@(Context.Session.GetInt32("UserId") ?? 0)">
     @* เรนเดอร์เนื้อหาหลักของแต่ละหน้า เช่น หน้าเข้าสู่ระบบหรือลงทะเบียน *@
-    <!-- พื้นที่แทรกเนื้อหาจากหน้า View ลูก -->
     @RenderBody()
+    @* โหลดสคริปต์ควบคุมการซิงค์เซสชันข้ามแท็บ *@
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @* พื้นที่สำหรับแทรกสคริปต์เพิ่มเติมจากหน้าย่อย *@
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

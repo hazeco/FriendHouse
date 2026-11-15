@@ -1,4 +1,6 @@
+@* กำหนดโมเดลข้อมูลระบบจัดการบัญชีผู้ใช้งานและสมาชิก *@
 @model Khetsophon_CSI402_8456.ViewModels.UserManagementViewModel
+@* กำหนดการตั้งค่าข้อมูลและตัวเลือกการกรองหน้าระบบจัดการสมาชิก *@
 
 @{
     // กำหนดหัวข้อหน้าเว็บสำหรับระบบจัดการข้อมูลผู้ใช้งานและลูกค้า (User Full CRUD + Search)
@@ -65,7 +67,7 @@
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="mx-auto max-w-7xl space-y-6">
 
-        <!-- แถบแจ้งเตือนผลการดำเนินการ CRUD จาก TempData -->
+        @* แถบแจ้งเตือนผลการดำเนินการจัดการข้อมูลผู้ใช้จาก TempData *@
         @if (TempData["SuccessMessage"] != null)
         {
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -92,7 +94,7 @@
             </div>
         }
 
-        <!-- ส่วนหัวของหน้ารายชื่อผู้ใช้งานและปุ่มเปิดหน้าต่างสร้างบัญชีลูกค้าใหม่ -->
+        @* ส่วนหัวของหน้ารายชื่อผู้ใช้งานและปุ่มเปิดหน้าต่างสร้างบัญชีสมาชิกใหม่ *@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
@@ -124,7 +126,7 @@
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="font-bold text-primary">@userItems.Count บัญชี</span>
                 </span>
-                <!-- CREATE: ปุ่มเปิดหน้าต่างเพิ่มสมาชิกใหม่ในหน้าเดียวทันที -->
+                @* ปุ่มเปิดหน้าต่างเพิ่มสมาชิกใหม่ในหน้าเดียวทันที *@
                 <button type="button"
                         onclick="openCreateCustomerModal()"
                         class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-accent cursor-pointer">
@@ -138,11 +140,11 @@
             </div>
         </div>
 
-        <!-- READ: ฟอร์มค้นหาและกรองข้อมูลผู้ใช้งาน (ไม่มีแอตทริบิวต์ method ตามกฎ MVC ของโปรเจกต์) -->
+        @* ฟอร์มค้นหาและกรองข้อมูลผู้ใช้งาน โดยไม่มีแอตทริบิวต์ method ตามกฎ MVC *@
         <form asp-controller="Home" asp-action="UserList" class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs">
             @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
             <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-                <!-- ช่องค้นหาด้วยชื่อ อีเมล รหัสผู้ใช้ หรือเบอร์โทรศัพท์ -->
+                @* ช่องค้นหาด้วยชื่อ อีเมล รหัสสมาชิก หรือเบอร์โทรศัพท์ *@
                 <div class="sm:col-span-5 relative">
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
@@ -159,7 +161,7 @@
                            class="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-4 py-2.5 text-xs sm:text-sm text-text placeholder:text-slate-400 focus:border-primary focus:bg-white focus:outline-hidden" />
                 </div>
 
-                <!-- ตัวกรองบทบาทผู้ใช้งาน -->
+                @* ตัวกรองเลือกบทบาทผู้ใช้งานในระบบ *@
                 <div class="sm:col-span-3">
                     @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="roleFilter" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:bg-white focus:outline-hidden">
@@ -178,7 +180,7 @@
                     </select>
                 </div>
 
-                <!-- ตัวกรองสถานะบัญชี -->
+                @* ตัวกรองเลือกสถานะการใช้งานของบัญชี *@
                 <div class="sm:col-span-2">
                     @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                     <select name="statusFilter" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:bg-white focus:outline-hidden">
@@ -197,7 +199,7 @@
                     </select>
                 </div>
 
-                <!-- ปุ่มกดค้นหาและปุ่มล้างตัวกรอง -->
+                @* ปุ่มกดค้นหาและปุ่มล้างตัวกรอง *@
                 <div class="sm:col-span-2 flex items-center gap-2">
                     @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                     <button type="submit" class="w-full rounded-xl bg-primary px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-accent transition-colors cursor-pointer">
@@ -215,7 +217,7 @@
             </div>
         </form>
 
-        <!-- ตารางแสดงข้อมูลสมาชิกและปุ่มจัดการแก้ไข/ลบ (User Full CRUD Table) -->
+        @* ตารางแสดงข้อมูลสมาชิกและปุ่มจัดการแก้ไขหรือลบบัญชีผู้ใช้ *@
         <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="overflow-x-auto">
@@ -320,7 +322,7 @@
                                     <td class="py-3.5 pl-3 pr-6 text-right">
                                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                         <div class="inline-flex items-center justify-end gap-1.5">
-                                            <!-- UPDATE: ปุ่มเปิดหน้าต่างแก้ไขข้อมูลผู้ใช้ -->
+                                            @* ปุ่มเปิดหน้าต่างแก้ไขข้อมูลผู้ใช้ *@
                                             <button type="button"
                                                     onclick="openEditCustomerModal(@user.UserId, '@user.UserCode', '@(user.FullName ?? "")', '@user.Email', '@user.Phone', @user.Points, @(user.IsActive ? "true" : "false"))"
                                                     class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-primary hover:text-primary transition-colors cursor-pointer">
@@ -331,7 +333,7 @@
                                                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                                 <span>แก้ไข</span>
                                             </button>
-                                            <!-- DELETE: ปุ่มเปิดหน้าต่างยืนยันการลบบัญชีผู้ใช้ -->
+                                            @* ปุ่มเปิดหน้าต่างยืนยันการลบบัญชีผู้ใช้ *@
                                             <button type="button"
                                                     onclick="openDeleteCustomerModal(@user.UserId, '@user.Email', '@user.UserCode')"
                                                     class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/60 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition-colors cursor-pointer">
@@ -370,7 +372,7 @@
                 var startRow = totalUserCount == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
                 var endRow = Math.Min(currentPage * pageSize, totalUserCount);
             }
-            <!-- แถบแบ่งหน้าตารางจัดการบัญชีลูกค้า เชื่อมโยงกับ HomeController.UserList และคงค่าตัวกรอง -->
+            @* แถบแบ่งหน้าตารางจัดการบัญชีลูกค้า เชื่อมโยงกับ HomeController.UserList พร้อมตัวเลข 3 หน้า *@
             <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>แสดง <span class="font-bold text-text">@startRow–@endRow</span> จากทั้งหมด <span class="font-bold text-text">@totalUserCount</span> บัญชี</span>
@@ -397,8 +399,14 @@
                         </span>
                     }
 
-                    @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                    @for (int p = 1; p <= totalPages; p++)
+                    @{
+                        // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                        int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                        // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                        int endPage = Math.Min(totalPages, startPage + 2);
+                    }
+                    @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                    @for (int p = startPage; p <= endPage; p++)
                     {
                         if (p == currentPage)
                         {
@@ -448,7 +456,7 @@
     </div>
 </div>
 
-<!-- CREATE MODAL: หน้าต่างสร้างบัญชีลูกค้าใหม่ด้วยฟอร์ม MVC มาตรฐาน -->
+@* หน้าต่างโมดัลสร้างบัญชีสมาชิกใหม่ด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="createCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">
@@ -528,7 +536,7 @@
     </div>
 </div>
 
-<!-- UPDATE MODAL: หน้าต่างแก้ไขข้อมูลลูกค้าและสถานะบัญชีด้วยฟอร์ม MVC มาตรฐาน -->
+@* หน้าต่างโมดัลแก้ไขข้อมูลสมาชิกและสถานะบัญชีด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="editCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">
@@ -613,7 +621,7 @@
     </div>
 </div>
 
-<!-- DELETE MODAL: หน้าต่างยืนยันการลบบัญชีผู้ใช้ด้วยฟอร์ม MVC มาตรฐาน -->
+@* หน้าต่างโมดัลยืนยันการลบบัญชีผู้ใช้ด้วยฟอร์ม MVC มาตรฐาน *@
 <div id="deleteCustomerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl space-y-5">

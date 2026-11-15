@@ -1,4 +1,6 @@
+@* กำหนดโมเดลข้อมูลรายงานสรุปยอดขายและการเงินประจำเดือน *@
 @model Khetsophon_CSI402_8456.ViewModels.FinancialReportViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้ารายงานประจำเดือน *@
 @{
     ViewData["Title"] = "รายงานสรุปยอดประจำเดือน";
     Layout = "_OwnerLayout";
@@ -28,7 +30,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-6">
-    <!-- ส่วนหัวหน้าเพจและตัวเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง -->
+    @* ส่วนหัวหน้าเพจและตัวเลือกช่วงเดือนที่เชื่อมโยงฐานข้อมูลจริง *@
     <div class="flex items-center justify-between flex-wrap gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -40,7 +42,7 @@
             <p class="text-sm text-slate-500 mt-1">@pageHeader.Subtitle</p>
         </div>
 
-        <!-- ปุ่มเลื่อนช่วงเดือนและการส่งออกรายงาน -->
+        @* ปุ่มเลื่อนช่วงเดือนและการส่งออกรายงาน *@
         <div class="flex items-center gap-2 print:hidden">
             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (!string.IsNullOrEmpty(Model.PrevMonthKey))
@@ -138,7 +140,7 @@
         </div>
     }
 
-    <!-- การ์ดสถิติสรุปยอด 4 รายการจากฐานข้อมูลจริง (ยอดรายได้ตรงกับหน้าภาพรวมการเงินบัญชี) -->
+    @* การ์ดสถิติสรุปยอด 4 รายการจากฐานข้อมูลจริง ยอดรายได้ตรงกับหน้าภาพรวมการเงินบัญชี *@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-5">
@@ -180,7 +182,7 @@
         </div>
     </div>
 
-    <!-- กราฟแท่งแสดงแนวโน้มรายได้จริงย้อนหลัง 6 เดือนจากฐานข้อมูล -->
+    @* กราฟแท่งแสดงแนวโน้มรายได้จริงย้อนหลัง 6 เดือนจากฐานข้อมูล *@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs p-6 space-y-4">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="flex items-center justify-between">
@@ -214,7 +216,7 @@
         </div>
     </div>
 
-    <!-- ตารางรายละเอียดความเคลื่อนไหวสต็อกสินค้าจริงจากฐานข้อมูลพร้อมระบบแบ่งหน้า -->
+    @* ตารางรายละเอียดความเคลื่อนไหวสต็อกสินค้าจริงจากฐานข้อมูลพร้อมระบบแบ่งหน้า *@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
@@ -229,7 +231,7 @@
             <span class="text-xs text-slate-400">@Model.TotalProductRowCount รายการ</span>
         </div>
 
-        <!-- Mobile Card List (md:hidden) -->
+        @* รายการการ์ดสำหรับหน้าจอมือถือ *@
         <div class="divide-y divide-slate-100 md:hidden">
             @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var row in Model.StockMovementRows)
@@ -345,7 +347,7 @@
                             <td class="py-3.5 px-6 text-right font-bold text-[#050315]">฿@row.OutValue.ToString("N0")</td>
                         </tr>
                     }
-                    <!-- แถวยอดรวมทั้งหมดของสินค้าทุกชิ้นในฐานข้อมูล -->
+                    @* แถวยอดรวมทั้งหมดของสินค้าทุกชิ้นในฐานข้อมูล *@
                     <tr class="bg-slate-50/80 font-bold text-[#050315]">
                         @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
                         <td class="py-4 px-6">รวมทั้งหมด (@Model.TotalProductRowCount รายการ)</td>
@@ -366,7 +368,7 @@
             </table>
         </div>
 
-        <!-- แถบแบ่งหน้าตารางรายงานประจำเดือน -->
+        @* แถบแบ่งหน้าตารางรายงานประจำเดือน *@
         <div class="px-6 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>แสดง @startRow–@endRow จากทั้งหมด @Model.TotalProductRowCount รายการ</span>
@@ -436,11 +438,11 @@
     </div>
 </div>
 
-<!-- Modal 1: รายงานส่งออก -->
+@* หน้าต่างโมดัลที่ 1 รายงานส่งออก *@
 <div id="exportModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 print:hidden">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-scale-up">
-        <!-- Header -->
+        @* ส่วนหัวหน้าต่างโมดัล *@
         <div>
             @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
             <h2 class="text-xl font-bold text-[#050315]">ส่งออกรายงาน</h2>
@@ -450,13 +452,13 @@
 
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="space-y-4">
-            <!-- 1. รูปแบบไฟล์ -->
+            @* ส่วนเลือกรูปแบบไฟล์สำหรับส่งออก *@
             <div>
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="text-[13px] font-semibold text-[#050315] block mb-2">รูปแบบการส่งออก</label>
                 @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Excel CSV Option -->
+                    @* ตัวเลือกส่งออกไฟล์รูปแบบ Excel CSV *@
                     <button type="button" id="btnFormatExcel" onclick="selectFormat('Excel')"
                             class="p-4 rounded-2xl border-2 border-[#2F39A9] bg-white flex items-center gap-3 text-left transition cursor-pointer">
                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -478,7 +480,7 @@
                         </div>
                     </button>
 
-                    <!-- PDF Print Option -->
+                    @* ตัวเลือกส่งออกไฟล์รูปแบบ PDF Print *@
                     <button type="button" id="btnFormatPdf" onclick="selectFormat('PDF')"
                             class="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 flex items-center gap-3 text-left transition cursor-pointer">
                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -503,7 +505,7 @@
                 </div>
             </div>
 
-            <!-- 2. เลือกช่วงเวลา -->
+            @* ส่วนเลือกช่วงเวลาสำหรับส่งออก *@
             <div>
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label id="periodSelectLabel" class="text-[13px] font-semibold text-[#050315] block mb-2">ช่วงเวลาของรายงาน</label>
@@ -535,7 +537,7 @@
             </div>
         </div>
 
-        <!-- Footer Actions -->
+        @* ปุ่มกดยืนยันหรือยกเลิกการส่งออกรายงาน *@
         <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeExportModal()"
@@ -556,11 +558,11 @@
     </div>
 </div>
 
-<!-- Modal 2: ส่งออกข้อมูลสำเร็จ -->
+@* หน้าต่างโมดัลที่ 2 ส่งออกข้อมูลสำเร็จ *@
 <div id="exportSuccessModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 print:hidden">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl border border-slate-100 animate-scale-up">
-        <!-- Success Icon -->
+        @* ไอคอนแสดงผลสำเร็จ SVG *@
         <div class="size-16 rounded-full bg-[#ECFDF5] text-[#10B981] mx-auto flex items-center justify-center mb-4">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
             <svg class="size-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -568,10 +570,10 @@
             </svg>
         </div>
 
-        <!-- Title -->
+        @* หัวข้อการส่งออกข้อมูลสำเร็จ *@
         <h3 class="text-2xl font-bold text-[#050315] mb-5">เตรียมไฟล์สำเร็จ</h3>
 
-        <!-- File Details Card -->
+        @* การ์ดแสดงรายละเอียดไฟล์ที่ส่งออก *@
         <div class="bg-[#F8F9FC] rounded-2xl p-4 text-left border border-slate-100 mb-6 space-y-3">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div>
@@ -612,7 +614,7 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
+        @* ปุ่มกดปิดหรือเปิดไฟล์ที่ส่งออก *@
         <div class="space-y-3">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a id="downloadExportFileLink" asp-controller="Owner" asp-action="ExportMonthlyReport" asp-route-selectedMonth="@Model.SelectedMonthKey"

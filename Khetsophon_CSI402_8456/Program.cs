@@ -79,8 +79,5 @@ using (var scope = app.Services.CreateScope())
     Khetsophon_CSI402_8456.Data.DbInitializer.Initialize(context);
 }
 
-// กำหนดพาธโฟลเดอร์ wwwroot ให้คลาสตัวช่วยจัดการรูปภาพและไฟล์สื่อ
-Khetsophon_CSI402_8456.Helpers.PromoAndRedemptionHelper.ConfigureWebRoot(app.Environment.WebRootPath);
-
 // เริ่มต้นรันเว็บเซิร์ฟเวอร์เพื่อรอรับคำขอจากผู้ใช้งาน
 app.Run();

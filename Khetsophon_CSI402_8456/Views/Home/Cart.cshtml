@@ -1,34 +1,80 @@
+@* กำหนดโมเดลข้อมูลตะกร้าสินค้าพรีออเดอร์ *@
 @model Khetsophon_CSI402_8456.ViewModels.CartViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการคำนวณข้อมูลสำหรับหน้าตะกร้าสินค้า *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     ViewData["Title"] = "ตะกร้าสินค้าพรีออเดอร์ — FriendHouse";
 
-    // Top-of-file Media & Content Configuration
+    // การกำหนดค่าสื่อและข้อมูลข้อความส่วนบนสุดของไฟล์ตามกฎโครงการ
     var cartMedia = new {
         EmptyCartSvg = "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
     };
 
+    // ดึงรายการสินค้าทั้งหมดในตะกร้าจากโมเดล
     var cartItems = Model?.Items ?? new List<Khetsophon_CSI402_8456.ViewModels.CartItemViewModel>();
+    // จำนวนชิ้นสินค้ารวมทั้งหมดในตะกร้า
     int totalItemCount = Model?.TotalItemCount ?? 0;
+    // ยอดรวมราคาสินค้าก่อนหักส่วนลดที่จัดรูปแบบแล้ว
     string subtotalFormatted = Model?.SubtotalFormatted ?? "฿0";
+    // มูลค่าส่วนลดที่ได้รับที่จัดรูปแบบแล้ว
     string discountFormatted = Model?.DiscountFormatted ?? "-฿0";
+    // ค่าบริการแพลตฟอร์ม
     string platformFeeFormatted = Model?.PlatformFeeFormatted ?? "ฟรี (฿0)";
+    // ยอดรวมสุทธิที่ต้องชำระเมื่อมารับสินค้า
     string grandTotalFormatted = Model?.GrandTotalFormatted ?? "฿0";
+    // เบอร์โทรศัพท์ของผู้ใช้งาน
     string userPhone = Model?.UserPhone ?? ((string?)ViewBag.UserPhone ?? "");
+    // วันที่นัดรับสินค้าได้เร็วที่สุด
     string minPickupDate = Model?.MinPickupDate ?? DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    // รหัสโปรโมชั่นที่ถูกนำมาใช้งาน
     string? appliedPromoCode = Model?.AppliedPromoCode;
+    // ชื่อโปรโมชั่นที่กำลังใช้งาน
     string? appliedPromoName = Model?.AppliedPromoName;
+    // ข้อความสรุปสิทธิประโยชน์ของโปรโมชั่น
     string? promoBenefitSummary = Model?.PromoBenefitSummary;
+    // ข้อความแจ้งเตือนข้อผิดพลาดของรหัสโปรโมชั่น
     string? promoValidationError = Model?.PromoValidationError;
+    // จำนวนเงินส่วนลดที่คำนวณได้
     decimal discountAmount = Model?.DiscountAmount ?? 0m;
+    // ตัวบ่งชี้การได้รับแต้มสะสมสองเท่า
     bool isDoublePoints = Model?.IsDoublePoints ?? false;
+    // รายการคูปองโปรโมชั่นที่ผู้ใช้เก็บไว้
     var collectedPromos = Model?.CollectedPromos ?? new List<Khetsophon_CSI402_8456.ViewModels.CollectedPromoOptionViewModel>();
+    // หัวข้อคำแนะนำการรับสินค้าที่หน้าร้าน
     string storeNoticeTitle = Model?.StoreNoticeTitle ?? "รับและชำระเงินที่หน้าร้านเท่านั้น";
+    // คำอธิบายเงื่อนไขการรับสินค้าและชำระเงินที่สาขา
     string storeNoticeDesc = Model?.StoreNoticeDesc ?? "การสั่งจองพรีออเดอร์ไม่ต้องชำระเงินออนไลน์ ชำระยอดเต็มหรือมัดจำเมื่อมารับสินค้าที่สาขา FriendHouse HQ";
 }
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
-    <!-- Breadcrumb Navigation -->
+    @* แถบนำทางระบุตำแหน่งหน้าเว็บ (Breadcrumb) *@
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
@@ -38,7 +84,7 @@
         <span class="text-text font-semibold">ตะกร้าสินค้าพรีออเดอร์</span>
     </nav>
 
-    <!-- Page Title -->
+    @* ส่วนหัวเรื่องของหน้าตะกร้าสินค้า *@
     <div>
         @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
         <h1 class="text-2xl sm:text-3xl font-extrabold text-text tracking-tight">ตะกร้าสั่งจองสินค้าพรีออเดอร์</h1>
@@ -70,11 +116,11 @@
         </div>
     }
 
-    <!-- Main Cart Layout -->
+    @* เลย์เอาต์หลักของตะกร้าสินค้าแบ่งเป็น 2 คอลัมน์ *@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <!-- Left Column: Item List -->
+        @* คอลัมน์ด้านซ้าย แสดงรายการสินค้าในตะกร้า *@
         <div class="lg:col-span-8 space-y-4">
-            <!-- Header Bar (Item count & Clear) -->
+            @* แถบหัวเรื่องแสดงจำนวนรายการและปุ่มล้างตะกร้า *@
             <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-sm font-semibold text-text">
@@ -93,7 +139,7 @@
                 }
             </div>
 
-            <!-- Cart Items Loop -->
+            @* วนลูปแสดงผลรายการสินค้าในตะกร้า *@
             <div class="space-y-4">
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
                 @if (cartItems.Count == 0)
@@ -121,13 +167,13 @@
                     {
                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5 transition-colors hover:border-primary/30" id="cart-item-row-@item.CartItemId">
-                            <!-- รูปภาพสินค้าเต็มกรอบ -->
+                            @* รูปภาพสินค้าเต็มกรอบ *@
                             <div class="size-20 sm:size-24 shrink-0 rounded-2xl border border-slate-200/80 overflow-hidden bg-white">
                                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                                <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(item.ImageUrl))" alt="@item.ProductName" class="size-full object-cover object-top" loading="lazy" />
+                                <img src="@Url.Content(ResolveCardImageUrl(item.ImageUrl))" alt="@item.ProductName" class="size-full object-cover object-top" loading="lazy" />
                             </div>
 
-                            <!-- Item Details -->
+                            @* รายละเอียดข้อมูลสินค้า ชื่อ ราคา และหมวดหมู่ *@
                             <div class="flex-1 min-w-0 space-y-1">
                                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                                 <h3 class="text-sm sm:text-base font-bold text-text leading-snug line-clamp-2">
@@ -139,9 +185,9 @@
                                 </div>
                             </div>
 
-                            <!-- Quantity and Subtotal Controls -->
+                            @* ส่วนควบคุมจำนวนสินค้าและยอดรวมย่อย *@
                             <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                                <!-- Quantity Counter (Standard Forms - No Method per rule) -->
+                                @* ปุ่มปรับเพิ่มลดจำนวนสินค้า ส่งแบบฟอร์มมาตรฐานโดยไม่ระบุ method ตามกฎ *@
                                 <div class="flex items-center rounded-lg border border-slate-200 bg-white">
                                     @* ฟอร์มส่งคำขอลดจำนวนสินค้า ไปยัง HomeController แอ็กชัน UpdateCartQuantity *@
                                     <form asp-controller="Home" asp-action="UpdateCartQuantity" class="inline">
@@ -169,7 +215,7 @@
                                     </form>
                                 </div>
 
-                                <!-- Total -->
+                                @* กล่องแสดงยอดเงินรวมของแต่ละรายการสินค้า *@
                                 <div class="text-right">
                                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                     <span class="text-base sm:text-lg font-extrabold text-primary">@item.LineTotalFormatted</span>
@@ -194,7 +240,7 @@
                 }
             </div>
 
-            <!-- Back to Browsing -->
+            @* ลิงก์นำทางกลับไปเลือกดูฟิกเกอร์เพิ่มเติม *@
             <div class="pt-4">
                 @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
                 <a asp-controller="Home" asp-action="Collection" class="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
@@ -208,14 +254,14 @@
             </div>
         </div>
 
-        <!-- Right Column: Summary Card -->
+        @* คอลัมน์ด้านขวา การ์ดสรุปยอดเงินและยืนยันการสั่งจอง *@
         <div class="lg:col-span-4">
             @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
             <div class="sticky top-24 rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h2 class="text-lg font-bold text-text border-b border-slate-100 pb-3">สรุปคำสั่งจองพรีออเดอร์</h2>
 
-                <!-- Promo Code Section (ใช้กับสินค้าในตะกร้าเท่านั้น) -->
+                @* ส่วนกรอกและเลือกคูปองโปรโมชั่นสำหรับลดราคาสินค้าในตะกร้า *@
                 @if (cartItems.Count > 0)
                 {
                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
@@ -318,7 +364,7 @@
                     </div>
                 }
 
-                <!-- Subtotals -->
+                @* รายละเอียดสรุปยอดเงิน ราคารวม ส่วนลด และยอดสุทธิ *@
                 <div class="space-y-3 text-sm">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center justify-between text-slate-500">
@@ -364,7 +410,7 @@
                     </div>
                 </div>
 
-                <!-- Store Pickup Notice -->
+                @* กล่องข้อความแจ้งเตือนเงื่อนไขการรับสินค้าที่สาขาหน้าร้าน *@
                 <div class="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3 items-start text-xs text-slate-600">
                     @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                     <svg class="size-5 shrink-0 text-primary mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -380,7 +426,7 @@
                     </div>
                 </div>
 
-                <!-- Confirm Order Action (No method attribute as per rule) -->
+                @* แบบฟอร์มยืนยันคำสั่งจองพรีออเดอร์ ส่งข้อมูลแบบไม่ระบุ method ตามกฎ *@
                 @if (cartItems.Count > 0)
                 {
                     @* ฟอร์มส่งข้อมูลยืนยันการจองสินค้าทั้งหมดในตะกร้า ไปยัง HomeController แอ็กชัน ConfirmPreorder *@

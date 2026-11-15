@@ -27,8 +27,8 @@ public class UserProfileViewModel
     // ที่อยู่พาธรูปภาพโปรไฟล์
     public string? AvatarUrl { get; set; }
 
-    // ที่อยู่รูปโปรไฟล์ที่พร้อมใช้งาน (หากไม่มีจะใช้โลโก้ร้านเป็นค่าเริ่มต้น)
-    public string EffectiveAvatarUrl => !string.IsNullOrEmpty(AvatarUrl) ? AvatarUrl : "~/logo/logo.png";
+    // ตัวอักษรย่อของชื่อสมาชิกสำหรับแสดงในวงกลมโปรไฟล์
+    public string Initial => !string.IsNullOrWhiteSpace(DisplayName) ? DisplayName.Trim()[0].ToString().ToUpper() : "F";
 
     // แต้มสะสมปัจจุบันของสมาชิก
     public int Points { get; set; }

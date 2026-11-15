@@ -1,23 +1,33 @@
+@* กำหนดโมเดลข้อมูลรายการใบเสร็จรับเงินในระบบ *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Receipt>
+@* กำหนดค่าเริ่มต้นและการประมวลผลสำหรับหน้าประวัติใบเสร็จ *@
 @{
+    // กำหนดชื่อหัวข้อของหน้าเว็บ
     ViewData["Title"] = "ประวัติใบเสร็จ / ธุรกรรม";
+    // กำหนดเค้าโครงหลักสำหรับฝ่ายบัญชี
     Layout = "_AccountantLayout";
 
+    // ตรวจสอบว่ามีรายการใบเสร็จในฐานข้อมูลหรือไม่
     var hasDbReceipts = Model != null && Model.Any();
 
     // กำหนดค่าข้อความและข้อมูลร้านสำหรับแสดงบนใบเสร็จรับเงินและส่วนหัวหน้าเพจ
     var pageHeader = new {
+        // หัวข้อหลักของหน้าประวัติใบเสร็จ
         Title = "ประวัติใบเสร็จ / ธุรกรรม",
+        // คำอธิบายขอบเขตข้อมูลของหน้า
         Subtitle = "รายการซื้อขายหน้าร้านและการรับสินค้าพรีออเดอร์ทั้งหมด สำหรับตรวจสอบและกระทบยอด",
+        // ชื่อทางการค้าของร้านค้า
         StoreName = "FriendHouse Shop",
+        // เลขประจำตัวผู้เสียภาษีอากร
         TaxId = "0-1055-67890-12-3",
+        // ที่ตั้งและที่อยู่ของร้านค้า
         StoreAddress = "123 อาคารฟิกเกอร์สตรีท ชั้น 2 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ 10310"
     };
 }
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="space-y-5">
-    <!-- Header: Title, Subtitle, and Export Button (Matching frame_9_25.png) -->
+    @* ส่วนหัวของหน้าแสดงชื่อเรื่อง คำอธิบาย และปุ่มส่งออกไฟล์ CSV *@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -26,45 +36,36 @@
             @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
             <p class="text-[13px] text-[#050315]/60 mt-1">@pageHeader.Subtitle</p>
         </div>
-        @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-        <a asp-controller="Accountant" asp-action="ExportReceiptsCSV"
-           asp-route-searchTerm="@ViewBag.SearchTerm"
-           asp-route-startDate="@ViewBag.StartDate"
-           asp-route-endDate="@ViewBag.EndDate"
-           asp-route-promoFilter="@ViewBag.PromoFilter"
-           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-[13px] font-medium text-white shadow-xs transition cursor-pointer self-start sm:self-auto">
+        @* ลิงก์นำทางสำหรับส่งออกข้อมูลใบเสร็จเป็นไฟล์ CSV *@
+        <a asp-controller="Accountant" asp-action="ExportReceiptsCSV" asp-route-searchTerm="@ViewBag.SearchTerm" asp-route-startDate="@ViewBag.StartDate" asp-route-endDate="@ViewBag.EndDate" asp-route-promoFilter="@ViewBag.PromoFilter" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-[13px] font-medium text-white shadow-xs transition cursor-pointer self-start sm:self-auto">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>ส่งออก .csv</span>
         </a>
     </div>
 
-    <!-- Filter Bar เชื่อมต่อ Controller จริง (ไม่ระบุ method ตามกฎโปรเจกต์) -->
+    @* แถบค้นหาและตัวกรองข้อมูลใบเสร็จ เชื่อมโยงกับ AccountantController *@
     <form asp-controller="Accountant" asp-action="Receipts" class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
         @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-            <!-- Start Date -->
+            @* ช่องกรองวันที่เริ่มต้น *@
             <div class="lg:col-span-2">
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ตั้งแต่วันที่</label>
                 @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-                <input type="date" name="startDate" value="@ViewBag.StartDate"
-                       class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
+                <input type="date" name="startDate" value="@ViewBag.StartDate" class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
             </div>
 
-            <!-- End Date -->
+            @* ช่องกรองวันที่สิ้นสุด *@
             <div class="lg:col-span-2">
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ถึงวันที่</label>
                 @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-                <input type="date" name="endDate" value="@ViewBag.EndDate"
-                       class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
+                <input type="date" name="endDate" value="@ViewBag.EndDate" class="w-full px-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315]" />
             </div>
 
-            <!-- Search Field -->
+            @* กล่องค้นหาคำค้นหา เลขที่ใบเสร็จ หรือเบอร์โทรศัพท์ *@
             <div class="lg:col-span-4">
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ค้นหา</label>
@@ -73,57 +74,47 @@
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
+                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
                     @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-                    <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="เลขที่ใบเสร็จ รหัสบาร์โค้ด หรือเบอร์โทร"
-                           class="w-full pl-9 pr-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] placeholder:text-[#050315]/40" />
+                    <input type="text" name="searchTerm" value="@ViewBag.SearchTerm" placeholder="เลขที่ใบเสร็จ รหัสบาร์โค้ด หรือเบอร์โทร" class="w-full pl-9 pr-3 py-2 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] placeholder:text-[#050315]/40" />
                 </div>
             </div>
 
-            <!-- Promo Filter Dropdown -->
+            @* เมนูดรอปดาวน์เลือกกรองตามโปรโมชั่นหรือส่วนลด *@
             <div class="lg:col-span-2">
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="block text-[11px] font-medium text-[#050315]/70 mb-1.5">ส่วนลด / โปรโมชั่น</label>
                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="relative">
                     @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
-                    <select name="promoFilter"
-                            class="w-full appearance-none px-3 py-2 pr-8 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] cursor-pointer">
+                    <select name="promoFilter" class="w-full appearance-none px-3 py-2 pr-8 text-[12px] rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#2F39A9]/20 bg-white text-[#050315] cursor-pointer">
+                        @* ตัวเลือกโปรโมชั่นทั้งหมด *@
                         <option value="all" selected="@((ViewBag.PromoFilter ?? "all") == "all")">ทั้งหมด</option>
+                        @* ตัวเลือกรายการที่มีส่วนลดโปรโมชั่น *@
                         <option value="discounted" selected="@((ViewBag.PromoFilter ?? "all") == "discounted")">มีส่วนลด / โปรโมชั่น</option>
+                        @* ตัวเลือกรายการราคาปกติ *@
                         <option value="regular" selected="@((ViewBag.PromoFilter ?? "all") == "regular")">ราคาปกติ (ไม่มีส่วนลด)</option>
                     </select>
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
                         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
+            @* กลุ่มปุ่มดำเนินการสำหรับกรองและล้างค่าค้นหา *@
             <div class="lg:col-span-2 flex items-center gap-2">
                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-                <button type="submit"
-                        class="flex-1 px-3.5 py-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-[12px] font-bold transition cursor-pointer">
-                    กรอง
-                </button>
+                <button type="submit" class="flex-1 px-3.5 py-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-[12px] font-bold transition cursor-pointer">กรอง</button>
                 @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                <a asp-controller="Accountant" asp-action="Receipts"
-                   class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-[12px] font-medium transition">
-                    ล้าง
-                </a>
+                <a asp-controller="Accountant" asp-action="Receipts" class="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-[12px] font-medium transition">ล้าง</a>
             </div>
         </div>
     </form>
 
-    <!-- Receipts Table (Matching frame_9_25.png) -->
+    @* ตารางแสดงรายการประวัติใบเสร็จและธุรกรรมทั้งหมด *@
     <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="overflow-x-auto">
@@ -150,29 +141,19 @@
                 @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                 <tbody class="divide-y divide-slate-100/80 text-[11px] font-normal">
                     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                    @if (hasDbReceipts)
-                    {
+                    @if (hasDbReceipts) {
                         @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                        @foreach (var r in Model!)
-                        {
+                        @foreach (var r in Model!) {
+                            // สรุปรายการสินค้าและจำนวนในใบเสร็จ
                             var itemSummary = r.Receiptitems.Any() ? string.Join(", ", r.Receiptitems.Select(i => $"{i.ItemDescription} x{i.Quantity}")) : "สินค้าหน้าร้าน x1";
+                            // ดึงชื่อลูกค้าหรือเบอร์โทรศัพท์
                             var customerName = r.Customer != null ? (r.Customer.FullName ?? r.Customer.Email) : (string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : "ลูกค้าสมาชิก");
+                            // ดึงชื่อพนักงานผู้รับชำระเงิน
                             var staffName = r.CashierUser != null ? (r.CashierUser.FullName ?? r.CashierUser.Email) : "พนักงานหน้าร้าน";
 
                             @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
-                            <tr class="hover:bg-slate-50/60 transition-colors receipt-row cursor-pointer"
-                                data-no="@r.ReceiptNo"
-                                data-time="@r.IssuedAt.ToString("dd MMM yyyy HH:mm น.")"
-                                data-customer="@customerName"
-                                data-phone="@(string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : r.CustomerPhone)"
-                                data-items="@itemSummary"
-                                data-total="฿@r.NetTotalAmount.ToString("N0")"
-                                data-vat="฿@r.VatAmount.ToString("N2")"
-                                data-method="เงินสด / สแกน"
-                                data-staff="@staffName"
-                                data-promo="@(r.DiscountAmount > 0 ? $"ส่วนลด ฿{r.DiscountAmount:N0}" : "—")"
-                                onclick="previewReceiptFromRow(this)">
-                                <!-- วันที่/เวลา -->
+                            <tr class="hover:bg-slate-50/60 transition-colors receipt-row cursor-pointer" data-no="@r.ReceiptNo" data-time="@r.IssuedAt.ToString("dd MMM yyyy HH:mm น.")" data-customer="@customerName" data-phone="@(string.IsNullOrEmpty(r.CustomerPhone) ? "ลูกค้าทั่วไป" : r.CustomerPhone)" data-items="@itemSummary" data-total="฿@r.NetTotalAmount.ToString("N0")" data-vat="฿@r.VatAmount.ToString("N2")" data-method="เงินสด / สแกน" data-staff="@staffName" data-promo="@(r.DiscountAmount > 0 ? $"ส่วนลด ฿{r.DiscountAmount:N0}" : "—")" onclick="previewReceiptFromRow(this)">
+                                @* คอลัมน์วันที่และเวลาที่ออกใบเสร็จ *@
                                 <td class="px-5 py-3.5 whitespace-nowrap">
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="text-[11px] text-[#050315]">@r.IssuedAt.ToString("dd MMM yyyy")</div>
@@ -180,195 +161,151 @@
                                     <div class="text-[10px] text-slate-400 mt-0.5">@r.IssuedAt.ToString("HH:mm น.")</div>
                                 </td>
 
-                                <!-- ลูกค้า -->
+                                @* คอลัมน์ข้อมูลลูกค้าหรือเบอร์โทรศัพท์ *@
                                 <td class="px-4 py-3.5 whitespace-nowrap">
                                     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                                    @if (!string.IsNullOrEmpty(r.CustomerPhone))
-                                    {
+                                    @if (!string.IsNullOrEmpty(r.CustomerPhone)) {
                                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                         <div class="text-[11px] text-[#050315] font-mono">@r.CustomerPhone</div>
                                         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-                                        <div class="mt-0.5">
-                                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                            <span class="inline-block px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 text-[10px]">
-                                                @(r.Customer != null ? "สมาชิก" : "ลูกค้า")
-                                            </span>
-                                        </div>
+                                        <div class="mt-0.5"><span class="inline-block px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-600 text-[10px]">@(r.Customer != null ? "สมาชิก" : "ลูกค้า")</span></div>
                                     }
-                                    else
-                                    {
+                                    @* กรณีเป็นลูกค้าทั่วไป *@
+                                    else {
                                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="text-[11px] text-[#050315]">ลูกค้าทั่วไป</span>
                                     }
                                 </td>
 
-                                <!-- รายการสินค้า -->
-                                <td class="px-4 py-3.5 text-[11px] text-[#050315]">
-                                    @itemSummary
-                                </td>
+                                @* คอลัมน์สรุปรายการสินค้าในใบเสร็จ *@
+                                <td class="px-4 py-3.5 text-[11px] text-[#050315]">@itemSummary</td>
 
-                                <!-- ยอดรวม -->
-                                <td class="px-4 py-3.5 text-right whitespace-nowrap font-semibold text-[11px] text-[#050315]">
-                                    ฿@r.NetTotalAmount.ToString("N0")
-                                </td>
+                                @* คอลัมน์ยอดเงินสุทธิรวมทั้งสิ้น *@
+                                <td class="px-4 py-3.5 text-right whitespace-nowrap font-semibold text-[11px] text-[#050315]">฿@r.NetTotalAmount.ToString("N0")</td>
 
-                                <!-- โปรโมชั่นที่ใช้ -->
+                                @* คอลัมน์โปรโมชั่นและส่วนลดที่ได้รับ *@
                                 <td class="px-4 py-3.5 text-center whitespace-nowrap">
                                     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                                    @if (r.DiscountAmount <= 0)
-                                    {
+                                    @if (r.DiscountAmount <= 0) {
                                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                                         <span class="text-slate-400 text-[11px]">—</span>
                                     }
-                                    else
-                                    {
+                                    @* กรณีมีส่วนลดโปรโมชั่น *@
+                                    else {
                                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                        <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] text-[10px] font-normal">
-                                            ลด ฿@r.DiscountAmount.ToString("N0")
-                                        </span>
+                                        <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#E0F2FE] text-[#0284C7] text-[10px] font-normal">ลด ฿@r.DiscountAmount.ToString("N0")</span>
                                     }
                                 </td>
 
-                                <!-- สถานะ -->
+                                @* คอลัมน์สถานะความสำเร็จของธุรกรรม *@
                                 <td class="px-5 py-3.5 text-center whitespace-nowrap">
                                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] text-[10px] font-normal">
-                                        สำเร็จ
-                                    </span>
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] text-[10px] font-normal">สำเร็จ</span>
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
+                    @* กรณีไม่มีข้อมูลใบเสร็จในระบบ *@
+                    else {
                         @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                         <tr>
                             @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
-                            <td colspan="6" class="px-5 py-8 text-center text-xs text-slate-400">
-                                ยังไม่มีประวัติใบเสร็จหรือรายการธุรกรรมในระบบ
-                            </td>
+                            <td colspan="6" class="px-5 py-8 text-center text-xs text-slate-400">ยังไม่มีประวัติใบเสร็จหรือรายการธุรกรรมในระบบ</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
 
+        @* คำนวณข้อมูลสถิติสำหรับการแบ่งหน้าตารางประวัติใบเสร็จ *@
         @{
-            // ดึงค่าสถิติและการแบ่งหน้าจาก ViewBag ที่ส่งมาจาก AccountantController.Receipts
+            // ดึงจำนวนใบเสร็จทั้งหมดในระบบ
             int totalReceipts = ViewBag.TotalReceiptCount ?? (hasDbReceipts ? Model!.Count() : 0);
+            // ดึงหมายเลขหน้าปัจจุบัน
             int currentPage = ViewBag.CurrentPage ?? 1;
+            // ดึงจำนวนหน้าทั้งหมด
             int totalPages = ViewBag.TotalPages ?? 1;
+            // กำหนดขนาดรายการต่อหน้า
             int pageSize = ViewBag.PageSize ?? 10;
+            // คำนวณลำดับแถวเริ่มต้น
             int startRow = totalReceipts == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+            // คำนวณลำดับแถวสิ้นสุด
             int endRow = Math.Min(currentPage * pageSize, totalReceipts);
         }
-        <!-- แถบแบ่งหน้าประวัติใบเสร็จ / ธุรกรรม เชื่อมโยงกับ AccountantController.Receipts -->
+        @* แถบแบ่งหน้าประวัติใบเสร็จและธุรกรรม เชื่อมโยงกับ AccountantController.Receipts *@
         <div class="px-5 py-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-slate-500">
-            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-            <div>
-                แสดง @startRow–@endRow จากทั้งหมด @totalReceipts รายการในฐานข้อมูล
-            </div>
+            @* กล่องแสดงจำนวนรายการใบเสร็จทั้งหมด *@
+            <div>แสดง @startRow–@endRow จากทั้งหมด @totalReceipts รายการในฐานข้อมูล</div>
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-1 self-center sm:self-auto">
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                @if (currentPage > 1)
-                {
+                @if (currentPage > 1) {
                     @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                    <a asp-controller="Accountant" asp-action="Receipts"
-                       asp-route-searchTerm="@ViewBag.SearchTerm"
-                       asp-route-startDate="@ViewBag.StartDate"
-                       asp-route-endDate="@ViewBag.EndDate"
-                       asp-route-promoFilter="@ViewBag.PromoFilter"
-                       asp-route-page="@(currentPage - 1)"
-                       class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
-                        ‹
-                    </a>
+                    <a asp-controller="Accountant" asp-action="Receipts" asp-route-searchTerm="@ViewBag.SearchTerm" asp-route-startDate="@ViewBag.StartDate" asp-route-endDate="@ViewBag.EndDate" asp-route-promoFilter="@ViewBag.PromoFilter" asp-route-page="@(currentPage - 1)" class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">‹</a>
                 }
-                else
-                {
+                @* กรณีอยู่ที่หน้าแรก ปิดการใช้งานปุ่มก่อนหน้า *@
+                else {
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                    <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">
-                        ‹
-                    </span>
+                    <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">‹</span>
                 }
 
-                @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                @for (int p = 1; p <= totalPages; p++)
-                {
-                    if (p == currentPage)
-                    {
+                @* คำนวณช่วงหมายเลขหน้า 3 หมายเลข *@
+                @{
+                    // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                    int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                    // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                    int endPage = Math.Min(totalPages, startPage + 2);
+                }
+                @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                @for (int p = startPage; p <= endPage; p++) {
+                    @* ตรวจสอบว่าตรงกับหน้าปัจจุบันหรือไม่ *@
+                    if (p == currentPage) {
                         @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                        <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-medium flex items-center justify-center text-xs">
-                            @p
-                        </span>
+                        <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-medium flex items-center justify-center text-xs">@p</span>
                     }
-                    else
-                    {
+                    @* กรณีเป็นหมายเลขหน้าอื่น *@
+                    else {
                         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                        <a asp-controller="Accountant" asp-action="Receipts"
-                           asp-route-searchTerm="@ViewBag.SearchTerm"
-                           asp-route-startDate="@ViewBag.StartDate"
-                           asp-route-endDate="@ViewBag.EndDate"
-                           asp-route-promoFilter="@ViewBag.PromoFilter"
-                           asp-route-page="@p"
-                           class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
-                            @p
-                        </a>
+                        <a asp-controller="Accountant" asp-action="Receipts" asp-route-searchTerm="@ViewBag.SearchTerm" asp-route-startDate="@ViewBag.StartDate" asp-route-endDate="@ViewBag.EndDate" asp-route-promoFilter="@ViewBag.PromoFilter" asp-route-page="@p" class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">@p</a>
                     }
                 }
 
                 @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                @if (currentPage < totalPages)
-                {
+                @if (currentPage < totalPages) {
                     @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                    <a asp-controller="Accountant" asp-action="Receipts"
-                       asp-route-searchTerm="@ViewBag.SearchTerm"
-                       asp-route-startDate="@ViewBag.StartDate"
-                       asp-route-endDate="@ViewBag.EndDate"
-                       asp-route-promoFilter="@ViewBag.PromoFilter"
-                       asp-route-page="@(currentPage + 1)"
-                       class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">
-                        ›
-                    </a>
+                    <a asp-controller="Accountant" asp-action="Receipts" asp-route-searchTerm="@ViewBag.SearchTerm" asp-route-startDate="@ViewBag.StartDate" asp-route-endDate="@ViewBag.EndDate" asp-route-promoFilter="@ViewBag.PromoFilter" asp-route-page="@(currentPage + 1)" class="size-7 rounded-lg border border-slate-200 bg-white text-slate-600 flex items-center justify-center hover:bg-slate-50 cursor-pointer text-xs">›</a>
                 }
-                else
-                {
+                @* กรณีอยู่ที่หน้าสุดท้าย ปิดการใช้งานปุ่มถัดไป *@
+                else {
                     @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                    <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">
-                        ›
-                    </span>
+                    <span class="size-7 rounded-lg border border-slate-100 bg-slate-50 text-slate-300 flex items-center justify-center cursor-not-allowed text-xs">›</span>
                 }
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal 1: ตัวอย่างใบเสร็จรับเงินอย่างเป็นทางการ ตาม Figma Note [64:2938] -->
+@* หน้าต่างแสดงตัวอย่างใบเสร็จรับเงินอย่างเป็นทางการ *@
 <div id="receiptPreviewModal" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 my-8">
-        <!-- Close button & Title -->
+        @* ส่วนหัวหน้าต่างใบเสร็จและปุ่มปิด *@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="text-xs font-bold text-slate-400 tracking-wider">ตัวอย่างใบเสร็จรับเงินอย่างเป็นทางการ</span>
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="closeReceiptPreview()" class="text-slate-400 hover:text-[#050315] cursor-pointer">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
 
-        <!-- Receipt Content Wrapper -->
+        @* กล่องบรรจุเนื้อหาใบเสร็จสำหรับพิมพ์ *@
         <div class="space-y-4 text-xs" id="printableReceiptArea">
-            <!-- Store Branding & Header -->
+            @* ข้อมูลชื่อร้าน เลขประจำตัวผู้เสียภาษี และที่อยู่ร้าน *@
             <div class="text-center space-y-1">
-                @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
-                <div class="size-10 rounded-xl bg-[#2F39A9] text-white flex items-center justify-center font-bold text-sm mx-auto shadow-xs">
-                    FH
-                </div>
+                @* กล่องโลโก้ร้าน FriendHouse ตัวย่อ *@
+                <div class="size-10 rounded-xl bg-[#2F39A9] text-white flex items-center justify-center font-bold text-sm mx-auto shadow-xs">FH</div>
                 @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                 <h3 class="text-base font-bold text-[#050315]">@pageHeader.StoreName</h3>
                 @* ข้อความอธิบายรายละเอียดเพิ่มเติมสำหรับผู้ใช้งาน *@
@@ -409,7 +346,7 @@
                 </div>
             </div>
 
-            <!-- Items -->
+            @* ตารางรายการสินค้าในใบเสร็จ *@
             <div>
                 @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
                 <table class="w-full text-[11px]">
@@ -436,7 +373,7 @@
                 </table>
             </div>
 
-            <!-- Promotion & Calculation -->
+            @* สรุปยอดเงิน ภาษีมูลค่าเพิ่ม และส่วนลดโปรโมชั่น *@
             <div class="border-t border-slate-100 pt-2.5 space-y-1 text-[11px]">
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="flex justify-between text-slate-400">
@@ -468,7 +405,7 @@
                 </div>
             </div>
 
-            <!-- Barcode & Notice -->
+            @* รหัสบาร์โค้ดและข้อความขอบคุณลูกค้า *@
             <div class="text-center pt-2 border-t border-dashed border-slate-200 space-y-1.5">
                 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                 <div class="inline-block py-1 px-4 bg-slate-50 border border-slate-100 rounded-md">
@@ -480,20 +417,14 @@
             </div>
         </div>
 
-        <!-- Action Buttons -->
+        @* กลุ่มปุ่มดำเนินการสำหรับกรองและล้างค่าค้นหา *@
         <div class="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-            <button type="button" onclick="closeReceiptPreview()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">
-                ปิด
-            </button>
+            <button type="button" onclick="closeReceiptPreview()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 cursor-pointer">ปิด</button>
             @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
             <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2F39A9] text-white text-xs font-medium shadow-xs hover:bg-[#2F39A9]/90 transition cursor-pointer">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span>พิมพ์ใบเสร็จ</span>
             </button>
@@ -501,30 +432,44 @@
     </div>
 </div>
 
+@* ส่วนแทรกสคริปต์ JavaScript สำหรับแสดงตัวอย่างใบเสร็จ *@
 @section Scripts {
 @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
 <script>
-    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
+    // ฟังก์ชันแสดงตัวอย่างใบเสร็จจากข้อมูลแถวตารางที่คลิก
     function previewReceiptFromRow(row) {
-        // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+        // ดึงชุดข้อมูลจาก dataset ของแถวที่เลือก
         const d = row.dataset;
+        // กำหนดเลขที่ใบเสร็จ
         document.getElementById('rcptNo').innerText = d.no || '';
+        // กำหนดวันและเวลาที่ออกใบเสร็จ
         document.getElementById('rcptDateTime').innerText = d.time || '';
+        // กำหนดชื่อลูกค้าและเบอร์โทรศัพท์
         document.getElementById('rcptCustomer').innerText = d.phone ? `${d.customer} (${d.phone})` : (d.customer || '');
+        // กำหนดชื่อพนักงานผู้รับเงิน
         document.getElementById('rcptStaff').innerText = d.staff || '';
+        // กำหนดรายการสินค้าที่ซื้อ
         document.getElementById('rcptItemName').innerText = d.items || '';
+        // กำหนดยอดรวมราคาสินค้า
         document.getElementById('rcptItemTotal').innerText = d.total || '';
+        // กำหนดยอดภาษีมูลค่าเพิ่ม
         document.getElementById('rcptVat').innerText = d.vat || '';
+        // กำหนดส่วนลดโปรโมชั่น
         document.getElementById('rcptPromo').innerText = d.promo || '—';
+        // กำหนดยอดชำระสุทธิ
         document.getElementById('rcptFinalTotal').innerText = d.total || '';
+        // กำหนดวิธีการชำระเงิน
         document.getElementById('rcptMethod').innerText = d.method || '';
+        // กำหนดรหัสบาร์โค้ดจำลอง
         document.getElementById('rcptBarcode').innerText = `*${d.no || ''}*`;
 
+        // เปิดหน้าต่างตัวอย่างใบเสร็จ
         document.getElementById('receiptPreviewModal').classList.remove('hidden');
     }
 
-    // ฟังก์ชันและตัวดักจับเหตุการณ์สำหรับควบคุมการทำงานบนหน้าเว็บ
+    // ฟังก์ชันปิดหน้าต่างตัวอย่างใบเสร็จ
     function closeReceiptPreview() {
+        // ซ่อนหน้าต่างตัวอย่างใบเสร็จ
         document.getElementById('receiptPreviewModal').classList.add('hidden');
     }
 </script>

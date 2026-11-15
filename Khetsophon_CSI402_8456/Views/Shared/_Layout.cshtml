@@ -1,53 +1,70 @@
 @* นำเข้าเนมสเปซหลักของคอนโทรลเลอร์สำหรับโครงร่างหน้าลูกค้า *@
 @using Khetsophon_CSI402_8456.Controllers
+@* ประกาศประเภทเอกสาร HTML5 *@
 <!DOCTYPE html>
+@* กำหนดภาษาไทยและคุณสมบัติเลื่อนหน้าจออย่างราบรื่น *@
 <html lang="th" class="scroll-smooth">
+@* ส่วนหัวของเอกสาร HTML สำหรับโหลดทรัพยากรและเมตาแท็ก *@
 <head>
-    <!-- ตั้งค่าเมตาแท็กการเข้ารหัสและขนาดหน้าจอ Responsive -->
+    @* ตั้งค่าเมตาแท็กการเข้ารหัสอักขระ UTF-8 เพื่อรองรับภาษาไทย *@
     <meta charset="utf-8" />
+    @* กำหนด Viewport เพื่อรองรับการแสดงผลแบบ Responsive ทุกขนาดหน้าจอ *@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* กำหนดชื่อเรื่องของแท็บเบราว์เซอร์ *@
     <title>@ViewData["Title"] - Khetsophon_CSI402_8456</title>
-    <!-- โหลดฟอนต์ภาษาไทย Kanit / Noto Sans Thai และโมดูล model-viewer 3D -->
+    @* เชื่อมต่อไปยังเซิร์ฟเวอร์ Google Fonts ล่วงหน้า *@
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    @* เชื่อมต่อไปยังเซิร์ฟเวอร์ Gstatic ล่วงหน้า *@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    @* โหลดฟอนต์ภาษาไทย Kanit และ Noto Sans Thai *@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @* โหลดสคริปต์โมดูล model-viewer สำหรับแสดงผลโมเดล 3 มิติ *@
     <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js"></script>
-    <!-- โหลดสไตล์ชีตหลักของระบบ -->
+    @* โหลดสไตล์ชีตหลักของระบบ FriendHouse *@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
+@* กำหนดค่าตัวแปรบทบาทผู้ใช้สำหรับเลย์เอาต์ *@
 @{
     // ตรวจสอบสิทธิ์บทบาทและรหัสลูกค้าจาก Session เพื่อกำหนดการแสดงผลแถบนำทางหน้าร้าน
     var sessionRole = Context.Session.GetString("Role")?.ToLowerInvariant();
+    // ดึงรหัสผู้ใช้สำหรับลูกค้าจาก Session
     var customerUserId = Context.Session.GetInt32("CustomerUserId");
+    // ดึงค่า Query String สำหรับบทบาทหากมีการระบุ
     var queryRole = Context.Request.Query["role"].ToString().ToLowerInvariant();
 
-    // WHY: Layout หน้าร้านจะแสดง Navbar หน้าร้านเสมอ
-    // ไม่สลับไปเป็น Navbar ฝั่งจัดการของพนักงาน/ผู้จัดการ แม้จะมีการล็อกอินบทบาทอื่นในอีกแท็บก็ตาม
+    // กำหนดค่าเริ่มต้นของบทบาทเป็นผู้เยี่ยมชมทั่วไป (guest)
     string userRole = "guest";
-    if (sessionRole == "customer" || customerUserId.HasValue || queryRole == "customer")
-    {
+    // ตรวจสอบเงื่อนไขว่าเป็นลูกค้าหรือไม่จากเซสชัน รหัสลูกค้า หรือพารามิเตอร์ URL
+    if (sessionRole == "customer" || customerUserId.HasValue || queryRole == "customer") {
+        // กำหนดบทบาทเป็นลูกค้า
         userRole = "customer";
     }
-    else if (ViewData["Role"] is string explicitRole && explicitRole.ToLowerInvariant() == "customer")
-    {
+    // ตรวจสอบบทบาทจาก ViewData หากมีการระบุชัดเจน
+    else if (ViewData["Role"] is string explicitRole && explicitRole.ToLowerInvariant() == "customer") {
+        // กำหนดบทบาทเป็นลูกค้าตาม ViewData
         userRole = "customer";
     }
 }
-<body class="flex min-h-screen flex-col bg-background text-text bg-white">
-    <!-- แถบนำทางส่วนหัวสำหรับหน้าลูกค้าและผู้เยี่ยมชมทั่วไป -->
+@* ส่วนบอดี้ของเอกสาร กำหนดคลาสจัดเลย์เอาต์พื้นหลังสีขาวและแนบข้อมูลเซสชัน *@
+<body class="flex min-h-screen flex-col bg-background text-text bg-white" data-session-role="@(sessionRole ?? "guest")" data-session-uid="@(Context.Session.GetInt32("UserId") ?? 0)">
+    @* แถบนำทางส่วนหัวสำหรับหน้าลูกค้าและผู้เยี่ยมชมทั่วไป ตรึงตำแหน่งไว้ด้านบน *@
     <header class="sticky top-0 z-50 w-full bg-white">
+        @* แสดงผลคอมโพเนนต์แถบนำทางตามบทบาทผู้ใช้ *@
         @await Component.InvokeAsync("Navbar", new { role = userRole })
     </header>
-    <!-- พื้นที่แทรกเนื้อหาหลักของแต่ละหน้า -->
+    @* พื้นที่แทรกเนื้อหาหลักของแต่ละหน้าเว็บ *@
     <main role="main" class="flex-1 w-full">
+        @* แสดงผลเนื้อหาของเพจย่อย *@
         @RenderBody()
     </main>
-    <!-- แถบส่วนท้ายของเว็บไซต์ (Footer Component) -->
+    @* แถบส่วนท้ายของเว็บไซต์ (Footer Component) *@
     @await Component.InvokeAsync("Footer")
 
-    <!-- สคริปต์ jQuery และสคริปต์เสริมเฉพาะแต่ละหน้า View -->
+    @* โหลดไลบรารี jQuery สำหรับการทำงานร่วมกัน *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    @* สคริปต์จัดการฟังก์ชันฝั่งไคลเอนต์และตรวจสอบเซสชัน *@
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* เรนเดอร์สคริปต์เฉพาะหน้าตามที่แต่ละ View กำหนด *@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

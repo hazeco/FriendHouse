@@ -1,3 +1,4 @@
+using Khetsophon_CSI402_8456.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -24,18 +25,25 @@ public class CartViewModel
     // ข้อมูลโค้ดโปรโมชั่นที่ใช้งานอยู่กับรายการสินค้าในตะกร้า
     public string? AppliedPromoCode { get; set; }
 
+    // ชื่อแคมเปญโปรโมชั่นที่กำลังใช้งาน
     public string? AppliedPromoName { get; set; }
 
+    // ข้อความสรุปสิทธิประโยชน์ของโปรโมชั่นที่ใช้งาน
     public string? PromoBenefitSummary { get; set; }
 
+    // ข้อความแจ้งเตือนข้อผิดพลาดในการตรวจสอบโปรโมชั่น
     public string? PromoValidationError { get; set; }
 
+    // ยอดเงินส่วนลดที่คำนวณได้จากโปรโมชั่น
     public decimal DiscountAmount { get; set; }
 
+    // ยอดเงินส่วนลดจัดรูปแบบเงินบาทไทย
     public string DiscountFormatted => $"-฿{DiscountAmount:N0}";
 
+    // สถานะระบุว่าโปรโมชั่นให้คะแนนสะสมพิเศษสองเท่าหรือไม่
     public bool IsDoublePoints { get; set; }
 
+    // รายการคูปองโปรโมชั่นทั้งหมดที่สมาชิกเก็บสะสมไว้
     public List<CollectedPromoOptionViewModel> CollectedPromos { get; set; } = new();
 
     // ค่าธรรมเนียมการให้บริการระบบ (ร้าน FriendHouse ให้บริการสั่งจองฟรี)
@@ -106,8 +114,69 @@ public class CartItemViewModel
 // READ: ViewModel แสดงตัวเลือกคูปองที่ลูกค้าเก็บไว้จากหน้าโปรโมชั่นสำหรับกดใช้ในตะกร้า
 public class CollectedPromoOptionViewModel
 {
+    // รหัสคูปองส่วนลดสำหรับอ้างอิง
     public string VoucherCode { get; set; } = string.Empty;
+    // ชื่อหัวข้อโปรโมชั่น
     public string Title { get; set; } = string.Empty;
+    // ป้ายข้อความระบุสิทธิประโยชน์ของคูปอง
     public string BenefitLabel { get; set; } = string.Empty;
+    // สถานะระบุว่าคูปองนี้ถูกเลือกใช้งานอยู่หรือไม่
     public bool IsApplied { get; set; }
+}
+
+// โครงสร้างผลลัพธ์จากการตรวจสอบและคำนวณโปรโมชั่นกับรายการสินค้าในตะกร้า
+public class PromoEvaluationResult
+{
+    // พร็อพเพอร์ตี้ IsValid สำหรับจัดเก็บสถานะความถูกต้องของโปรโมชั่น
+    public bool IsValid { get; set; }
+    // พร็อพเพอร์ตี้ ErrorMessage สำหรับจัดเก็บข้อความแจ้งข้อผิดพลาด
+    public string? ErrorMessage { get; set; }
+    // พร็อพเพอร์ตี้ Promotion สำหรับจัดเก็บเอนทิตีโปรโมชั่นที่ผ่านการตรวจสอบ
+    public Promotion? Promotion { get; set; }
+    // รหัสคูปองส่วนลดที่ได้รับจากโปรโมชั่น
+    public string VoucherCode => Promotion?.VoucherCode ?? string.Empty;
+    // ชื่อโปรโมชั่นที่ผ่านการประเมิน
+    public string PromoName => Promotion?.Name ?? string.Empty;
+    // ประเภทโปรโมชั่นในรูปแบบตัวพิมพ์เล็ก
+    public string PromoType => (Promotion?.PromoType ?? string.Empty).ToLowerInvariant();
+    // พร็อพเพอร์ตี้ SubtotalAmount สำหรับจัดเก็บยอดรวมราคาสินค้าในตะกร้า
+    public decimal SubtotalAmount { get; set; }
+    // พร็อพเพอร์ตี้ EligibleSubtotal สำหรับจัดเก็บยอดราคาสินค้าที่เข้าเกณฑ์โปรโมชั่น
+    public decimal EligibleSubtotal { get; set; }
+    // พร็อพเพอร์ตี้ DiscountAmount สำหรับจัดเก็บยอดเงินส่วนลดสุทธิ
+    public decimal DiscountAmount { get; set; }
+    // พร็อพเพอร์ตี้ IsDoublePoints สำหรับจัดเก็บสถานะแต้มสะสมพิเศษสองเท่า
+    public bool IsDoublePoints { get; set; }
+    // พร็อพเพอร์ตี้ BenefitSummary สำหรับจัดเก็บข้อความสรุปสิทธิประโยชน์
+    public string BenefitSummary { get; set; } = string.Empty;
+}
+
+// ข้อมูลวันนัดรับและเบอร์ติดต่อของการจองแลกของรางวัล จัดเก็บผ่าน DetailPayload ในบันทึกกิจกรรม
+public class RedemptionMetaPayload
+{
+    // พร็อพเพอร์ตี้ RedemptionCode สำหรับจัดเก็บรหัสการแลกของรางวัล
+    public string RedemptionCode { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ PickupDate สำหรับจัดเก็บวันนัดรับของรางวัล
+    public string PickupDate { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ ContactPhone สำหรับจัดเก็บเบอร์ติดต่อผู้แลกของรางวัล
+    public string ContactPhone { get; set; } = string.Empty;
+}
+
+// ข้อมูลรหัสโปรโมชั่นและส่วนลดของใบสั่งจองพรีออเดอร์ จัดเก็บผ่าน DetailPayload ในบันทึกกิจกรรม
+public class PreorderPromoPayload
+{
+    // พร็อพเพอร์ตี้ ReservationNumber สำหรับจัดเก็บหมายเลขใบสั่งจองพรีออเดอร์
+    public string ReservationNumber { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ VoucherCode สำหรับจัดเก็บรหัสคูปองโปรโมชั่น
+    public string VoucherCode { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ PromoName สำหรับจัดเก็บชื่อโปรโมชั่น
+    public string PromoName { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ PromoType สำหรับจัดเก็บประเภทโปรโมชั่น
+    public string PromoType { get; set; } = string.Empty;
+    // พร็อพเพอร์ตี้ OriginalSubtotal สำหรับจัดเก็บยอดรวมเดิมก่อนหักส่วนลด
+    public decimal OriginalSubtotal { get; set; }
+    // พร็อพเพอร์ตี้ DiscountAmount สำหรับจัดเก็บยอดส่วนลดที่ได้รับ
+    public decimal DiscountAmount { get; set; }
+    // พร็อพเพอร์ตี้ IsDoublePoints สำหรับจัดเก็บสถานะแต้มสะสมพิเศษสองเท่า
+    public bool IsDoublePoints { get; set; }
 }

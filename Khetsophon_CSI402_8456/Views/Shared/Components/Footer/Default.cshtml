@@ -21,14 +21,14 @@
     var contactEmail = "hello@friendhouse.shop";
 }
 
-<!-- ส่วนท้ายของเว็บไซต์ (Footer) แสดงลิงก์นำทางและข้อมูลติดต่อร้าน -->
+@* ส่วนท้ายของเว็บไซต์ (ส่วนท้าย) แสดงลิงก์นำทางและข้อมูลติดต่อร้าน *@
 <footer id="footer" class="scroll-mt-10 border-t border-slate-200 bg-white px-4 pt-10 pb-8 text-slate-700">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="mx-auto max-w-7xl">
-        <!-- กริด 4 คอลัมน์แสดงโลโก้ เมนูสินค้า สิทธิพิเศษ และช่องทางติดต่อ -->
-        <div class="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <!-- คอลัมน์ที่ 1: โลโก้ร้านและคำอธิบายสั้น -->
-            <div>
+        @* กริด 4 คอลัมน์แสดงโลโก้ เมนูสินค้า สิทธิพิเศษ และช่องทางติดต่อ *@
+<div class="mb-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            @* คอลัมน์ที่ 1: โลโก้ร้านและคำอธิบายสั้น *@
+<div>
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                 <div class="mb-4 flex items-center gap-2.5 text-xl font-bold text-text sm:text-2xl">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -46,8 +46,8 @@
                 </p>
             </div>
 
-            <!-- คอลัมน์ที่ 2: ลิงก์หมวดฟิกเกอร์และสินค้า -->
-            <div>
+            @* คอลัมน์ที่ 2: ลิงก์หมวดฟิกเกอร์และสินค้า *@
+<div>
                 <h4 class="mb-4 font-semibold text-text">ฟิกเกอร์และสินค้า</h4>
 
                 <ul class="space-y-2 text-sm text-slate-500">
@@ -64,8 +64,8 @@
                 </ul>
             </div>
 
-            <!-- คอลัมน์ที่ 3: ลิงก์สิทธิพิเศษสำหรับสมาชิก -->
-            <div>
+            @* คอลัมน์ที่ 3: ลิงก์สิทธิพิเศษสำหรับสมาชิก *@
+<div>
                 <h4 class="mb-4 font-semibold text-text">สิทธิพิเศษสมาชิก</h4>
 
                 <ul class="space-y-2 text-sm text-slate-500">
@@ -82,8 +82,8 @@
                 </ul>
             </div>
 
-            <!-- คอลัมน์ที่ 4: ช่องทางการติดต่อร้านค้า -->
-            <div>
+            @* คอลัมน์ที่ 4: ช่องทางการติดต่อร้านค้า *@
+<div>
                 <h4 class="mb-4 font-semibold text-text">ติดต่อ</h4>
 
                 <ul class="space-y-2 text-sm text-slate-500">
@@ -94,8 +94,8 @@
             </div>
         </div>
 
-        <!-- แถบลิขสิทธิ์ด้านล่างสุดของส่วนท้าย -->
-        <div class="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        @* แถบลิขสิทธิ์ด้านล่างสุดของส่วนท้าย *@
+<div class="flex flex-col gap-3 border-t border-slate-200 pt-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span>
                 &copy; @DateTime.Now.Year @siteName สงวนลิขสิทธิ์ทั้งหมด

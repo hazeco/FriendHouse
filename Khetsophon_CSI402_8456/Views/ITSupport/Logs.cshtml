@@ -1,4 +1,7 @@
+@* กำหนดโมเดลข้อมูลรายการบันทึกประวัติกิจกรรมของระบบ *@
+@* กำหนดโมเดลข้อมูลรายการบันทึกประวัติกิจกรรมของระบบ *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Systemlog>
+@* กำหนดค่าเริ่มต้นและการประมวลผลสำหรับหน้าบันทึกกิจกรรม *@
 @{
     // กำหนดชื่อหัวข้อของหน้าบันทึกกิจกรรมระบบ
     ViewData["Title"] = "บันทึกกิจกรรมและข้อผิดพลาด";
@@ -10,7 +13,9 @@
 
     // กำหนดค่าคอนฟิกข้อความและหัวเรื่องส่วนบนสุดของไฟล์ตามมาตรฐานโครงการ
     var pageHeader = new {
+        // ชื่อเรื่องของหน้าบันทึกกิจกรรม
         Title = "บันทึกกิจกรรมและข้อผิดพลาด",
+        // คำอธิบายการทำงานและประโยชน์ของหน้าบันทึกกิจกรรม
         Subtitle = "ดูเหตุการณ์ระบบเพื่อช่วยตรวจสอบปัญหาเบื้องต้น เช่น การเข้าสู่ระบบ การซิงก์สต็อก และการแจ้งเตือน"
     };
 }
@@ -31,13 +36,12 @@
         @{
             // อ่านค่าระดับความสำคัญที่เลือกอยู่ปัจจุบัน
             string currentLevel = (ViewBag.SelectedLevel as string ?? "all").ToUpperInvariant();
+            // ตรวจสอบระดับความสำคัญหากเป็นตัวพิมพ์ใหญ่ทั้งหมดให้แปลงเป็นตัวเล็ก
             if (currentLevel == "ALL") currentLevel = "all";
             // อ่านค่าช่วงเวลาที่เลือกอยู่ปัจจุบัน
             string currentTimeRange = ViewBag.SelectedTimeRange as string ?? "all";
             // ฟังก์ชันช่วยกำหนดคลาสสีปุ่มแท็บที่เลือกอยู่
-            string ActiveTabClass(string target) => currentLevel.Equals(target, StringComparison.OrdinalIgnoreCase)
-                ? "px-3.5 py-1.5 rounded-xl bg-[#2F39A9] text-white text-xs font-semibold transition"
-                : "px-3.5 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium shadow-2xs transition";
+            string ActiveTabClass(string target) => currentLevel.Equals(target, StringComparison.OrdinalIgnoreCase) ? "px-3.5 py-1.5 rounded-xl bg-[#2F39A9] text-white text-xs font-semibold transition" : "px-3.5 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-medium shadow-2xs transition";
         }
         @* กลุ่มปุ่มกรองตามระดับความสำคัญของบันทึก (ทั้งหมด / Error / Warning / Info) *@
         <div class="flex items-center gap-2">
@@ -46,21 +50,13 @@
             @* รายการปุ่มสลับระดับความสำคัญ *@
             <div class="flex items-center gap-1.5" id="logLevelButtons">
                 @* ปุ่มเลือกระดับทั้งหมด *@
-                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="all" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("all")">
-                    ทั้งหมด
-                </a>
+                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="all" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("all")">ทั้งหมด</a>
                 @* ปุ่มเลือกระดับข้อผิดพลาด (Error) *@
-                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="ERROR" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("ERROR")">
-                    Error
-                </a>
+                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="ERROR" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("ERROR")">ข้อผิดพลาด (Error)</a>
                 @* ปุ่มเลือกระดับการแจ้งเตือน (Warning) *@
-                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="WARNING" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("WARNING")">
-                    Warning
-                </a>
+                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="WARNING" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("WARNING")">แจ้งเตือน (Warning)</a>
                 @* ปุ่มเลือกระดับข้อมูลทั่วไป (Info) *@
-                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="INFO" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("INFO")">
-                    Info
-                </a>
+                <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="INFO" asp-route-timeRange="@currentTimeRange" class="@ActiveTabClass("INFO")">ข้อมูลทั่วไป (Info)</a>
             </div>
         </div>
 
@@ -72,24 +68,23 @@
                 <input type="hidden" name="level" value="@currentLevel" />
                 @* เมนูดรอปดาวน์เลือกช่วงเวลาของบันทึก *@
                 <select id="logTimeRange" name="timeRange" onchange="this.form.submit()" class="appearance-none pr-8 pl-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-2xs focus:outline-none cursor-pointer">
+                    @* ตัวเลือกช่วงเวลาทั้งหมด *@
                     <option value="all" selected="@(currentTimeRange == "all")">ช่วงเวลา: ทั้งหมด</option>
+                    @* ตัวเลือกช่วงเวลา 24 ชั่วโมงล่าสุด *@
                     <option value="24h" selected="@(currentTimeRange == "24h")">ช่วงเวลา: 24 ชั่วโมงล่าสุด</option>
+                    @* ตัวเลือกช่วงเวลา 7 วันล่าสุด *@
                     <option value="7d" selected="@(currentTimeRange == "7d")">ช่วงเวลา: 7 วันล่าสุด</option>
+                    @* ตัวเลือกช่วงเวลา 30 วันล่าสุด *@
                     <option value="30d" selected="@(currentTimeRange == "30d")">ช่วงเวลา: 30 วันล่าสุด</option>
                 </select>
                 @* ไอคอนลูกศรชี้ลง SVG ในช่องดรอปดาวน์ *@
-                <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
+                <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </form>
             @* ปุ่มดาวน์โหลดข้อมูลบันทึกระบบออกเป็นไฟล์ CSV พร้อมภาษาไทยสมบูรณ์ *@
-            <a asp-controller="ITSupport" asp-action="ExportLogsCSV"
-               asp-route-level="@currentLevel"
-               asp-route-timeRange="@currentTimeRange"
-               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer">
-                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
+            <a asp-controller="ITSupport" asp-action="ExportLogsCSV" asp-route-level="@currentLevel" asp-route-timeRange="@currentTimeRange" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2F39A9] hover:bg-[#3027FF] text-white text-xs font-bold shadow-xs transition-colors cursor-pointer">
+                @* ไอคอนลูกศรดาวน์โหลด SVG *@
+                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v12m0 0l-4-4m4 4l4-4M4 18h16" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                @* ข้อความบนปุ่มส่งออกไฟล์ *@
                 <span>ส่งออก .csv</span>
             </a>
         </div>
@@ -103,61 +98,55 @@
             <table class="w-full text-xs font-mono min-w-[500px]" id="logsTable">
                 @* ส่วนหัวของตารางระบุคอลัมน์ *@
                 <thead>
+                    @* แถวหัวตารางข้อมูลบันทึก *@
                     <tr class="border-b border-gray-100 text-left text-xs font-sans font-semibold text-gray-400 bg-[#FBFBFE]">
+                        @* คอลัมน์ระบุเวลาที่เกิดเหตุการณ์ *@
                         <th class="py-4 px-6 w-28">เวลา</th>
+                        @* คอลัมน์ระบุระดับความสำคัญ *@
                         <th class="py-4 px-6 w-28 text-center">ระดับ</th>
+                        @* คอลัมน์ระบุข้อความรายละเอียด *@
                         <th class="py-4 px-6">ข้อความ</th>
                     </tr>
                 </thead>
                 @* ข้อมูลแถวในตาราง *@
                 <tbody class="divide-y divide-gray-100">
                     @* ตรวจสอบว่ามีข้อมูลบันทึกหรือไม่ *@
-                    @if (hasDbLogs)
-                    {
+                    @if (hasDbLogs) {
                         @* วนลูปแสดงรายการบันทึกทีละแถว *@
-                        @foreach (var log in Model!)
-                        {
+                        @foreach (var log in Model!) {
+                            // แปลงระดับความสำคัญเป็นตัวพิมพ์ใหญ่เพื่อให้สีเหลืองของ WARNING เหมือนกันทุกรายการ
+                            var upperLevel = (log.LogLevel ?? "INFO").ToUpperInvariant();
                             // คำนวณคลาสสีของป้ายกำกับตามระดับความสำคัญ
-                            var badgeClass = log.LogLevel == "ERROR" ? "bg-[#FEE2E2] text-[#DC2626]" :
-                                             log.LogLevel == "WARNING" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DBEAFE] text-[#2F39A9]";
+                            var badgeClass = upperLevel == "ERROR" ? "bg-[#FEE2E2] text-[#DC2626]" : (upperLevel == "WARNING" ? "bg-[#FEF3C7] text-[#D97706]" : "bg-[#DBEAFE] text-[#2F39A9]");
                             // จัดรูปแบบเวลาเป็น ชั่วโมง:นาที:วินาที
                             var displayTime = log.Timestamp.ToString("HH:mm:ss");
                             // รวมชื่อโมดูลและข้อความบันทึก
                             var fullMsg = $"{log.Module}: {log.Message}";
 
                             @* แถวข้อมูลบันทึกระบบ สามารถคลิกเพื่อดูรายละเอียดเชิงลึกได้ *@
-                            <tr class="hover:bg-gray-50/70 transition-colors log-row cursor-pointer"
-                                data-level="@log.LogLevel"
-                                data-time="@log.Timestamp.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")"
-                                data-message="@fullMsg"
-                                onclick="openLogDetailFromRow(this)">
+                            <tr class="hover:bg-gray-50/70 transition-colors log-row cursor-pointer" data-level="@upperLevel" data-time="@log.Timestamp.ToLocalTime().ToString("dd MMM yyyy HH:mm:ss")" data-message="@fullMsg" onclick="openLogDetailFromRow(this)">
                                 @* คอลัมน์เวลาบันทึก *@
-                                <td class="py-3.5 px-6 text-gray-400 whitespace-nowrap">
-                                    @displayTime
-                                </td>
+                                <td class="py-3.5 px-6 text-gray-400 whitespace-nowrap">@displayTime</td>
 
                                 @* คอลัมน์ป้ายระดับความสำคัญ *@
-                                <td class="py-3.5 px-6 text-center">
-                                    <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold @badgeClass">
-                                        @log.LogLevel
-                                    </span>
-                                </td>
+                                <td class="py-3.5 px-6 text-center"><span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold @badgeClass">@upperLevel</span></td>
 
                                 @* คอลัมน์ข้อความรายละเอียดของบันทึก *@
                                 <td class="py-3.5 px-6 text-gray-800 leading-relaxed font-sans">
+                                    @* ชื่อโมดูลที่บันทึกเหตุการณ์ *@
                                     <span class="font-mono text-gray-900 font-semibold">@log.Module:</span>
+                                    @* ข้อความรายละเอียดเหตุการณ์ *@
                                     <span>@log.Message</span>
                                 </td>
                             </tr>
                         }
                     }
-                    else
-                    {
+                    @* กรณีไม่มีข้อมูลบันทึกในฐานข้อมูล *@
+                    else {
                         @* แถวกรณีไม่พบรายการบันทึกในฐานข้อมูล *@
                         <tr>
-                            <td colspan="3" class="py-12 text-center text-xs text-gray-400 font-sans">
-                                ยังไม่มีบันทึกกิจกรรมในระบบฐานข้อมูล
-                            </td>
+                            @* เซลล์ตารางแสดงข้อความไม่พบข้อมูล *@
+                            <td colspan="3" class="py-12 text-center text-xs text-gray-400 font-sans">ยังไม่มีบันทึกกิจกรรมในระบบฐานข้อมูล</td>
                         </tr>
                     }
                 </tbody>
@@ -185,61 +174,47 @@
             <span>แสดง @startRow–@endRow จากทั้งหมด @totalLogs รายการในฐานข้อมูลจริง</span>
             @* ปุ่มสำหรับเปลี่ยนหน้าเอกสาร *@
             <div class="flex items-center gap-1.5">
-                @* ปุ่มย้อนกลับไปหน้าก่อนหน้า *@
-                @if (currentPage > 1)
-                {
-                    <a asp-controller="ITSupport" asp-action="Logs"
-                       asp-route-level="@ViewBag.SelectedLevel"
-                       asp-route-timeRange="@ViewBag.SelectedTimeRange"
-                       asp-route-page="@(currentPage - 1)"
-                       class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                        ก่อนหน้า
-                    </a>
+                @* ตรวจสอบว่าหน้าปัจจุบันมากกว่า 1 หรือไม่เพื่อแสดงปุ่มย้อนกลับ *@
+                @if (currentPage > 1) {
+                    @* ลิงก์ย้อนกลับไปยังหน้าก่อนหน้า *@
+                    <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="@ViewBag.SelectedLevel" asp-route-timeRange="@ViewBag.SelectedTimeRange" asp-route-page="@(currentPage - 1)" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ก่อนหน้า</a>
                 }
-                else
-                {
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                        ก่อนหน้า
-                    </span>
+                @* กรณีอยู่ที่หน้าแรก ปิดการใช้งานปุ่มย้อนกลับ *@
+                else {
+                    @* ป้ายปุ่มก่อนหน้าที่ถูกปิดการใช้งาน *@
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ก่อนหน้า</span>
                 }
 
-                @* วนลูปสร้างปุ่มตัวเลขหน้า *@
-                @for (int p = 1; p <= totalPages; p++)
-                {
-                    if (p == currentPage)
-                    {
-                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
-                            @p
-                        </span>
+                @* คำนวณช่วงหมายเลขหน้า 3 หมายเลข *@
+                @{
+                    // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                    int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                    // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                    int endPage = Math.Min(totalPages, startPage + 2);
+                }
+                @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                @for (int p = startPage; p <= endPage; p++) {
+                    @* ตรวจสอบว่ารอบลูปตรงกับหน้าปัจจุบันหรือไม่ *@
+                    if (p == currentPage) {
+                        @* ปุ่มหมายเลขหน้าปัจจุบัน แสดงพื้นหลังสีน้ำเงิน *@
+                        <span class="size-8 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">@p</span>
                     }
-                    else
-                    {
-                        <a asp-controller="ITSupport" asp-action="Logs"
-                           asp-route-level="@ViewBag.SelectedLevel"
-                           asp-route-timeRange="@ViewBag.SelectedTimeRange"
-                           asp-route-page="@p"
-                           class="size-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">
-                            @p
-                        </a>
+                    @* กรณีเป็นหมายเลขหน้าอื่น แสดงปุ่มลิงก์นำทาง *@
+                    else {
+                        @* ลิงก์นำทางไปยังหมายเลขหน้าดังกล่าว *@
+                        <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="@ViewBag.SelectedLevel" asp-route-timeRange="@ViewBag.SelectedTimeRange" asp-route-page="@p" class="size-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">@p</a>
                     }
                 }
 
-                @* ปุ่มไปยังหน้าถัดไป *@
-                @if (currentPage < totalPages)
-                {
-                    <a asp-controller="ITSupport" asp-action="Logs"
-                       asp-route-level="@ViewBag.SelectedLevel"
-                       asp-route-timeRange="@ViewBag.SelectedTimeRange"
-                       asp-route-page="@(currentPage + 1)"
-                       class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                        ถัดไป
-                    </a>
+                @* ตรวจสอบว่าหน้าปัจจุบันยังไม่ถึงหน้าสุดท้ายเพื่อแสดงปุ่มถัดไป *@
+                @if (currentPage < totalPages) {
+                    @* ลิงก์นำทางไปยังหน้าถัดไป *@
+                    <a asp-controller="ITSupport" asp-action="Logs" asp-route-level="@ViewBag.SelectedLevel" asp-route-timeRange="@ViewBag.SelectedTimeRange" asp-route-page="@(currentPage + 1)" class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ถัดไป</a>
                 }
-                else
-                {
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                        ถัดไป
-                    </span>
+                @* กรณีอยู่ที่หน้าสุดท้าย ปิดการใช้งานปุ่มถัดไป *@
+                else {
+                    @* ป้ายปุ่มถัดไปที่ถูกปิดการใช้งาน *@
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ถัดไป</span>
                 }
             </div>
         </div>
@@ -252,49 +227,56 @@
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4 animate-scale-up font-sans">
         @* ส่วนหัวของหน้าต่างป๊อปอัปพร้อมปุ่มปิด *@
         <div class="flex items-center justify-between">
+            @* หัวข้อหน้าต่างป๊อปอัปรายละเอียดบันทึก Log *@
             <h3 class="text-base font-bold text-[#050315]">รายละเอียดบันทึก Log</h3>
+            @* ปุ่มกากบาทสำหรับปิดหน้าต่างป๊อปอัป *@
             <button type="button" onclick="closeAllModals()" class="text-gray-400 hover:text-gray-600 cursor-pointer">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                @* ไอคอนกากบาท SVG *@
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
         @* รายละเอียดของบันทึก (เวลา, ระดับ, ข้อความ) *@
         <div class="space-y-2 text-xs">
             @* แถวเวลาที่เกิดเหตุการณ์ *@
             <div class="flex gap-2">
+                @* ป้ายกำกับเวลา *@
                 <span class="text-gray-400 w-20">เวลา:</span>
+                @* ข้อความแสดงเวลาที่เกิดเหตุการณ์ *@
                 <span class="font-mono text-gray-800" id="detailTime"></span>
             </div>
             @* แถวระดับความสำคัญ *@
             <div class="flex gap-2">
+                @* ป้ายกำกับระดับ *@
                 <span class="text-gray-400 w-20">ระดับ:</span>
+                @* ข้อความแสดงระดับความสำคัญ *@
                 <span class="font-bold" id="detailLevel"></span>
             </div>
             @* แถวข้อความแจ้งเตือนฉบับเต็ม *@
             <div class="flex flex-col gap-1 pt-1">
+                @* ป้ายกำกับข้อความระบบ *@
                 <span class="text-gray-400">ข้อความระบบ:</span>
+                @* กรอบแสดงข้อความระบบฉบับเต็ม *@
                 <div class="p-3 bg-gray-50 rounded-xl font-mono text-gray-800 text-[11px] leading-relaxed break-all border border-gray-200" id="detailMsg"></div>
             </div>
         </div>
         @* ปุ่มปิดหน้าต่างป๊อปอัป *@
-        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs cursor-pointer">
-            ปิด
-        </button>
+        <button type="button" onclick="closeAllModals()" class="w-full bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs cursor-pointer">ปิด</button>
     </div>
 </div>
 
 @* ส่วนสคริปต์จาวาสคริปต์ควบคุมการเปิดและปิดหน้าต่างป๊อปอัปรายละเอียด *@
 @section Scripts {
+    @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการเปิดและปิดหน้าต่างป๊อปอัป *@
     <script>
         // ฟังก์ชันเปิดหน้าต่างรายละเอียด Log จากข้อมูลแถวที่ผู้ใช้คลิก
         function openLogDetailFromRow(row) {
             // อ่านค่าข้อมูลจากชุด dataset ของแถวตาราง
             const d = row.dataset;
-            // นำค่าเวลา ระดับ และข้อความไปแสดงในหน้าต่างป๊อปอัป
+            // นำค่าเวลาไประบุในช่องแสดงเวลาของหน้าต่างป๊อปอัป
             document.getElementById('detailTime').innerText = d.time || '';
+            // นำค่าระดับความสำคัญไประบุในช่องแสดงระดับของหน้าต่างป๊อปอัป
             document.getElementById('detailLevel').innerText = d.level || '';
+            // นำค่าข้อความรายละเอียดไประบุในกรอบข้อความของหน้าต่างป๊อปอัป
             document.getElementById('detailMsg').innerText = d.message || '';
             // แสดงหน้าต่างป๊อปอัปโดยเอาคลาส hidden ออก
             document.getElementById('logDetailModal')?.classList.remove('hidden');

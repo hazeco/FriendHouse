@@ -21,12 +21,12 @@
     }
 }
 
-<!-- แถบนำทางหลักสีน้ำเงินเข้มสำหรับบทบาทไอทีซัพพอร์ต -->
+@* แถบนำทางหลักสีน้ำเงินเข้มสำหรับบทบาทไอทีซัพพอร์ต *@
 <div class="bg-[#2F39A9] text-white">
     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <!-- โลโก้ร้านและลิงก์กลับสู่แผงควบคุมระบบ -->
-        <a asp-controller="ITSupport" asp-action="Dashboard" class="flex items-center gap-3 shrink-0 cursor-pointer">
+        @* โลโก้ร้านและลิงก์กลับสู่แผงควบคุมระบบ *@
+<a asp-controller="ITSupport" asp-action="Dashboard" class="flex items-center gap-3 shrink-0 cursor-pointer">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
@@ -36,8 +36,8 @@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
-        <!-- เมนูนำทางกลางสำหรับเดสก์ท็อป: แผงควบคุม ผู้ใช้งาน และบันทึกกิจกรรมระบบ -->
-        <nav class="hidden md:flex items-center gap-2">
+        @* เมนูนำทางกลางสำหรับเดสก์ท็อป: แผงควบคุม ผู้ใช้งาน และบันทึกกิจกรรมระบบ *@
+<nav class="hidden md:flex items-center gap-2">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard")">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -55,8 +55,8 @@
             </a>
         </nav>
 
-        <!-- ข้อมูลบัญชีไอทีซัพพอร์ตที่เข้าสู่ระบบอยู่และปุ่มออกจากระบบ -->
-        <div class="flex items-center gap-3">
+        @* ข้อมูลบัญชีไอทีซัพพอร์ตที่เข้าสู่ระบบอยู่และปุ่มออกจากระบบ *@
+<div class="flex items-center gap-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-full bg-[#BAF2FF] text-[#2F39A9] font-bold text-xs flex items-center justify-center shadow-xs">
                 @brand.UserInitials
@@ -76,8 +76,8 @@
         </div>
     </div>
 
-    <!-- แถบนำทางย่อยสำหรับหน้าจอมือถือ (ไม่ซ้ำปุ่มออกจากระบบ) -->
-    <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+    @* แถบนำทางย่อยสำหรับหน้าจอมือถือ (ไม่ซ้ำปุ่มออกจากระบบ) *@
+<div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="ITSupport" asp-action="Dashboard" class="@NavClass("Dashboard") text-xs py-1.5 px-3 shrink-0">แผงควบคุมระบบ</a>
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@

@@ -1,5 +1,34 @@
+@* กำหนดโมเดลข้อมูลแคตตาล็อกสินค้าฟิกเกอร์ทั้งหมด *@
 @model Khetsophon_CSI402_8456.ViewModels.ProductCatalogViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าคอลเลกชันสินค้า *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     ViewData["Title"] = "คอลเลกชันฟิกเกอร์ทั้งหมด — FriendHouse";
 
     // READ: การกำหนดค่าทรัพยากรข้อความและสื่อมีเดียที่ส่วนบนสุดของไฟล์ตามกฎ Media & Content Configuration
@@ -38,7 +67,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-4 bg-white">
-    <!-- แถบนำทาง -->
+    @* แถบนำทางระบุตำแหน่งหน้าเว็บ (Breadcrumb) *@
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">@pageConfig.BreadcrumbHome</a>
@@ -106,7 +135,7 @@
         </div>
     }
 
-    <!-- แบบฟอร์มค้นหาและตัวกรองสินค้า ส่งข้อมูลไปยัง HomeController แอ็กชัน Collection (ตามมาตรฐาน MVC ไม่มี method attribute) -->
+    @* แบบฟอร์มค้นหาและตัวกรองสินค้า ส่งข้อมูลไปยัง HomeController แอ็กชัน Collection ตามมาตรฐาน MVC โดยไม่ระบุ method attribute *@
     <form asp-controller="Home" asp-action="Collection" class="space-y-3">
         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
         @if (!string.IsNullOrWhiteSpace(Model.SelectedPromoCode))
@@ -120,7 +149,7 @@
             @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="promoScope" value="@Model.SelectedPromoScope" />
         }
-        <!-- แถวที่ 1: ช่องค้นหาคำค้นหา, ปุ่มค้นหา, ปุ่มล้างตัวกรอง และจำนวนผลลัพธ์ -->
+        @* แถวที่ 1 ช่องค้นหาคำค้นหา ปุ่มค้นหา ปุ่มล้างตัวกรอง และจำนวนผลลัพธ์ *@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex flex-wrap items-center gap-2 flex-1 max-w-2xl">
@@ -172,9 +201,9 @@
             </div>
         </div>
 
-        <!-- แถวที่ 2: เมนูดรอปดาวน์ 4 รายการ (หมวดหมู่, ซีรีส์, สถานะ, ช่วงราคา) ที่จะส่งค่าอัตโนมัติเมื่อผู้ใช้เปลี่ยนค่า -->
+        @* แถวที่ 2 เมนูดรอปดาวน์ 4 รายการ หมวดหมู่ ซีรีส์ สถานะ และช่วงราคา *@
         <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <!-- ตัวกรองที่ 1: หมวดหมู่สินค้า -->
+            @* ตัวกรองที่ 1 เมนูเลือกหมวดหมู่สินค้า *@
             <div class="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-text shadow-2xs hover:border-primary/40 transition-colors">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-slate-400 font-medium shrink-0">@pageConfig.CategoryLabel</span>
@@ -200,7 +229,7 @@
                 </svg>
             </div>
 
-            <!-- ตัวกรองที่ 2: ซีรีส์อนิเมะ -->
+            @* ตัวกรองที่ 2 เมนูเลือกซีรีส์อนิเมะ *@
             <div class="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-text shadow-2xs hover:border-primary/40 transition-colors">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-slate-400 font-medium shrink-0">@pageConfig.SeriesLabel</span>
@@ -226,7 +255,7 @@
                 </svg>
             </div>
 
-            <!-- ตัวกรองที่ 3: สถานะสินค้าคงเหลือ -->
+            @* ตัวกรองที่ 3 เมนูเลือกสถานะสินค้าคงเหลือ *@
             <div class="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-text shadow-2xs hover:border-primary/40 transition-colors">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-slate-400 font-medium shrink-0">@pageConfig.StatusLabel</span>
@@ -252,7 +281,7 @@
                 </svg>
             </div>
 
-            <!-- ตัวกรองที่ 4: ช่วงราคา -->
+            @* ตัวกรองที่ 4 เมนูเลือกช่วงราคาสินค้า *@
             <div class="relative flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-text shadow-2xs hover:border-primary/40 transition-colors">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="text-slate-400 font-medium shrink-0">@pageConfig.PriceRangeLabel</span>
@@ -280,8 +309,8 @@
         </div>
     </form>
 
-    <!-- ตารางแสดงการ์ดสินค้าฟิกเกอร์ หรือสถานะว่างเปล่ากรณีไม่พบสินค้า -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    @* ตารางแสดงการ์ดสินค้าฟิกเกอร์ รองรับการแสดงผลแบบ Responsive ทุกขนาดหน้าจอ *@
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
         @if (Model.Products != null && Model.Products.Any())
         {
@@ -292,15 +321,15 @@
                 <div class="group flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white transition-colors hover:border-primary/40">
                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
-                        <!-- รูปสินค้าเต็มกรอบครึ่งบนการ์ด -->
+                        @* รูปสินค้าเต็มกรอบครึ่งบนการ์ด *@
                         <a asp-controller="Home" asp-action="ProductDetail" asp-route-id="@item.ProductId"
                            class="block aspect-square w-full bg-white border-b border-slate-100 overflow-hidden">
                             @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                            <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(!string.IsNullOrEmpty(item.ImageUrl) ? item.ImageUrl : pageConfig.FallbackImage))"
+                            <img src="@Url.Content(ResolveCardImageUrl(!string.IsNullOrEmpty(item.ImageUrl) ? item.ImageUrl : pageConfig.FallbackImage))"
                                  alt="@item.Name" class="size-full object-cover object-top" loading="lazy" />
                         </a>
 
-                        <!-- ข้อมูลสินค้า: สถานะ, ซีรีส์, สเกล, ชื่อสินค้า -->
+                        @* ข้อมูลรายละเอียดสินค้า สถานะ ซีรีส์ สเกล และชื่อสินค้า *@
                         <div class="px-3.5 pt-3 space-y-1.5">
                             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex items-center justify-between gap-1.5">
@@ -325,7 +354,7 @@
                         </div>
                     </div>
 
-                    <!-- แถวด้านล่าง: แสดงราคา และปุ่มกด -->
+                    @* แถวด้านล่าง แสดงราคาสินค้าและปุ่มสั่งซื้อหรือใส่ตะกร้า *@
                     <div class="px-3.5 pb-3.5 mt-3 pt-2.5 border-t border-slate-100 space-y-2.5">
                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between">
@@ -437,7 +466,7 @@
         }
     </div>
 
-    <!-- แถบแบ่งหน้า แสดงผลเป็นภาษาไทยล้วน ปราศจากภาษาอังกฤษ และเชื่อมโยงกับตัวกรองของระบบจริง -->
+    @* แถบแบ่งหน้ารายการสินค้า เชื่อมโยงกับตัวกรองของระบบจริง *@
     @{
         // คำนวณลำดับรายการเริ่มต้นและสิ้นสุดที่แสดงอยู่ในหน้านี้
         var startItem = Model.TotalItems == 0 ? 0 : ((Model.CurrentPage - 1) * Model.PageSize) + 1;
@@ -445,12 +474,12 @@
     }
     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 pb-2 border-t border-slate-100">
-        <!-- แสดงช่วงรายการสินค้าและจำนวนสินค้าทั้งหมด -->
+        @* แสดงช่วงรายการสินค้าและจำนวนสินค้าทั้งหมด *@
         <div class="text-xs font-medium text-slate-500">
             แสดงรายการที่ <span class="font-bold text-text">@startItem–@endItem</span> จากทั้งหมด <span class="font-bold text-text">@Model.TotalItems</span> รายการ (หน้า @Model.CurrentPage / @Model.TotalPages)
         </div>
 
-        <!-- ปุ่มควบคุมการเปลี่ยนหน้า (ก่อนหน้า / หมายเลขหน้า / ถัดไป) -->
+        @* ปุ่มควบคุมการเปลี่ยนหน้าแบบเลื่อน 3 หมายเลข *@
         <div class="flex items-center justify-center gap-2">
             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (Model.CurrentPage > 1)
@@ -477,8 +506,14 @@
                 </span>
             }
 
-            @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-            @for (var p = 1; p <= Model.TotalPages; p++)
+            @{
+                // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                int startPage = Math.Clamp(Model.CurrentPage - 1, 1, Math.Max(1, Model.TotalPages - 2));
+                // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                int endPage = Math.Min(Model.TotalPages, startPage + 2);
+            }
+            @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+            @for (var p = startPage; p <= endPage; p++)
             {
                 if (p == Model.CurrentPage)
                 {

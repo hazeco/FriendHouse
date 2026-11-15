@@ -1,20 +1,32 @@
+@* กำหนดโมเดลข้อมูลรายการสมุดบันทึกรายรับ-รายจ่ายของระบบ *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Financialledger>
+@* กำหนดค่าเริ่มต้นและการประมวลผลสำหรับหน้าบันทึกรายรับ-รายจ่าย *@
 @{
+    // กำหนดชื่อหัวข้อของหน้าเว็บ
     ViewData["Title"] = "บันทึกรายรับ-รายจ่าย";
+    // กำหนดเค้าโครงหลักสำหรับฝ่ายบัญชี
     Layout = "_AccountantLayout";
 
+    // ตรวจสอบว่ามีรายการในฐานข้อมูลหรือไม่
     var hasDbEntries = Model != null && Model.Any();
 
     // กำหนดค่าข้อความและส่วนหัวของหน้าสมุดบันทึกรายรับ-รายจ่าย
     var pageHeader = new {
+        // หัวข้อหลักของหน้าสมุดบัญชี
         Title = "บันทึกรายรับ-รายจ่าย",
+        // คำอธิบายขอบเขตและการทำงานของหน้า
         Subtitle = "สำหรับค่าใช้จ่ายที่ต้องกรอกเอง เช่น ค่าเช่า ค่าน้ำค่าไฟ — ยอดขายหน้าร้านระบบบันทึกให้อัตโนมัติแล้ว ไม่ต้องกรอกซ้ำ",
+        // เดือนที่กำลังเลือกดูข้อมูล
         SelectedMonth = DateTime.Now.ToString("MMMM yyyy")
     };
 
+    // กำหนดค่าตัวเลขสถิติทางการเงินประจำเดือน
     var ledgerStats = new {
+        // ยอดรวมรายรับที่บันทึกเองในเดือนนี้
         Income = ViewBag.TotalIncome != null ? "฿" + ((decimal)ViewBag.TotalIncome).ToString("N0") : "฿0",
+        // ยอดรวมรายจ่ายทั้งหมดในเดือนนี้
         Expense = ViewBag.TotalExpense != null ? "฿" + ((decimal)ViewBag.TotalExpense).ToString("N0") : "฿0",
+        // ยอดคงเหลือสุทธิหลังหักรายจ่าย
         Net = ViewBag.NetBalance != null ? "฿" + ((decimal)ViewBag.NetBalance).ToString("N0") : "฿0"
     };
 }
@@ -35,14 +47,15 @@
         <div class="relative">
             @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
             <select class="appearance-none pr-8 pl-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] shadow-2xs focus:outline-none">
+                @* ตัวเลือกเดือนปัจจุบัน *@
                 <option>@pageHeader.SelectedMonth</option>
+                @* ตัวเลือกเดือนสิงหาคม 2569 *@
                 <option>สิงหาคม 2569</option>
+                @* ตัวเลือกเดือนกรกฎาคม 2569 *@
                 <option>กรกฎาคม 2569</option>
             </select>
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <svg class="size-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
     </div>
 
@@ -58,7 +71,9 @@
                 <div class="text-3xl font-extrabold text-[#16A34A]">@ledgerStats.Income</div>
             </div>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-            <span class="size-9 rounded-xl bg-green-50 text-[#16A34A] text-sm font-bold flex items-center justify-center">▲</span>
+            <span class="size-9 rounded-xl bg-green-50 text-[#16A34A] text-sm font-bold flex items-center justify-center">
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+            </span>
         </div>
 
         @* การ์ดรายจ่าย *@
@@ -71,7 +86,9 @@
                 <div class="text-3xl font-extrabold text-[#DC2626]">@ledgerStats.Expense</div>
             </div>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-            <span class="size-9 rounded-xl bg-red-50 text-[#DC2626] text-sm font-bold flex items-center justify-center">▼</span>
+            <span class="size-9 rounded-xl bg-red-50 text-[#DC2626] text-sm font-bold flex items-center justify-center">
+                <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+            </span>
         </div>
 
         @* การ์ดคงเหลือสุทธิ *@
@@ -89,30 +106,22 @@
     </div>
 
     @* แสดงข้อความแจ้งเตือนผลสำเร็จและข้อผิดพลาดจาก TempData *@
-    @if (TempData["SuccessMessage"] != null)
-    {
+    @if (TempData["SuccessMessage"] != null) {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] p-4 flex items-center gap-3 text-xs text-[#065F46] shadow-xs">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
+            <svg class="size-5 text-[#10B981] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["SuccessMessage"]</span>
         </div>
     }
 
     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-    @if (TempData["ErrorMessage"] != null)
-    {
+    @if (TempData["ErrorMessage"] != null) {
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-center gap-3 text-xs text-rose-800 shadow-xs">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+            <svg class="size-5 text-rose-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
             <span class="font-bold">@TempData["ErrorMessage"]</span>
         </div>
@@ -139,16 +148,10 @@
                     <label class="text-xs font-bold text-gray-700 block mb-1.5">ประเภทรายการ</label>
                     @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
                     <div class="grid grid-cols-2 gap-2">
-                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                        <button type="button" id="btnIncome" onclick="selectEntryType('income')"
-                                class="py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium transition cursor-pointer">
-                            รายรับ
-                        </button>
-                        @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                        <button type="button" id="btnExpense" onclick="selectEntryType('expense')"
-                                class="py-2.5 rounded-xl border-2 border-[#DC2626] text-[#DC2626] bg-[#FEE2E2]/20 text-xs font-bold transition cursor-pointer">
-                            รายจ่าย
-                        </button>
+                        @* ปุ่มเลือกประเภทรายรับ *@
+                        <button type="button" id="btnIncome" onclick="selectEntryType('income')" class="py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium transition cursor-pointer">รายรับ</button>
+                        @* ปุ่มเลือกประเภทรายจ่าย *@
+                        <button type="button" id="btnExpense" onclick="selectEntryType('expense')" class="py-2.5 rounded-xl border-2 border-[#DC2626] text-[#DC2626] bg-[#FEE2E2]/20 text-xs font-bold transition cursor-pointer">รายจ่าย</button>
                     </div>
                     @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
                     <input type="hidden" name="EntryType" id="entryTypeInput" value="expense" />
@@ -162,17 +165,21 @@
                     <div class="relative">
                         @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                         <select name="CategoryName" class="appearance-none w-full pr-8 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 shadow-2xs focus:outline-none">
+                            @* หมวดหมู่ค่าเช่าร้าน *@
                             <option value="ค่าเช่าร้าน">ค่าเช่าร้าน</option>
+                            @* หมวดหมู่ค่าน้ำค่าไฟ *@
                             <option value="ค่าน้ำค่าไฟ">ค่าน้ำค่าไฟ</option>
+                            @* หมวดหมู่ค่าขนส่งสินค้าเข้า *@
                             <option value="ค่าขนส่งสินค้าเข้า">ค่าขนส่งสินค้าเข้า</option>
+                            @* หมวดหมู่เงินเดือนพนักงาน *@
                             <option value="เงินเดือนพนักงาน">เงินเดือนพนักงาน</option>
+                            @* หมวดหมู่รายได้อื่นๆ *@
                             <option value="รายได้อื่นๆ">รายได้อื่นๆ</option>
+                            @* หมวดหมู่อื่นๆ *@
                             <option value="อื่นๆ">อื่นๆ</option>
                         </select>
                         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                        <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
+                        <svg class="size-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </div>
                 </div>
 
@@ -183,16 +190,14 @@
                         @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="text-xs font-bold text-gray-700 block mb-1.5">จำนวนเงิน (บาท)</label>
                         @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-                        <input type="number" step="0.01" min="1" name="Amount" placeholder="0.00" required
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-[#050315] focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
+                        <input type="number" step="0.01" min="1" name="Amount" placeholder="0.00" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-[#050315] focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
                     </div>
                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
                         @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                         <label class="text-xs font-bold text-gray-700 block mb-1.5">วันที่</label>
                         @* ช่องกรอกข้อมูลสำหรับรับค่าจากผู้ใช้งาน *@
-                        <input type="date" name="EntryDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required
-                               class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
+                        <input type="date" name="EntryDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 focus:outline-none focus:border-[#2F39A9] shadow-2xs" />
                     </div>
                 </div>
 
@@ -200,32 +205,34 @@
                 <div>
                     @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                     <label class="text-xs font-bold text-gray-700 block mb-1.5">หมายเหตุ</label>
-                    <textarea name="Note" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..."
-                              class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9] shadow-2xs"></textarea>
+                    @* ช่องกรอกหมายเหตุรายละเอียดเพิ่มเติม *@
+                    <textarea name="Note" rows="3" placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:outline-none focus:border-[#2F39A9] shadow-2xs"></textarea>
                 </div>
             </div>
 
             @* ปุ่มบันทึกและปุ่มล้างข้อมูล *@
             <div class="flex items-center gap-2 pt-4">
                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs transition cursor-pointer">
-                    บันทึกรายการ
-                </button>
-                @* ปุ่มกดดำเนินการสำหรับผู้ใช้งาน *@
-                <button type="reset" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-xs cursor-pointer">
-                    ล้างข้อมูล
-                </button>
+                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs shadow-xs transition cursor-pointer">บันทึกรายการ</button>
+                @* ปุ่มกดยกเลิกและล้างข้อมูลแบบฟอร์ม *@
+                <button type="reset" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-xs cursor-pointer">ล้างข้อมูล</button>
             </div>
         </form>
 
         @* คอลัมน์ขวา: ตารางรายการบันทึกบัญชีทั้งหมด *@
+        @* คำนวณข้อมูลสถิติและการแบ่งหน้าสำหรับสมุดบัญชี *@
         @{
-            // ดึงค่าสถิติและการแบ่งหน้าจาก ViewBag ที่ส่งมาจาก AccountantController.Ledger
+            // ดึงจำนวนรายการบัญชีทั้งหมด
             int totalEntries = ViewBag.TotalEntryCount ?? (hasDbEntries ? Model!.Count() : 0);
+            // ดึงหมายเลขหน้าปัจจุบัน
             int currentPage = ViewBag.CurrentPage ?? 1;
+            // ดึงจำนวนหน้าทั้งหมด
             int totalPages = ViewBag.TotalPages ?? 1;
+            // กำหนดขนาดรายการต่อหน้า
             int pageSize = ViewBag.PageSize ?? 10;
+            // คำนวณลำดับแถวเริ่มต้น
             int startRow = totalEntries == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+            // คำนวณลำดับแถวสิ้นสุด
             int endRow = Math.Min(currentPage * pageSize, totalEntries);
         }
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -263,13 +270,14 @@
                         @* ส่วนเนื้อหาตารางแสดงแถวข้อมูลแต่ละรายการ *@
                         <tbody class="divide-y divide-gray-100">
                             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                            @if (hasDbEntries)
-                            {
+                            @if (hasDbEntries) {
                                 @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                                @foreach (var entry in Model!)
-                                {
+                                @foreach (var entry in Model!) {
+                                    // ตรวจสอบว่ารายการนี้เป็นรายจ่ายหรือไม่
                                     var isExpense = entry.EntryType.ToLower() == "expense";
+                                    // กำหนดคลาสสีแดงสำหรับรายจ่ายและสีเขียวสำหรับรายรับ
                                     var amountClass = isExpense ? "text-[#DC2626]" : "text-[#16A34A]";
+                                    // กำหนดเครื่องหมายลบสำหรับรายจ่ายและบวกสำหรับรายรับ
                                     var amountPrefix = isExpense ? "-฿" : "+฿";
 
                                     @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
@@ -287,36 +295,26 @@
                                             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                             <div class="inline-flex items-center gap-1">
                                                 @* ปุ่มเปิดหน้าต่างแก้ไขรายการบัญชี *@
-                                                <button type="button" onclick="openEditLedgerModal(@entry.EntryId, '@entry.CategoryName', '@entry.Amount', '@entry.EntryType', '@entry.Description')"
-                                                        class="size-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-[#2F39A9] flex items-center justify-center cursor-pointer" title="แก้ไขรายการ">
+                                                <button type="button" onclick="openEditLedgerModal(@entry.EntryId, '@entry.CategoryName', '@entry.Amount', '@entry.EntryType', '@entry.Description')" class="size-7 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-[#2F39A9] flex items-center justify-center cursor-pointer" title="แก้ไขรายการ">
                                                     @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                                                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M12 20h9"></path>
-                                                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
-                                                    </svg>
+                                                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>
                                                 </button>
                                                 @* ปุ่มเปิดหน้าต่างยืนยันการลบรายการบัญชี *@
-                                                <button type="button" onclick="openDeleteLedgerModal(@entry.EntryId, '@entry.CategoryName')"
-                                                        class="size-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-[#DC2626] flex items-center justify-center cursor-pointer" title="ลบรายการ">
+                                                <button type="button" onclick="openDeleteLedgerModal(@entry.EntryId, '@entry.CategoryName')" class="size-7 rounded-lg hover:bg-red-50 text-gray-400 hover:text-[#DC2626] flex items-center justify-center cursor-pointer" title="ลบรายการ">
                                                     @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-                                                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <polyline points="3 6 5 6 21 6"></polyline>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                    </svg>
+                                                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 }
                             }
-                            else
-                            {
+                            @* กรณีไม่มีข้อมูลรายการบัญชีในระบบ *@
+                            else {
                                 @* แถวข้อมูลในตารางพร้อมเอฟเฟกต์เปลี่ยนสีพื้นหลังเมื่อชี้เมาส์ *@
                                 <tr>
                                     @* เซลล์แสดงค่าข้อมูลของแถวปัจจุบันในตาราง *@
-                                    <td colspan="5" class="py-8 text-center text-xs text-gray-400">
-                                        ยังไม่มีรายการบันทึกรายรับ-รายจ่ายในระบบ
-                                    </td>
+                                    <td colspan="5" class="py-8 text-center text-xs text-gray-400">ยังไม่มีรายการบันทึกรายรับ-รายจ่ายในระบบ</td>
                                 </tr>
                             }
                         </tbody>
@@ -333,57 +331,46 @@
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-1.5">
                         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                        @if (currentPage > 1)
-                        {
+                        @if (currentPage > 1) {
                             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage - 1)"
-                               class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                                ก่อนหน้า
-                            </a>
+                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage - 1)" class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ก่อนหน้า</a>
                         }
-                        else
-                        {
+                        @* กรณีอยู่ที่หน้าแรก ปิดการใช้งานปุ่มก่อนหน้า *@
+                        else {
                             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                                ก่อนหน้า
-                            </span>
+                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ก่อนหน้า</span>
                         }
 
-                        @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
-                        @for (int p = 1; p <= totalPages; p++)
-                        {
-                            if (p == currentPage)
-                            {
+                        @* คำนวณช่วงหมายเลขหน้า 3 หมายเลข *@
+                        @{
+                            // คำนวณช่วงหมายเลขหน้าแบบเลื่อนทีละ 3 หมายเลข (เช่น 1 2 3 -> 2 (3) 4 -> 3 (4) 5)
+                            int startPage = Math.Clamp(currentPage - 1, 1, Math.Max(1, totalPages - 2));
+                            // คำนวณหมายเลขหน้าสิ้นสุดไม่ให้เกินจำนวนหน้าทั้งหมด
+                            int endPage = Math.Min(totalPages, startPage + 2);
+                        }
+                        @* วนลูปสร้างปุ่มตัวเลขหน้าแบบเลื่อนทีละ 3 หมายเลข *@
+                        @for (int p = startPage; p <= endPage; p++) {
+                            @* ตรวจสอบว่าตรงกับหน้าปัจจุบันหรือไม่ *@
+                            if (p == currentPage) {
                                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">
-                                    @p
-                                </span>
+                                <span class="size-7 rounded-lg bg-[#2F39A9] text-white font-bold flex items-center justify-center">@p</span>
                             }
-                            else
-                            {
+                            @* กรณีเป็นหมายเลขหน้าอื่น *@
+                            else {
                                 @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                                <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@p"
-                                   class="size-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">
-                                    @p
-                                </a>
+                                <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@p" class="size-7 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium flex items-center justify-center cursor-pointer">@p</a>
                             }
                         }
 
                         @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
-                        @if (currentPage < totalPages)
-                        {
+                        @if (currentPage < totalPages) {
                             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
-                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage + 1)"
-                               class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">
-                                ถัดไป
-                            </a>
+                            <a asp-controller="Accountant" asp-action="Ledger" asp-route-page="@(currentPage + 1)" class="px-3 py-1 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 font-medium cursor-pointer">ถัดไป</a>
                         }
-                        else
-                        {
+                        @* กรณีอยู่ที่หน้าสุดท้าย ปิดการใช้งานปุ่มถัดไป *@
+                        else {
                             @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">
-                                ถัดไป
-                            </span>
+                            <span class="px-3 py-1 rounded-lg border border-gray-100 bg-gray-50 text-gray-300 font-medium cursor-not-allowed">ถัดไป</span>
                         }
                     </div>
                 </div>
@@ -418,11 +405,17 @@
                 <label class="text-xs font-bold text-gray-700 block mb-1">หมวดหมู่</label>
                 @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select name="categoryName" id="editCategoryInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
+                    @* หมวดหมู่ค่าเช่าร้าน *@
                     <option value="ค่าเช่าร้าน">ค่าเช่าร้าน</option>
+                    @* หมวดหมู่ค่าน้ำค่าไฟ *@
                     <option value="ค่าน้ำค่าไฟ">ค่าน้ำค่าไฟ</option>
+                    @* หมวดหมู่ค่าขนส่งสินค้าเข้า *@
                     <option value="ค่าขนส่งสินค้าเข้า">ค่าขนส่งสินค้าเข้า</option>
+                    @* หมวดหมู่เงินเดือนพนักงาน *@
                     <option value="เงินเดือนพนักงาน">เงินเดือนพนักงาน</option>
+                    @* หมวดหมู่รายได้อื่นๆ *@
                     <option value="รายได้อื่นๆ">รายได้อื่นๆ</option>
+                    @* หมวดหมู่อื่นๆ *@
                     <option value="อื่นๆ">อื่นๆ</option>
                 </select>
             </div>
@@ -432,7 +425,9 @@
                 <label class="text-xs font-bold text-gray-700 block mb-1">ประเภทรายการ</label>
                 @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select name="entryType" id="editEntryTypeInput" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none">
+                    @* ตัวเลือกประเภทรายจ่าย *@
                     <option value="expense">รายจ่าย</option>
+                    @* ตัวเลือกประเภทรายรับ *@
                     <option value="income">รายรับ</option>
                 </select>
             </div>
@@ -447,18 +442,15 @@
             <div>
                 @* ป้ายชื่อกำกับช่องกรอกข้อมูลในแบบฟอร์ม *@
                 <label class="text-xs font-bold text-gray-700 block mb-1">หมายเหตุ</label>
+                @* ช่องกรอกหมายเหตุรายละเอียดเพิ่มเติม *@
                 <textarea name="note" id="editNoteInput" rows="2" class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"></textarea>
             </div>
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 pt-2">
-                @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                    ยกเลิก
-                </button>
-                @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                    บันทึกการแก้ไข
-                </button>
+                @* ปุ่มกดยกเลิกการแก้ไข *@
+                <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
+                @* ปุ่มกดยืนยันบันทึกการแก้ไข *@
+                <button type="submit" class="flex-1 bg-[#2F39A9] hover:bg-[#242D87] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">บันทึกการแก้ไข</button>
             </div>
         </form>
     </div>
@@ -471,10 +463,7 @@
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="size-12 rounded-full bg-red-100 text-[#DC2626] mx-auto flex items-center justify-center">
             @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
-            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </div>
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div>
@@ -487,58 +476,72 @@
         <form asp-controller="Accountant" asp-action="DeleteLedgerEntry" class="flex items-center gap-2 pt-2">
             @* ฟิลด์ซ่อนสำหรับส่งค่าพารามิเตอร์แนบไปกับแบบฟอร์ม *@
             <input type="hidden" name="ledgerId" id="deleteLedgerIdInput" />
-            @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
-            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">
-                ยกเลิก
-            </button>
-            @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
-            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">
-                ยืนยันลบ
-            </button>
+            @* ปุ่มกดยกเลิกการลบ *@
+            <button type="button" onclick="closeAllModals()" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl font-semibold text-xs cursor-pointer">ยกเลิก</button>
+            @* ปุ่มกดยืนยันการลบรายการ *@
+            <button type="submit" class="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white py-2.5 rounded-xl font-bold text-xs cursor-pointer shadow-xs">ยืนยันลบ</button>
         </form>
     </div>
 </div>
 
+@* ส่วนแทรกสคริปต์ JavaScript สำหรับการทำงานของสมุดบัญชี *@
 @section Scripts {
     @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script>
         // ฟังก์ชันสลับปุ่มเลือกประเภทรายการ รายรับ หรือ รายจ่าย ในฟอร์มบันทึกใหม่
         function selectEntryType(type) {
+            // บันทึกประเภทรายการลงในฟิลด์ซ่อน
             document.getElementById('entryTypeInput').value = type;
-            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+            // อ้างอิงปุ่มเลือกรายรับ
             const btnIncome = document.getElementById('btnIncome');
-            // อ้างอิงอิลิเมนต์หรือกำหนดค่าตัวแปรสำหรับการประมวลผลฝั่งไคลเอนต์
+            // อ้างอิงปุ่มเลือกรายจ่าย
             const btnExpense = document.getElementById('btnExpense');
 
-            // ตรวจสอบเงื่อนไขก่อนดำเนินการปรับเปลี่ยนสถานะหรือแสดงผล
+            // ตรวจสอบเงื่อนไขว่าเป็นรายรับหรือไม่
             if (type === 'income') {
+                // ปรับสไตล์ปุ่มรายรับให้เป็นแบบแอ็กทีฟสีเขียว
                 btnIncome.className = 'py-2.5 rounded-xl border-2 border-[#16A34A] text-[#16A34A] bg-[#DCFCE7]/20 text-xs font-bold transition cursor-pointer';
+                // ปรับสไตล์ปุ่มรายจ่ายให้เป็นแบบปกติ
                 btnExpense.className = 'py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium transition cursor-pointer';
-            } else {
+            }
+            // กรณีเป็นประเภทรายจ่าย
+            else {
+                // ปรับสไตล์ปุ่มรายจ่ายให้เป็นแบบแอ็กทีฟสีแดง
                 btnExpense.className = 'py-2.5 rounded-xl border-2 border-[#DC2626] text-[#DC2626] bg-[#FEE2E2]/20 text-xs font-bold transition cursor-pointer';
+                // ปรับสไตล์ปุ่มรายรับให้เป็นแบบปกติ
                 btnIncome.className = 'py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-medium transition cursor-pointer';
             }
         }
 
         // ฟังก์ชันเปิดหน้าต่างแก้ไขรายการบันทึกบัญชีพร้อมเติมข้อมูลเดิมลงในฟอร์ม
         function openEditLedgerModal(id, cat, amount, type, note) {
+            // กำหนดรหัสรายการลงในฟิลด์ซ่อน
             document.getElementById('editLedgerIdInput').value = id;
+            // กำหนดชื่อหมวดหมู่ลงในช่องดรอปดาวน์
             document.getElementById('editCategoryInput').value = cat || '';
+            // กำหนดจำนวนเงินเดิมลงในช่องอินพุต
             document.getElementById('editAmountInput').value = amount || '';
+            // กำหนดประเภทรายการเดิมลงในช่องดรอปดาวน์
             document.getElementById('editEntryTypeInput').value = type ? type.toLowerCase() : 'expense';
+            // กำหนดหมายเหตุเดิมลงในช่องข้อความ
             document.getElementById('editNoteInput').value = note || '';
+            // แสดงหน้าต่างโมดอลแก้ไขรายการ
             document.getElementById('editLedgerModal')?.classList.remove('hidden');
         }
 
         // ฟังก์ชันเปิดหน้าต่างยืนยันการลบรายการบัญชี
         function openDeleteLedgerModal(id, cat) {
+            // กำหนดรหัสรายการที่จะลบลงในฟิลด์ซ่อน
             document.getElementById('deleteLedgerIdInput').value = id;
+            // แสดงข้อความยืนยันการลบพร้อมชื่อหมวดหมู่
             document.getElementById('deleteEntryDesc').innerText = `รายการ "${cat}" จะถูกลบออกจากสมุดรายวัน`;
+            // แสดงหน้าต่างโมดอลยืนยันการลบ
             document.getElementById('deleteLedgerModal')?.classList.remove('hidden');
         }
 
         // ฟังก์ชันปิดหน้าต่างป๊อปอัปทั้งหมด
         function closeAllModals() {
+            // ค้นหาและซ่อนหน้าต่างโมดอลทั้งหมดบนหน้าเว็บ
             document.querySelectorAll('[id$="Modal"]').forEach(m => m.classList.add('hidden'));
         }
     </script>

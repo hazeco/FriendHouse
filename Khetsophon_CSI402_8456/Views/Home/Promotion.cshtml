@@ -1,4 +1,6 @@
+@* กำหนดโมเดลข้อมูลแคตตาล็อกโปรโมชั่นและสิทธิพิเศษ *@
 @model Khetsophon_CSI402_8456.ViewModels.PromotionCatalogViewModel
+@* กำหนดการตั้งค่าข้อมูลและตัวเลือกการกรองหน้าโปรโมชั่น *@
 @{
     // กำหนดชื่อหน้าเว็บสำหรับแสดงผลบนแถบเบราว์เซอร์
     ViewData["Title"] = "โปรโมชั่นและสิทธิพิเศษ — FriendHouse";
@@ -44,7 +46,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
-    <!-- แถบนำทางบอกตำแหน่งหน้าปัจจุบัน -->
+    @* แถบนำทางบอกตำแหน่งหน้าปัจจุบัน *@
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
@@ -85,7 +87,7 @@
         </div>
     }
 
-    <!-- ส่วนหัวของหน้าโปรโมชั่น -->
+    @* ส่วนหัวของหน้าโปรโมชั่นและข้อความอธิบาย *@
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
         <div class="space-y-2">
@@ -112,11 +114,11 @@
         </div>
     </div>
 
-    <!-- READ: ฟอร์มค้นหาและกรองประเภทโปรโมชั่นตามมาตรฐาน MVC (ไม่มีแอตทริบิวต์ method) -->
+    @* ฟอร์มค้นหาและกรองประเภทโปรโมชั่นตามมาตรฐาน MVC โดยไม่มีแอตทริบิวต์ method *@
     <form asp-controller="Home" asp-action="Promotion" class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5 shadow-2xs">
         @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
         <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
-            <!-- ช่องกรอกคำค้นหาชื่อโปรโมชั่นหรือรหัสคูปอง -->
+            @* ช่องกรอกคำค้นหาชื่อโปรโมชั่นหรือรหัสคูปองส่วนลด *@
             <div class="sm:col-span-6 relative">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
@@ -133,7 +135,7 @@
                        class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-xs sm:text-sm text-text placeholder:text-slate-400 focus:border-primary focus:outline-hidden" />
             </div>
 
-            <!-- ตัวเลือกกรองประเภทโปรโมชั่น -->
+            @* ตัวเลือกกรองประเภทโปรโมชั่นและแคมเปญ *@
             <div class="sm:col-span-4">
                 @* เมนูดรอปดาวน์สำหรับเลือกตัวกรองหรือหมวดหมู่ข้อมูล *@
                 <select name="promoType" class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-text focus:border-primary focus:outline-hidden">
@@ -152,7 +154,7 @@
                 </select>
             </div>
 
-            <!-- ปุ่มกดค้นหาและล้างค่า -->
+            @* ปุ่มกดค้นหาและล้างค่าตัวกรอง *@
             <div class="sm:col-span-2 flex items-center gap-2">
                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                 <button type="submit" class="w-full rounded-xl bg-primary px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-accent transition-colors cursor-pointer">
@@ -170,11 +172,11 @@
         </div>
     </form>
 
-    <!-- แสดงรายการการ์ดโปรโมชั่น -->
+    @* แสดงรายการการ์ดโปรโมชั่นทั้งหมดที่ตรงตามเงื่อนไข *@
     @if (promoCards.Any())
     {
-        @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid รองรับ Responsive ทุกขนาดหน้าจอ *@
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @* คอนเทนเนอร์จัดวางโครงสร้างแบบ Grid 2 คอลัมน์บนจอมือถือ และ 3 คอลัมน์บนเดสก์ท็อป *@
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var promo in promoCards)
             {
@@ -205,7 +207,7 @@
                             <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">@promo.Description</p>
                         </div>
 
-                        <!-- กล่องแสดงรหัสคูปอง ปุ่มคัดลอก ปุ่มเก็บโค้ด และระยะเวลา -->
+                        @* กล่องแสดงรหัสคูปอง ปุ่มคัดลอก ปุ่มเก็บโค้ด และระยะเวลา *@
                         <div class="space-y-2.5 pt-3 border-t border-slate-200/60 text-xs">
                             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 border border-dashed border-primary/30">
@@ -310,7 +312,7 @@
     }
     else
     {
-        <!-- กรณีไม่พบโปรโมชั่นที่ตรงกับคำค้นหา -->
+        @* กล่องแสดงสถานะเมื่อไม่พบโปรโมชั่นที่ตรงกับคำค้นหา *@
         <div class="rounded-3xl border border-slate-200/80 bg-slate-50/50 py-14 px-6 text-center space-y-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">

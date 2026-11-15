@@ -1,3 +1,4 @@
+@* กำหนดโมเดลข้อมูลแบบฟอร์มนักศึกษา *@
 @model IEnumerable<Khetsophon_CSI402_8456.Models.Labstudent>
 @{
     ViewData["Title"] = "รายชื่อนักศึกษา ปฏิบัติการที่ 9.1 และ 10.1";
@@ -45,8 +46,8 @@
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="max-w-6xl mx-auto space-y-6">
 
-        <!-- แถบด้านบน: หัวเรื่อง + ปุ่มเพิ่มข้อมูล -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        @* แถบด้านบน: หัวเรื่อง + ปุ่มเพิ่มข้อมูล *@
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-4">
                 @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
@@ -90,8 +91,8 @@
             </div>
         </div>
 
-        <!-- กล่องแจ้งเตือนสถานะการทำงาน -->
-        @if (!string.IsNullOrEmpty(rawStatus))
+        @* กล่องแจ้งเตือนสถานะการทำงาน *@
+@if (!string.IsNullOrEmpty(rawStatus))
         {
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="rounded-2xl p-4 flex items-center gap-3 text-sm @(isSuccess ? "bg-emerald-50 border border-emerald-200 text-emerald-800" : "bg-rose-50 border border-rose-200 text-rose-800") shadow-sm">
@@ -109,13 +110,13 @@
             </div>
         }
 
-        <!-- ตารางแสดงข้อมูล -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        @* ตารางแสดงข้อมูล *@
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
             @if (Model != null && Model.Any())
             {
-                <!-- ตารางสำหรับหน้าจอ Desktop และ Tablet -->
-                <div class="overflow-x-auto">
+                @* ตารางสำหรับหน้าจอ Desktop และ Tablet *@
+<div class="overflow-x-auto">
                     @* ตารางแสดงรายการข้อมูลอย่างเป็นระเบียบพร้อมรองรับการเลื่อนแนวนอนบนจอเล็ก *@
                     <table class="w-full text-left border-collapse">
                         @* ส่วนหัวตารางกำหนดชื่อคอลัมน์ข้อมูล *@
@@ -164,8 +165,8 @@
                                     <td class="py-4 px-6 text-right">
                                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                                         <div class="inline-flex items-center justify-end gap-2">
-                                            <!-- ปุ่มแก้ไข (Edit -> Lab 10) -->
-                                            <a asp-action="Lab10" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-all cursor-pointer">
+                                            @* ปุ่มแก้ไข (Edit -> Lab 10) *@
+<a asp-action="Lab10" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-primary/30 text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-all cursor-pointer">
                                                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
                                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="@pageConfig.Icons.Edit"></path>
@@ -174,8 +175,8 @@
                                                 <span>@pageConfig.Labels.BtnEdit</span>
                                             </a>
 
-                                            <!-- ปุ่มลบ (Delete -> Lab 10_1, -->
-                                            <form asp-action="Lab10_1" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-block m-0">
+                                            @* ปุ่มลบ (Delete -> Lab 10_1, *@
+<form asp-action="Lab10_1" asp-controller="Home" asp-route-StdId="@item.StdId" class="inline-block m-0">
                                                 @* ปุ่มกดยืนยันส่งข้อมูลแบบฟอร์ม *@
                                                 <button type="submit" onclick="return confirm('คุณต้องการลบข้อมูลนักศึกษารหัส @item.StdId ใช่หรือไม่?');" class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-rose-200 text-rose-600 text-xs font-semibold hover:bg-rose-600 hover:text-white transition-all cursor-pointer">
                                                     @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
@@ -196,8 +197,8 @@
             }
             else
             {
-                <!-- กรณีไม่มีข้อมูล -->
-                <div class="p-12 text-center">
+                @* กรณีไม่มีข้อมูล *@
+<div class="p-12 text-center">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
                         @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@

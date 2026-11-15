@@ -1,45 +1,56 @@
+@* นำเข้าเนมสเปซคอนโทรลเลอร์ของระบบ FriendHouse *@
 @using Khetsophon_CSI402_8456.Controllers
+@* ประกาศประเภทเอกสาร HTML5 *@
 <!DOCTYPE html>
+@* กำหนดภาษาไทยและคุณสมบัติเลื่อนหน้าจออย่างราบรื่น *@
 <html lang="th" class="scroll-smooth">
+@* ส่วนหัวของเอกสาร HTML สำหรับโหลดทรัพยากรและเมตาแท็ก *@
 <head>
+    @* กำหนดชุดอักขระเป็น UTF-8 เพื่อรองรับภาษาไทย *@
     <meta charset="utf-8" />
+    @* กำหนด Viewport เพื่อรองรับการแสดงผลแบบ Responsive บนทุกอุปกรณ์ *@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* กำหนดชื่อไตเติลของหน้าเว็บสำหรับระบบผู้ดูแลระบบไอที *@
     <title>@ViewData["Title"] - ระบบไอทีซัพพอร์ต FriendHouse</title>
+    @* ลิงก์เชื่อมต่อไปยังเซิร์ฟเวอร์ Google Fonts แบบล่วงหน้า *@
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    @* ลิงก์เชื่อมต่อไปยังเซิร์ฟเวอร์ Gstatic แบบล่วงหน้าเพื่อเพิ่มความเร็วโหลด *@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    @* โหลดฟอนต์ภาษาไทย Kanit และ Noto Sans Thai *@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @* โหลดไฟล์สไตล์ชีต Tailwind CSS หลักของเว็บไซต์ *@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body class="min-h-screen flex flex-col bg-[#F8F9FD] text-[#050315] antialiased font-sans">
-    <!-- แถบนำทางด้านบนสำหรับบทบาทผู้ดูแลระบบไอที -->
+@* ส่วนเนื้อหาหลัก กำหนดสไตล์พื้นหลัง สีข้อความ และจัดเก็บข้อมูลเซสชันสำหรับตรวจสอบสิทธิ์ *@
+<body class="min-h-screen flex flex-col bg-[#F8F9FD] text-[#050315] antialiased font-sans" data-session-role="@(Context.Session.GetString("Role")?.ToLowerInvariant() ?? "guest")" data-session-uid="@(Context.Session.GetInt32("UserId") ?? 0)">
+    @* แถบนำทางด้านบนสำหรับบทบาทผู้ดูแลระบบไอที ตรึงตำแหน่งไว้ด้านบนสุดของหน้าจอ *@
     <header class="sticky top-0 z-50 w-full shadow-sm">
+        @* เรียกใช้งานคอมโพเนนต์แถบนำทางสำหรับบทบาทผู้ดูแลระบบไอที *@
         @await Component.InvokeAsync("Navbar", new { role = "itsupport" })
     </header>
 
-    <!-- พื้นที่เนื้อหาหลักของระบบไอทีซัพพอร์ต -->
+    @* พื้นที่เนื้อหาหลักของระบบไอทีซัพพอร์ต กำหนดความกว้างสูงสุดและจัดกึ่งกลาง *@
     <main role="main" class="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        @* แสดงผลเนื้อหาของแต่ละหน้า View ตามเส้นทาง *@
         @RenderBody()
     </main>
 
-    <!-- ส่วนท้ายแสดงคำกำกับสำหรับระบบตรวจสอบและดูแลระบบภายใน -->
+    @* ส่วนท้ายแสดงคำกำกับสำหรับระบบตรวจสอบและดูแลระบบภายใน *@
     <footer class="mt-auto border-t border-gray-200/60 bg-white py-4 text-xs text-gray-400">
         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between flex-wrap gap-2">
-            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-            <div>
-                © 2569 FriendHouse — ระบบผู้ดูแลระบบไอที (ใช้งานภายในร้าน)
-            </div>
-            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-            <div>
-                ระบบตรวจสอบและกู้คืนข้อมูลภายในร้าน
-            </div>
+            @* กล่องคอนเทนเนอร์จัดกลุ่มข้อความลิขสิทธิ์สำหรับผู้ดูแลระบบไอที *@
+            <div>© 2569 FriendHouse — ระบบผู้ดูแลระบบไอที (ใช้งานภายในร้าน)</div>
+            @* กล่องคอนเทนเนอร์แสดงประเภทระบบตรวจสอบและกู้คืนข้อมูลภายในร้าน *@
+            <div>ระบบตรวจสอบและกู้คืนข้อมูลภายในร้าน</div>
         </div>
     </footer>
 
-    <!-- สคริปต์พื้นฐานของเว็บไซต์และส่วนสคริปต์เฉพาะหน้า -->
+    @* สคริปต์พื้นฐานของเว็บไซต์และส่วนสคริปต์เฉพาะหน้า *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     @* บล็อกสคริปต์ JavaScript สำหรับควบคุมการโต้ตอบฝั่งไคลเอนต์ *@
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* เรนเดอร์เซกชันสคริปต์เฉพาะหน้าหากมีการประกาศในหน้านั้นๆ *@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

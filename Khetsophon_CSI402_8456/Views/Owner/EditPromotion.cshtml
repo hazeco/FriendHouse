@@ -1,6 +1,17 @@
-@using Khetsophon_CSI402_8456.Helpers
+@* กำหนดโมเดลข้อมูลโปรโมชั่นสำหรับการแก้ไข *@
 @model Khetsophon_CSI402_8456.Models.Promotion?
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าแก้ไขโปรโมชั่น *@
 @{
+
+    // ฟังก์ชันจัดรูปแบบวันที่เป็น ISO (yyyy-MM-dd)
+    string FormatIsoDate(DateOnly date)
+    {
+        int year = date.Year;
+        if (year > 0 && year < 1900) year += 543;
+        else if (year >= 2400) year -= 543;
+        var gregorian = new DateOnly(year, date.Month, date.Day);
+        return gregorian.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+    }
     // กำหนดชื่อหัวข้อของหน้าแก้ไขโปรโมชั่น
     ViewData["Title"] = "แก้ไขโปรโมชั่น";
     // กำหนด Layout หลักของฝั่งเจ้าของร้าน
@@ -21,11 +32,11 @@
     string initialPromoType = (Model?.PromoType ?? "percent").Trim().ToLowerInvariant();
     // จัดรูปแบบวันที่เริ่มต้นในรูปแบบ ISO yyyy-MM-dd
     string startIso = Model != null
-        ? PromoAndRedemptionHelper.FormatIsoDate(Model.StartDate)
+        ? FormatIsoDate(Model.StartDate)
         : DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
     // จัดรูปแบบวันที่สิ้นสุดในรูปแบบ ISO yyyy-MM-dd
     string endIso = Model != null
-        ? PromoAndRedemptionHelper.FormatIsoDate(Model.EndDate)
+        ? FormatIsoDate(Model.EndDate)
         : DateTime.Today.AddDays(30).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 }
 

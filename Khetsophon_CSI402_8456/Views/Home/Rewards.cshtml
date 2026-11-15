@@ -1,8 +1,37 @@
+@* กำหนดโมเดลข้อมูลแคตตาล็อกของรางวัลสำหรับแลกแต้ม *@
 @model Khetsophon_CSI402_8456.ViewModels.RewardsCatalogViewModel
+@* กำหนดฟังก์ชันช่วยเหลือและการตั้งค่าข้อมูลหน้าของรางวัล *@
 @{
+
+    // ฟังก์ชันตรวจสอบและคืนค่าพาธรูปภาพสำหรับแสดงในการ์ดสินค้า
+    string ResolveCardImageUrl(string? imageUrl)
+    {
+        // กรณีไม่มีรูปภาพให้ใช้รูปภาพสำรองตั้งต้นของระบบ
+        if (string.IsNullOrWhiteSpace(imageUrl)) return "~/media/images/naruto_hero_fig.png";
+        // ตัดช่องว่างส่วนหัวและท้ายของพาธรูปภาพ
+        string trimmed = imageUrl.Trim();
+        // ปรับรูปแบบพาธโดยตัดเครื่องหมาย tilde หากมี
+        string normalized = trimmed.StartsWith("~/") ? trimmed[1..] : trimmed;
+        // ตรวจสอบความถูกต้องของโฟลเดอร์มีเดียและป้องกัน path traversal
+        if (!normalized.StartsWith("/media/images/", StringComparison.OrdinalIgnoreCase) || normalized.Contains("..")) return trimmed;
+        // ดึงชื่อไฟล์โดยไม่รวมนามสกุล
+        string? fileNameNoExt = System.IO.Path.GetFileNameWithoutExtension(normalized);
+        // หากไม่มีชื่อไฟล์หรือลงท้ายด้วย _card อยู่แล้วให้คืนค่าพาธเดิม
+        if (string.IsNullOrWhiteSpace(fileNameNoExt) || fileNameNoExt.EndsWith("_card", StringComparison.OrdinalIgnoreCase)) return trimmed;
+        // กำหนดชื่อไฟล์รูปภาพขนาดการ์ด
+        string cardFileName = fileNameNoExt + "_card.png";
+        // กำหนดพาธแบบสัมพัทธ์ของรูปภาพการ์ด
+        string cardRelative = "/media/images/" + cardFileName;
+        // ตรวจสอบพาธไฟล์จริงบนระบบปฏิบัติการ
+        string physicalPath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "media", "images", cardFileName);
+        // หากมีไฟล์รูปภาพการ์ดอยู่จริงให้ใช้ไฟล์การ์ด มิฉะนั้นใช้พาธเดิม
+        if (System.IO.File.Exists(physicalPath)) return trimmed.StartsWith("~/") ? "~" + cardRelative : cardRelative;
+        // ส่งคืนพาธรูปภาพเดิมหากไม่พบไฟล์การ์ด
+        return trimmed;
+    }
     ViewData["Title"] = "แคตตาล็อกแลกแต้มสะสม — FriendHouse";
 
-    // Top-of-file Media & Content Configuration
+    // การกำหนดค่าสื่อและข้อมูลข้อความส่วนบนสุดของไฟล์ตามกฎโครงการ
     int userPoints = Model?.UserPoints ?? (int)(ViewBag.UserPoints ?? 0);
     string userPointsFormatted = Model?.UserPointsFormatted ?? $"{userPoints:N0}";
     string userPhone = Model?.UserPhone ?? string.Empty;
@@ -26,7 +55,7 @@
 
 @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 bg-white">
-    <!-- Breadcrumb -->
+    @* แถบนำทางระบุตำแหน่งหน้าเว็บ (Breadcrumb) *@
     <nav class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium" aria-label="แถบนำทาง">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Home" asp-action="Index" class="hover:text-primary transition-colors">หน้าแรก</a>
@@ -63,7 +92,7 @@
     @* ตรวจสอบเงื่อนไขข้อมูลเพื่อเลือกแสดงผลส่วนติดต่อผู้ใช้ที่เหมาะสม *@
     @if (!isCustomer)
     {
-        <!-- Guest Gate / Member-only Notification -->
+        @* แถบแจ้งเตือนสิทธิพิเศษเฉพาะสมาชิกสำหรับผู้เยี่ยมชม *@
         <div class="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-12 text-center shadow-xs max-w-2xl mx-auto space-y-6">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="mx-auto flex size-20 items-center justify-center rounded-3xl bg-secondary/30 text-primary shadow-sm">
@@ -99,11 +128,11 @@
     }
     else
     {
-        <!-- Points Summary Card Banner -->
+        @* แถบแบนเนอร์แสดงสรุปคะแนนสะสมของสมาชิก *@
         <div class="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-r from-blue-50 via-indigo-50/70 to-secondary/15 p-6 sm:p-8 shadow-xs">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-                <!-- Points Info -->
+                @* กล่องแสดงจำนวนคะแนนสะสมคงเหลือ *@
                 <div class="space-y-2">
                     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                     <div class="flex items-center gap-2 text-primary font-bold text-sm">
@@ -128,7 +157,7 @@
                     <p class="text-xs sm:text-sm text-slate-600">คุณสามารถใช้แต้มเพื่อแลกรับสินค้าสุดพิเศษและของพรีเมียมได้ที่นี่ โดยไม่มีค่าใช้จ่าย</p>
                 </div>
 
-                <!-- History Button -->
+                @* ปุ่มเปิดหน้าต่างประวัติการแลกของรางวัล *@
                 <div>
                     @* ปุ่มกดเรียกฟังก์ชันโต้ตอบหรือเปิด-ปิดหน้าต่าง Modal *@
                     <button type="button" onclick="openHistoryModal()" class="rounded-xl border border-primary/30 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-primary shadow-xs transition-colors hover:bg-slate-50 cursor-pointer flex items-center gap-2">
@@ -144,7 +173,7 @@
             </div>
         </div>
 
-        <!-- Category Filters -->
+        @* แถบแท็บเลือกหมวดหมู่ของรางวัล *@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
@@ -164,8 +193,8 @@
             </div>
         </div>
 
-        <!-- Rewards Grid (Real Database Rows) -->
-        <div id="rewardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        @* ตารางกริดแสดงการ์ดของรางวัลทั้งหมดจากฐานข้อมูล *@
+        <div id="rewardsGrid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             @* วนลูปแสดงผลรายการข้อมูลแต่ละชิ้นบนหน้าเว็บ *@
             @foreach (var item in rewardsList)
             {
@@ -176,15 +205,15 @@
                      data-afford="@(item.CanAfford ? "true" : "false")">
                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                     <div>
-                        <!-- รูปภาพของแลกแต้มเต็มกรอบครึ่งบนการ์ด -->
+                        @* รูปภาพของแลกแต้มเต็มกรอบครึ่งบนการ์ด *@
                         <div class="aspect-square w-full overflow-hidden bg-white border-b border-slate-100">
                             @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
-                            <img src="@Url.Content(PromoAndRedemptionHelper.ResolveCardImageUrl(item.ImageUrl))" alt="@item.Title"
+                            <img src="@Url.Content(ResolveCardImageUrl(item.ImageUrl))" alt="@item.Title"
                                  class="size-full object-cover object-top"
                                  loading="lazy" />
                         </div>
 
-                        <!-- Badges & Details (Below Photo) -->
+                        @* ป้ายกำกับและรายละเอียดของรางวัล ชื่อ ซีรีส์ และจำนวนคงเหลือ *@
                         <div class="p-4 pb-0 space-y-2">
                             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                             <div class="flex flex-wrap items-center justify-between gap-1.5">
@@ -209,7 +238,7 @@
                         </div>
                     </div>
 
-                    <!-- Points & Action Buttons -->
+                    @* กล่องแสดงจำนวนแต้มที่ใช้แลกและปุ่มกดยืนยันการแลกของรางวัล *@
                     <div class="mt-4 p-4 pt-3 border-t border-slate-100 space-y-3">
                         @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
                         <div class="flex items-center justify-between">
@@ -261,7 +290,7 @@
             }
         </div>
 
-        <!-- Empty Filter State (แสดงเมื่อตัวกรองหมวดหมู่ไม่พบรายการ) -->
+        @* กล่องแสดงสถานะเมื่อตัวกรองหมวดหมู่ไม่พบรายการ *@
         <div id="rewardsEmptyFilterState" class="hidden rounded-3xl border border-dashed border-slate-200 bg-slate-50/70 p-10 text-center space-y-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="mx-auto size-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
@@ -284,9 +313,9 @@
     }
 </div>
 
-<!-- ================= MODALS ================= -->
+@* ส่วนหน้าต่างโมดัลสำหรับระบบแลกของรางวัล *@
 
-<!-- Redemptions History Modal -->
+@* หน้าต่างโมดัลแสดงประวัติการแลกของรางวัลของสมาชิก *@
 <div id="historyModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-5 max-h-[85vh] overflow-y-auto animate-scale-up">
@@ -390,7 +419,7 @@
     </div>
 </div>
 
-<!-- Confirm Redeem Validate Alert Modal (ป้องกันลูกค้ากดแลกผิดพลาด) -->
+@* หน้าต่างโมดัลยืนยันการแลกของรางวัล ป้องกันการกดผิดพลาด *@
 <div id="confirmRedeemModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5">
@@ -492,7 +521,7 @@
     </div>
 </div>
 
-<!-- Confirm Cancel Redemption Modal -->
+@* หน้าต่างโมดัลยืนยันการยกเลิกรายการแลกของรางวัล *@
 <div id="confirmCancelRedeemModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">

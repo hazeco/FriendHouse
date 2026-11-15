@@ -21,8 +21,8 @@
 <div class="bg-[#2F39A9] text-white">
     @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <!-- Brand (frame_9_23.png) -->
-        <a asp-controller="Accountant" asp-action="Index" class="flex items-center gap-3 shrink-0 cursor-pointer">
+        @* ตราสินค้าและโลโก้ร้าน (frame_9_23.png) *@
+<a asp-controller="Accountant" asp-action="Index" class="flex items-center gap-3 shrink-0 cursor-pointer">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-xl overflow-hidden bg-white shadow-xs flex items-center justify-center shrink-0">
                 @* รูปภาพประกอบรายการพร้อมกำหนดคลาสจัดสัดส่วนการแสดงผล *@
@@ -32,8 +32,8 @@
             <span class="font-bold leading-tight text-base tracking-tight text-white">@brand.Name</span>
         </a>
 
-        <!-- Center Nav Items (frame_9_23.png: แดชบอร์ดการเงิน, บันทึกรายรับ-รายจ่าย, ประวัติใบเสร็จ) -->
-        <nav class="hidden md:flex items-center gap-2">
+        @* เมนูนำทางหลักส่วนกลาง (frame_9_23.png: แดชบอร์ดการเงิน, บันทึกรายรับ-รายจ่าย, ประวัติใบเสร็จ) *@
+<nav class="hidden md:flex items-center gap-2">
             @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
             <a asp-controller="Accountant" asp-action="Index" class="@NavClass("Index")">
                 @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
@@ -51,8 +51,8 @@
             </a>
         </nav>
 
-        <!-- Right User (frame_9_23.png: ปวีณา รักษ์บัญชี / คนทำบัญชี) -->
-        <div class="flex items-center gap-3">
+        @* ข้อมูลผู้ใช้งานด้านขวา (frame_9_23.png: ปวีณา รักษ์บัญชี / คนทำบัญชี) *@
+<div class="flex items-center gap-3">
             @* กล่องจัดวางองค์ประกอบแบบ Flexbox เพื่อจัดเรียงแนวและระยะห่าง *@
             <div class="size-9 rounded-full bg-[#BAF2FF] text-[#2F39A9] flex items-center justify-center shadow-xs">
                 @* ไอคอนกราฟิก SVG แทนการใช้สัญลักษณ์อีโมจิ *@
@@ -79,8 +79,8 @@
         </div>
     </div>
 
-    <!-- Mobile Sub-navigation Bar (ไม่ซ้ำปุ่มออกจากระบบ) -->
-    <div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+    @* แถบเมนูนำทางย่อยสำหรับมือถือ (ไม่ซ้ำปุ่มออกจากระบบ) *@
+<div class="md:hidden border-t border-white/10 px-4 py-2 flex items-center gap-2 overflow-x-auto">
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
         <a asp-controller="Accountant" asp-action="Index" class="@NavClass("Index") text-xs py-1.5 px-3 shrink-0">แดชบอร์ดการเงิน</a>
         @* ลิงก์นำทางเชื่อมโยงไปยังหน้าเว็บหรือเส้นทางที่ระบุ *@
