@@ -74,8 +74,25 @@ public class OwnerController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ดึงรายการโปรโมชั่นทั้งหมดจากตารางโปรโมชั่นในฐานข้อมูล
-        var promotions = _db.Promotions.ToList();
+        // ส่งพจนานุกรมชื่อสินค้าตามรหัสสินค้าไปยัง ViewBag เพื่อแสดงชื่อสินค้าของแถมหรือสินค้าคู่ Bundle
+        ViewBag.ProductNameMap = _db.Products.ToDictionary(p => p.ProductId, p => p.Name);
+        // ดึงรายการโปรโมชั่นทั้งหมดจากตารางโปรโมชั่นในฐานข้อมูลแบบไม่ติดตามการเปลี่ยนแปลงเพื่อให้แสดงผลกฎเชิงลึกได้
+        var promotions = _db.Promotions.AsNoTracking().ToList();
+        // ดึงกฎเชิงลึกของโปรโมชั่น BOGO และ Bundle จากตาราง Systemlogs โมดูล promo.rule
+        var ruleMap = _db.Systemlogs
+            .Where(l => l.Module == "promo.rule" && !string.IsNullOrEmpty(l.Message) && !string.IsNullOrEmpty(l.DetailPayload))
+            .OrderByDescending(l => l.Timestamp)
+            .ToList()
+            .GroupBy(l => l.Message.ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => g.First().DetailPayload!);
+        // ผูกกฎเชิงลึกเข้ากับ ApplicableScope สำหรับการแสดงผลบนหน้าจัดการโปรโมชั่น
+        foreach (var pr in promotions)
+        {
+            if (ruleMap.TryGetValue(pr.VoucherCode.ToUpperInvariant(), out string? detailedRule))
+            {
+                pr.ApplicableScope = detailedRule;
+            }
+        }
         // ส่งรายการโปรโมชั่นไปแสดงผลที่หน้าจัดการโปรโมชั่น
         return View(promotions);
     }
@@ -94,6 +111,8 @@ public class OwnerController : Controller
             return RedirectToAction("Login", "Account");
         }
 
+        // ดึงรายการสินค้าที่เปิดขายทั้งหมดสำหรับเลือกสินค้าของแถมหรือจับคู่ชุด Bundle
+        ViewBag.AllProducts = _db.Products.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
         // ส่งมุมมองหน้าสร้างโปรโมชั่นใหม่
         return View();
     }
@@ -134,8 +153,33 @@ public class OwnerController : Controller
 
         // ปรับแต่งประเภทโปรโมชั่นเป็นตัวพิมพ์เล็ก (ค่าเริ่มต้นคือ percent)
         data.PromoType = string.IsNullOrWhiteSpace(data.PromoType) ? "percent" : data.PromoType.Trim().ToLowerInvariant();
-        // ปรับแต่งขอบเขตสินค้าเป็นตัวพิมพ์เล็ก (ค่าเริ่มต้นคือ all)
-        data.ApplicableScope = string.IsNullOrWhiteSpace(data.ApplicableScope) ? "all" : data.ApplicableScope.Trim().ToLowerInvariant();
+        // อ่านค่าขอบเขตและกฎเชิงลึกที่ส่งมาจากฟอร์ม
+        string rawRuleScope = string.IsNullOrWhiteSpace(data.ApplicableScope) ? "all" : data.ApplicableScope.Trim().ToLowerInvariant();
+        // บันทึกกฎเชิงลึก (เช่น bogo:... หรือ bundle:...) ลงในตาราง Systemlogs โมดูล promo.rule
+        var existingRuleLog = _db.Systemlogs.FirstOrDefault(l => l.Module == "promo.rule" && l.Message.ToUpper() == data.VoucherCode);
+        if (existingRuleLog != null)
+        {
+            // อัปเดตกฎเชิงลึกเดิม
+            existingRuleLog.DetailPayload = rawRuleScope;
+            existingRuleLog.Timestamp = DateTime.UtcNow;
+        }
+        else if (rawRuleScope != "all" && rawRuleScope != "figures" && rawRuleScope != "clearance")
+        {
+            // สร้างบันทึกกฎเชิงลึกใหม่สำหรับโปรโมชั่นนี้
+            _db.Systemlogs.Add(new Systemlog
+            {
+                LogCode = GenerateLogCode("PRULE"),
+                LogLevel = "INFO",
+                Module = "promo.rule",
+                Message = data.VoucherCode,
+                DetailPayload = rawRuleScope,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+        // ปรับค่า ApplicableScope ที่จะบันทึกลงตาราง Promotions ให้ตรงตาม Check Constraint ของฐานข้อมูล (all, figures, clearance)
+        data.ApplicableScope = (rawRuleScope == "all" || rawRuleScope == "figures" || rawRuleScope == "clearance")
+            ? rawRuleScope
+            : (rawRuleScope.Contains("clearance") ? "clearance" : (rawRuleScope.Contains("all") ? "all" : "figures"));
 
         // ตรวจสอบว่ามูลค่าส่วนลดไม่ติดลบ
         if (data.DiscountValue < 0)
@@ -196,6 +240,8 @@ public class OwnerController : Controller
         // ตรวจสอบว่ามีข้อมูลส่งมาจากแบบฟอร์มหรือไม่
         if (data == null)
         {
+            // โหลดรายการสินค้าสำหรับดรอปดาวน์ก่อนส่งกลับหน้าฟอร์ม
+            ViewBag.AllProducts = _db.Products.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
             // กำหนดข้อความแจ้งเตือนกรณีไม่พบข้อมูล
             TempData["ErrorMessage"] = "ไม่พบข้อมูลโปรโมชั่นที่ส่งมา";
             // ส่งกลับไปยังหน้าแบบฟอร์มเดิม
@@ -207,6 +253,8 @@ public class OwnerController : Controller
         // ตรวจสอบว่ามีข้อผิดพลาดหรือไม่
         if (!string.IsNullOrEmpty(validationError))
         {
+            // โหลดรายการสินค้าสำหรับดรอปดาวน์ก่อนส่งกลับหน้าฟอร์ม
+            ViewBag.AllProducts = _db.Products.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
             // กำหนดข้อความแจ้งเตือนตามข้อผิดพลาดที่พบ
             TempData["ErrorMessage"] = validationError;
             // ส่งกลับไปยังหน้าแบบฟอร์มเดิมพร้อมข้อมูลเดิม
@@ -248,10 +296,24 @@ public class OwnerController : Controller
         // ตรวจสอบว่ามีการระบุรหัสโปรโมชั่นที่มากกว่าศูนย์หรือไม่
         if (id.HasValue && id.Value > 0)
         {
-            // ค้นหาโปรโมชั่นจากตารางโปรโมชั่นในฐานข้อมูลตามรหัสที่ระบุ
-            promo = _db.Promotions.FirstOrDefault(p => p.PromotionId == id.Value);
+            // ค้นหาโปรโมชั่นจากตารางโปรโมชั่นในฐานข้อมูลตามรหัสที่ระบุแบบไม่ติดตามการเปลี่ยนแปลง
+            promo = _db.Promotions.AsNoTracking().FirstOrDefault(p => p.PromotionId == id.Value);
+            // หากมีกฎเชิงลึกใน Systemlogs โมดูล promo.rule ให้นำมาแสดงในฟอร์มแก้ไข
+            if (promo != null)
+            {
+                var ruleLog = _db.Systemlogs
+                    .Where(l => l.Module == "promo.rule" && l.Message.ToUpper() == promo.VoucherCode.ToUpper())
+                    .OrderByDescending(l => l.Timestamp)
+                    .FirstOrDefault();
+                if (ruleLog != null && !string.IsNullOrEmpty(ruleLog.DetailPayload))
+                {
+                    promo.ApplicableScope = ruleLog.DetailPayload;
+                }
+            }
         }
 
+        // ดึงรายการสินค้าที่เปิดขายทั้งหมดสำหรับเลือกสินค้าของแถมหรือจับคู่ชุด Bundle
+        ViewBag.AllProducts = _db.Products.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
         // ส่งข้อมูลโปรโมชั่นไปแสดงในหน้าแบบฟอร์มแก้ไข
         return View(promo);
     }
@@ -282,6 +344,8 @@ public class OwnerController : Controller
             // ตรวจสอบว่ามีข้อผิดพลาดหรือไม่
             if (!string.IsNullOrEmpty(validationError))
             {
+                // โหลดรายการสินค้าสำหรับดรอปดาวน์ก่อนส่งกลับหน้าฟอร์ม
+                ViewBag.AllProducts = _db.Products.Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
                 // กำหนดข้อความแจ้งเตือนข้อผิดพลาด
                 TempData["ErrorMessage"] = validationError;
                 // ส่งกลับไปยังหน้าแบบฟอร์มเดิมพร้อมข้อมูล

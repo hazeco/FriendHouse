@@ -45,8 +45,20 @@ public class PromotionCardItemViewModel
     // รหัสคูปองโปรโมชั่น
     public string VoucherCode { get; set; } = string.Empty;
 
-    // ขอบเขตสินค้าที่ใช้ได้จริงในระบบ (all, figures, clearance)
+    // ขอบเขตสินค้าที่ใช้ได้จริงในระบบ (all, figures, clearance, bogo:..., bundle:...)
     public string ApplicableScope { get; set; } = "all";
+
+    // รหัสประเภทโปรโมชั่น (percent, fixed, bogo, bundle, double_points)
+    public string PromoTypeCode { get; set; } = "percent";
+
+    // ข้อความอธิบายรายละเอียดของแถมหรือสินค้าคู่ชุดเซ็ตพิเศษ
+    public string GiftOrBundleDetail { get; set; } = string.Empty;
+
+    // รหัสสินค้าชิ้นที่ 1 สำหรับโปรโมชั่นซื้อคู่ Bundle (ถ้ามี)
+    public int? BundleProduct1Id { get; set; }
+
+    // รหัสสินค้าชิ้นที่ 2 สำหรับโปรโมชั่นซื้อคู่ Bundle (ถ้ามี)
+    public int? BundleProduct2Id { get; set; }
 
     // สถานะว่าลูกค้าเก็บคูปองนี้ไว้ใช้งานแล้วหรือยัง
     public bool IsCollected { get; set; }

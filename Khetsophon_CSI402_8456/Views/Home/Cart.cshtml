@@ -237,6 +237,77 @@
                             </div>
                         </div>
                     }
+
+                    @* แสดงการ์ดสินค้าของแถมและตัวเลือกของแถมเมื่อใช้โปรโมชั่น "ซื้อ 1 แถม 1" *@
+                    @if (Model?.IsBogoApplied == true)
+                    {
+                        @* กล่องแสดงสิทธิพิเศษของแถม ซื้อ 1 แถม 1 ในตะกร้าสินค้า *@
+                        <div class="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4 sm:p-5 space-y-3">
+                            @* แถวส่วนหัวของการ์ดของแถม *@
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                @* ป้ายหัวข้อของแถม *@
+                                <div class="flex items-center gap-2">
+                                    @* ป้ายกำกับฟรี *@
+                                    <span class="rounded-lg bg-primary px-2.5 py-1 text-[11px] font-extrabold text-white">ซื้อ 1 แถม 1</span>
+                                    @* ข้อความอธิบายโหมดของแถม *@
+                                    <span class="text-xs sm:text-sm font-bold text-text">
+                                        @(Model.BogoGiftMode == "same" ? "แถมฟรีตัวมันเองรุ่นเดียวกัน 1 ชิ้น" :
+                                          Model.BogoGiftMode == "item" ? "แถมฟรีสินค้าเฉพาะรุ่นที่ร้านกำหนด 1 ชิ้น" :
+                                          "เลือกรับของแถมฟรี 1 ชิ้น (แถมตัวมันเองหรือเลือกสินค้าอื่นได้)")
+                                    </span>
+                                </div>
+                                @* ป้ายราคาของแถม 0 บาท *@
+                                <span class="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-lg">
+                                    แถมฟรี ฿0 (มูลค่าปกติ ฿@Model.SelectedFreeGiftPrice.ToString("N0"))
+                                </span>
+                            </div>
+
+                            @* แสดงรายละเอียดสินค้าของแถมที่กำลังเลือกอยู่ *@
+                            <div class="flex items-center gap-3.5 rounded-xl bg-white p-3 border border-slate-200/80">
+                                @* รูปภาพสินค้าของแถม *@
+                                <div class="size-14 rounded-xl border border-slate-100 overflow-hidden bg-white shrink-0">
+                                    <img src="@Url.Content(ResolveCardImageUrl(Model.SelectedFreeGiftImageUrl))" alt="@Model.SelectedFreeGiftProductName" class="size-full object-cover object-top" />
+                                </div>
+                                @* ชื่อและสถานะของแถม *@
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-xs font-extrabold text-primary">ของแถมที่จะได้รับในใบจองนี้:</div>
+                                    <div class="text-sm font-bold text-text truncate">@Model.SelectedFreeGiftProductName</div>
+                                    <div class="text-[11px] text-slate-500">จำนวน 1 ชิ้น · รับพร้อมสินค้าหลักที่หน้าร้าน</div>
+                                </div>
+                            </div>
+
+                            @* หากเป็นโหมดให้ลูกค้าเลือกของแถมเองได้ (pick) ให้แสดงดรอปดาวน์เลือกสินค้าของแถม *@
+                            @if (Model.BogoGiftMode == "pick" && Model.AvailableBogoGifts.Count > 1)
+                            {
+                                @* ฟอร์มเปลี่ยนตัวเลือกสินค้าของแถม (ไม่ใส่แอตทริบิวต์ method ตามกฎโปรเจกต์) *@
+                                <form asp-controller="Home" asp-action="SelectBogoFreeGift" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                                    @* ป้ายกำกับดรอปดาวน์เลือกของแถม *@
+                                    <label class="text-xs font-bold text-slate-700 shrink-0">เปลี่ยนของแถมที่ต้องการ:</label>
+                                    @* ดรอปดาวน์รายชื่อของแถมที่เลือกได้ (รวมตัวมันเองและสินค้าอื่นในร้าน) *@
+                                    <select name="freeProductId" class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-text focus:border-primary focus:outline-none">
+                                        @* วนลูปตัวเลือกของแถมทั้งหมด *@
+                                        @foreach (var giftOpt in Model.AvailableBogoGifts)
+                                        {
+                                            if (giftOpt.IsSelected)
+                                            {
+                                                @* ตัวเลือกของแถมที่กำลังเลือกอยู่ *@
+                                                <option value="@giftOpt.ProductId" selected>@giftOpt.Name (มูลค่า ฿@giftOpt.RetailPrice.ToString("N0") -> ฟรี ฿0)</option>
+                                            }
+                                            else
+                                            {
+                                                @* ตัวเลือกของแถมอื่นๆ *@
+                                                <option value="@giftOpt.ProductId">@giftOpt.Name (มูลค่า ฿@giftOpt.RetailPrice.ToString("N0") -> ฟรี ฿0)</option>
+                                            }
+                                        }
+                                    </select>
+                                    @* ปุ่มกดยืนยันเปลี่ยนสินค้าของแถม *@
+                                    <button type="submit" class="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white hover:bg-accent transition-colors cursor-pointer shrink-0">
+                                        ยืนยันเลือกของแถม
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    }
                 }
             </div>
 

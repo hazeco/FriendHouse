@@ -37,15 +37,71 @@
             _ => "โปรโมชั่นพิเศษ"
         };
 
-    // ฟังก์ชันแปลงขอบเขตสินค้าที่ร่วมรายการโปรโมชั่นเป็นภาษาไทย
-    string GetScopeThaiLabel(string? scope) =>
-        (scope ?? string.Empty).Trim().ToLowerInvariant() switch
+    // ดึงพจนานุกรมชื่อสินค้าตามรหัสสินค้าสำหรับแสดงชื่อของแถมหรือชุดคู่ Bundle
+    var prodNameMap = ViewBag.ProductNameMap as Dictionary<int, string> ?? new Dictionary<int, string>();
+
+    // ฟังก์ชันช่วยแปลงรหัสเป้าหมายสินค้าเป็นชื่อภาษาไทย
+    string FormatTargetLabel(string target)
+    {
+        if (int.TryParse(target, out int pid) && prodNameMap.TryGetValue(pid, out string? pName))
+        {
+            return $"รุ่น {pName}";
+        }
+        return target switch
+        {
+            "figures" => "สินค้าหมวดฟิกเกอร์",
+            "clearance" => "สินค้าค้างสต็อกนาน / ล้างสต็อก",
+            _ => "สินค้าทุกหมวดหมู่"
+        };
+    }
+
+    // ฟังก์ชันแปลงขอบเขตสินค้าที่ร่วมรายการโปรโมชั่นเป็นภาษาไทยอย่างละเอียด
+    string GetScopeThaiLabel(string? scope)
+    {
+        string raw = (scope ?? string.Empty).Trim().ToLowerInvariant();
+        if (raw.StartsWith("bogo:"))
+        {
+            var parts = raw.Split(':');
+            if (parts.Length >= 3)
+            {
+                string mode = parts[1];
+                string buyLbl = FormatTargetLabel(parts[2]);
+                if (mode == "same") return $"ซื้อ {buyLbl} · แถมฟรีตัวมันเองอีก 1 ชิ้น";
+                if (mode == "item" && parts.Length >= 4) return $"ซื้อ {buyLbl} · แถมฟรี {FormatTargetLabel(parts[3])}";
+                return $"ซื้อ {buyLbl} · เลือกของแถมหรือแถมตัวเดิมในตะกร้าได้";
+            }
+        }
+        if (raw.StartsWith("bundle:"))
+        {
+            var parts = raw.Split(':');
+            if (parts.Length >= 3 && parts[1] == "any2")
+            {
+                return $"ซื้อครบ 2 ชิ้นขึ้นไป ({FormatTargetLabel(parts[2])})";
+            }
+            if (parts.Length >= 3)
+            {
+                return $"ซื้อคู่: {FormatTargetLabel(parts[1])} + {FormatTargetLabel(parts[2])}";
+            }
+        }
+        if (raw.StartsWith("prod:") && partsHasId(raw, out int spId) && prodNameMap.TryGetValue(spId, out string? spName))
+        {
+            return $"เฉพาะรุ่น: {spName}";
+        }
+        return raw switch
         {
             "all" or "" => "สินค้าทุกหมวดหมู่ในร้าน",
             "figures" => "สินค้าหมวดฟิกเกอร์",
-            "clearance" => "สินค้าลดล้างสต๊อก / พร้อมส่ง",
+            "clearance" => "สินค้าค้างสต็อกนาน / ล้างสต็อกสิ้นปี",
             _ => scope!
         };
+    }
+
+    bool partsHasId(string rawScope, out int parsedId)
+    {
+        parsedId = 0;
+        var arr = rawScope.Split(':');
+        return arr.Length >= 2 && int.TryParse(arr[1], out parsedId);
+    }
 
     // ฟังก์ชันสรุปสิทธิประโยชน์ของโปรโมชั่นเป็นภาษาไทย
     string FormatPromoBenefitSummary(Promotion promo)

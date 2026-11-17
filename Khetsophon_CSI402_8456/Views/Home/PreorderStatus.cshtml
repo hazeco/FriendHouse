@@ -364,13 +364,29 @@
                                     <div class="flex-1 min-w-0">
                                         @* หัวข้อหลักหรือหัวข้อย่อยสำหรับแบ่งส่วนเนื้อหาของหน้าเว็บ *@
                                         <h3 class="text-sm font-bold text-text truncate">@(item.Product?.Name ?? "สินค้าไม่มีชื่อ")</h3>
-                                        @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
-                                        <div class="text-xs font-semibold text-primary mt-0.5">฿@item.UnitPrice.ToString("N0") • จำนวน @item.Quantity ชิ้น</div>
+                                        @if (item.UnitPrice <= 0m)
+                                        {
+                                            @* ป้ายกำกับกรณีเป็นสินค้าของแถมฟรีจากโปรโมชั่น ซื้อ 1 แถม 1 *@
+                                            <div class="text-xs font-bold text-emerald-700 mt-0.5">แถมฟรี (โปรโมชั่น ซื้อ 1 แถม 1) • จำนวน @item.Quantity ชิ้น</div>
+                                        }
+                                        else
+                                        {
+                                            @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
+                                            <div class="text-xs font-semibold text-primary mt-0.5">฿@item.UnitPrice.ToString("N0") • จำนวน @item.Quantity ชิ้น</div>
+                                        }
                                     </div>
                                     @* กล่องคอนเทนเนอร์จัดกลุ่มเนื้อหาและกำหนดสไตล์ด้วย Tailwind CSS *@
                                     <div class="text-right">
-                                        @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
-                                        <span class="text-sm font-extrabold text-text">฿@((item.UnitPrice * item.Quantity).ToString("N0"))</span>
+                                        @if (item.UnitPrice <= 0m)
+                                        {
+                                            @* ป้ายราคาฟรี 0 บาท *@
+                                            <span class="rounded-lg bg-emerald-100 px-2.5 py-1 text-xs font-extrabold text-emerald-800">ฟรี ฿0</span>
+                                        }
+                                        else
+                                        {
+                                            @* ข้อความหรือป้ายกำกับสถานะ (Badge) แสดงข้อมูลย่อย *@
+                                            <span class="text-sm font-extrabold text-text">฿@((item.UnitPrice * item.Quantity).ToString("N0"))</span>
+                                        }
                                     </div>
                                 </div>
                             }

@@ -30,6 +30,8 @@
 
     // กำหนดประเภทโปรโมชั่นตั้งต้น
     string initialPromoType = (Model?.PromoType ?? "percent").Trim().ToLowerInvariant();
+    // ดึงรายการสินค้าทั้งหมดในร้านจาก ViewBag สำหรับเลือกของแถมหรือจับคู่ชุด Bundle
+    var allProducts = ViewBag.AllProducts as List<Khetsophon_CSI402_8456.Models.Product> ?? new List<Khetsophon_CSI402_8456.Models.Product>();
     // จัดรูปแบบวันที่เริ่มต้นในรูปแบบ ISO yyyy-MM-dd
     string startIso = Model != null
         ? FormatIsoDate(Model.StartDate)
@@ -176,15 +178,45 @@
                     </div>
                 </div>
 
-                @* กำหนดตัวแปรคลาสของปุ่มเลือกขอบเขตสินค้า *@
+                @* กำหนดตัวแปรคลาสของปุ่มเลือกขอบเขตสินค้าและแยกค่าเริ่มต้นของ BOGO / Bundle *@
                 @{
                     string currentScope = (Model?.ApplicableScope ?? "all").Trim().ToLowerInvariant();
                     string activeScopeCls = "scope-btn px-4 py-2 rounded-xl text-xs font-bold bg-[#2F39A9] text-white shadow-xs cursor-pointer";
                     string idleScopeCls = "scope-btn px-4 py-2 rounded-xl text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer";
+                    string initBogoMode = "pick";
+                    string initBogoBuy = "figures";
+                    string initBogoFree = allProducts.FirstOrDefault()?.ProductId.ToString() ?? "1";
+                    if (currentScope.StartsWith("bogo:"))
+                    {
+                        var parts = currentScope.Split(':');
+                        if (parts.Length >= 3)
+                        {
+                            initBogoMode = parts[1];
+                            initBogoBuy = parts[2];
+                            if (parts.Length >= 4) initBogoFree = parts[3];
+                        }
+                    }
+                    string initBundleMode = "pair";
+                    string initBundleP1 = allProducts.FirstOrDefault()?.ProductId.ToString() ?? "1";
+                    string initBundleP2 = allProducts.Skip(1).FirstOrDefault()?.ProductId.ToString() ?? initBundleP1;
+                    if (currentScope.StartsWith("bundle:"))
+                    {
+                        var parts = currentScope.Split(':');
+                        if (parts.Length >= 3 && parts[1] == "any2")
+                        {
+                            initBundleMode = $"any2:{parts[2]}";
+                        }
+                        else if (parts.Length >= 3)
+                        {
+                            initBundleMode = "pair";
+                            initBundleP1 = parts[1];
+                            initBundleP2 = parts[2];
+                        }
+                    }
                 }
 
-                @* ส่วนเลือกขอบเขตสินค้าที่ร่วมรายการ *@
-                <div>
+                @* ส่วนเลือกขอบเขตสินค้าที่ร่วมรายการสำหรับส่วนลดทั่วไป / ล้างสต็อก / แต้มสะสม *@
+                <div id="standardScopePanel" class="space-y-3">
                     @* ป้ายกำกับขอบเขตสินค้า *@
                     <label class="text-xs font-bold text-gray-700 block mb-2">ขอบเขตสินค้าที่ร่วมรายการ</label>
                     @* กลุ่มปุ่มเลือกขอบเขตสินค้า *@
@@ -197,14 +229,108 @@
                         <button type="button" onclick="selectScope(this, 'figures')" class="@(currentScope == "figures" ? activeScopeCls : idleScopeCls)">
                             เฉพาะหมวดฟิกเกอร์
                         </button>
-                        @* ปุ่มเลือกเฉพาะสินค้าพร้อมส่ง *@
+                        @* ปุ่มเลือกเฉพาะสินค้าค้างสต็อกนาน / ลดล้างสต็อก *@
                         <button type="button" onclick="selectScope(this, 'clearance')" class="@(currentScope == "clearance" ? activeScopeCls : idleScopeCls)">
-                            สินค้าลดล้างสต๊อก / พร้อมส่ง
+                            สินค้าค้างสต็อกนาน / ล้างสต็อกสิ้นปี
                         </button>
                     </div>
-                    @* ฟิลด์ซ่อนสำหรับเก็บค่าขอบเขตสินค้าที่เลือก *@
-                    <input type="hidden" name="ApplicableScope" id="applicableScopeInput" value="@currentScope" />
                 </div>
+
+                @* แผงตั้งค่าเฉพาะสำหรับโปรโมชั่น "ซื้อ 1 แถม 1" *@
+                <div id="bogoConfigPanel" class="hidden rounded-2xl border border-[#92EEFF] bg-[#F8FAFF] p-4 space-y-4">
+                    @* หัวข้อแผงตั้งค่าซื้อ 1 แถม 1 *@
+                    <div class="text-xs font-bold text-[#2F39A9]">ตั้งค่าเงื่อนไข ซื้อ 1 แถม 1 (กำหนดสินค้าที่ซื้อและรูปแบบของแถม)</div>
+
+                    @* เลือกสินค้าหรือหมวดหมู่ที่ลูกค้าต้องซื้อ *@
+                    <div>
+                        @* ป้ายกำกับสินค้าที่ต้องซื้อ *@
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">1. สินค้าที่ต้องซื้อ (เงื่อนไขการรับแถม)</label>
+                        @* ดรอปดาวน์เลือกหมวดหมู่หรือสินค้าเฉพาะรุ่น *@
+                        <select id="bogoBuyTargetSelect" onchange="syncBogoScope()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                            <option value="figures" selected="@(initBogoBuy == "figures")">สินค้าหมวดฟิกเกอร์ที่ร่วมรายการ</option>
+                            <option value="all" selected="@(initBogoBuy == "all")">สินค้าทุกหมวดหมู่ในร้าน</option>
+                            <option value="clearance" selected="@(initBogoBuy == "clearance")">สินค้าค้างสต็อกนาน / ล้างสต็อก</option>
+                            @foreach (var prod in allProducts)
+                            {
+                                <option value="@prod.ProductId" selected="@(initBogoBuy == prod.ProductId.ToString())">เฉพาะรุ่น: @prod.Name (฿@prod.RetailPrice.ToString("N0"))</option>
+                            }
+                        </select>
+                    </div>
+
+                    @* เลือกรูปแบบของแถม *@
+                    <div>
+                        @* ป้ายกำกับรูปแบบของแถม *@
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">2. รูปแบบสินค้าที่แถมฟรี</label>
+                        @* ดรอปดาวน์เลือกรูปแบบของแถม *@
+                        <select id="bogoGiftModeSelect" onchange="syncBogoScope()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                            <option value="pick" selected="@(initBogoMode == "pick")">ให้ลูกค้าเลือกของแถมเองในตะกร้า (หรือเลือกแถมตัวมันเองได้)</option>
+                            <option value="same" selected="@(initBogoMode == "same")">แถมตัวมันเอง (ซื้อรุ่นไหน แถมฟรีรุ่นนั้นอีก 1 ชิ้น)</option>
+                            <option value="item" selected="@(initBogoMode == "item")">แถมสินค้าเฉพาะรุ่นที่ร้านกำหนดไว้</option>
+                        </select>
+                    </div>
+
+                    @* กล่องเลือกสินค้าของแถมเฉพาะรุ่น *@
+                    <div id="bogoSpecificGiftWrapper" class="@(initBogoMode == "item" ? "" : "hidden")">
+                        @* ป้ายกำกับเลือกสินค้าของแถม *@
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">3. เลือกสินค้าที่จะแถมฟรีให้ลูกค้า</label>
+                        @* ดรอปดาวน์รายชื่อสินค้าของแถม *@
+                        <select id="bogoFreeProdSelect" onchange="syncBogoScope()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                            @foreach (var prod in allProducts)
+                            {
+                                <option value="@prod.ProductId" selected="@(initBogoFree == prod.ProductId.ToString())">แถมฟรี: @prod.Name (มูลค่า ฿@prod.RetailPrice.ToString("N0"))</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @* แผงตั้งค่าเฉพาะสำหรับโปรโมชั่น "ชุดเซ็ตสุดคุ้ม / ซื้อคู่ Bundle" *@
+                <div id="bundleConfigPanel" class="hidden rounded-2xl border border-[#92EEFF] bg-[#F8FAFF] p-4 space-y-4">
+                    @* หัวข้อแผงตั้งค่าซื้อคู่ Bundle *@
+                    <div class="text-xs font-bold text-[#2F39A9]">ตั้งค่าเงื่อนไข ซื้อคู่ / Bundle (ซื้อเป็นชุดในราคาพิเศษกว่าซื้อแยก)</div>
+
+                    @* เลือกรูปแบบการจัดชุด *@
+                    <div>
+                        @* ป้ายกำกับรูปแบบการจัดชุด *@
+                        <label class="text-xs font-bold text-gray-700 block mb-1.5">1. รูปแบบการจับคู่ชุดสินค้า</label>
+                        @* ดรอปดาวน์เลือกรูปแบบการจับคู่ *@
+                        <select id="bundleModeSelect" onchange="syncBundleScope()"
+                                class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                            <option value="pair" selected="@(initBundleMode == "pair")">จับคู่สินค้า 2 รุ่นที่กำหนด (ซื้อคู่กันได้ลดราคาพิเศษ)</option>
+                            <option value="any2:figures" selected="@(initBundleMode == "any2:figures")">ซื้อสินค้าหมวดฟิกเกอร์ครบ 2 ชิ้นขึ้นไป</option>
+                            <option value="any2:all" selected="@(initBundleMode == "any2:all")">ซื้อสินค้าในร้านครบ 2 ชิ้นขึ้นไป (ทุกหมวดหมู่)</option>
+                        </select>
+                    </div>
+
+                    @* กล่องเลือกสินค้าคู่ที่ 1 และคู่ที่ 2 *@
+                    <div id="bundlePairSelectors" class="grid grid-cols-1 sm:grid-cols-2 gap-3 @(initBundleMode == "pair" ? "" : "hidden")">
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 block mb-1">สินค้าในชุด ชิ้นที่ 1</label>
+                            <select id="bundleProd1Select" onchange="syncBundleScope()"
+                                    class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                                @foreach (var prod in allProducts)
+                                {
+                                    <option value="@prod.ProductId" selected="@(initBundleP1 == prod.ProductId.ToString())">@prod.Name (฿@prod.RetailPrice.ToString("N0"))</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-700 block mb-1">สินค้าในชุด ชิ้นที่ 2</label>
+                            <select id="bundleProd2Select" onchange="syncBundleScope()"
+                                    class="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-[#050315] focus:outline-none focus:border-[#2F39A9]">
+                                @foreach (var prod in allProducts)
+                                {
+                                    <option value="@prod.ProductId" selected="@(initBundleP2 == prod.ProductId.ToString())">@prod.Name (฿@prod.RetailPrice.ToString("N0"))</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                @* ฟิลด์ซ่อนสำหรับเก็บค่าขอบเขตสินค้าที่เลือก *@
+                <input type="hidden" name="ApplicableScope" id="applicableScopeInput" value="@currentScope" />
 
                 @* กล่องข้อความแจ้งเตือนเงื่อนไขการนำโปรโมชั่นไปคำนวณ *@
                 <div class="rounded-xl bg-[#F8F9FD] border border-slate-100 px-4 py-3 text-xs text-slate-600">
@@ -333,28 +459,70 @@
             const valInput = document.getElementById('discountValueInput');
             if (!label || !valInput) return;
 
+            // สลับการแสดงแผงตั้งค่าขอบเขตตามประเภทโปรโมชั่น
+            const stdPanel = document.getElementById('standardScopePanel');
+            const bogoPanel = document.getElementById('bogoConfigPanel');
+            const bundlePanel = document.getElementById('bundleConfigPanel');
+            if (stdPanel) stdPanel.classList.toggle('hidden', type === 'bogo' || type === 'bundle');
+            if (bogoPanel) bogoPanel.classList.toggle('hidden', type !== 'bogo');
+            if (bundlePanel) bundlePanel.classList.toggle('hidden', type !== 'bundle');
+
             // ตรวจสอบประเภทส่วนลดเพื่อปรับการแสดงผลและขีดจำกัด
             if (type === 'percent') {
                 label.innerText = 'มูลค่าส่วนลด (%)';
-                hint.innerText = 'ระบุเปอร์เซ็นต์ส่วนลด 1 ถึง 100 เช่น 10 หรือ 20';
+                hint.innerText = 'ระบุเปอร์เซ็นต์ส่วนลด เช่น ล้างสต็อกสิ้นปี 20 ถึง 50%';
                 valInput.readOnly = false;
                 valInput.max = '100';
             } else if (type === 'bogo') {
-                label.innerText = 'เพดานส่วนลดของแถม (บาท)';
-                hint.innerText = 'ระบุ 0 เพื่อใช้ราคาสินค้าชิ้นที่ถูกที่สุดอัตโนมัติ (ต้องซื้ออย่างน้อย 2 ชิ้น)';
+                label.innerText = 'เพดานราคาของแถมสูงสุด (บาท)';
+                hint.innerText = 'ระบุวงเงินราคาของแถมสูงสุด (หรือระบุ 0 เพื่อให้แถมตามราคาจริงของสินค้าแถม)';
                 valInput.readOnly = false;
                 valInput.removeAttribute('max');
+                syncBogoScope();
+            } else if (type === 'bundle') {
+                label.innerText = 'ส่วนลดพิเศษเมื่อซื้อครบชุดคู่ (บาท)';
+                hint.innerText = 'ระบุส่วนลดเมื่อซื้อเป็นชุดคู่ให้ถูกกว่าซื้อแยก เช่น ลดทันที 650 บาท';
+                valInput.readOnly = false;
+                valInput.removeAttribute('max');
+                syncBundleScope();
             } else if (type === 'double_points') {
-                label.innerText = 'ตัวคูณคะแนนสะสม';
-                hint.innerText = 'ลูกค้าจะได้รับแต้มสะสม x2 อัตโนมัติเมื่อชำระเงินที่หน้าร้าน';
+                label.innerText = 'ตัวคูณคะแนนสะสม (เฉพาะสมาชิก Login)';
+                hint.innerText = 'ลูกค้าสมาชิกจะได้รับแต้มสะสม x2 สำหรับนำไปแลกของรางวัล';
                 valInput.value = '2';
                 valInput.readOnly = true;
                 valInput.removeAttribute('max');
             } else {
-                label.innerText = 'มูลค่าส่วนลด (บาท)';
-                hint.innerText = 'ระบุจำนวนเงินส่วนลดเป็นบาท เช่น 100 หรือ 300';
+                label.innerText = 'มูลค่าส่วนลดพรีออเดอร์ / ท้ายบิล (บาท)';
+                hint.innerText = 'ระบุจำนวนเงินส่วนลดเป็นบาทสำหรับใบสั่งจองรับและชำระที่หน้าร้าน';
                 valInput.readOnly = false;
                 valInput.removeAttribute('max');
+            }
+        }
+
+        // ฟังก์ชันอัปเดตค่า ApplicableScope สำหรับโปรโมชั่น ซื้อ 1 แถม 1
+        function syncBogoScope() {
+            const buyTarget = document.getElementById('bogoBuyTargetSelect')?.value || 'figures';
+            const giftMode = document.getElementById('bogoGiftModeSelect')?.value || 'pick';
+            const freeProdId = document.getElementById('bogoFreeProdSelect')?.value || '1';
+            const specWrapper = document.getElementById('bogoSpecificGiftWrapper');
+            if (specWrapper) specWrapper.classList.toggle('hidden', giftMode !== 'item');
+            const scopeVal = giftMode === 'item'
+                ? `bogo:item:${buyTarget}:${freeProdId}`
+                : `bogo:${giftMode}:${buyTarget}`;
+            document.getElementById('applicableScopeInput').value = scopeVal;
+        }
+
+        // ฟังก์ชันอัปเดตค่า ApplicableScope สำหรับโปรโมชั่น ซื้อคู่ / Bundle
+        function syncBundleScope() {
+            const mode = document.getElementById('bundleModeSelect')?.value || 'pair';
+            const pairBox = document.getElementById('bundlePairSelectors');
+            if (pairBox) pairBox.classList.toggle('hidden', mode !== 'pair');
+            if (mode === 'pair') {
+                const p1 = document.getElementById('bundleProd1Select')?.value || '1';
+                const p2 = document.getElementById('bundleProd2Select')?.value || '2';
+                document.getElementById('applicableScopeInput').value = `bundle:${p1}:${p2}`;
+            } else {
+                document.getElementById('applicableScopeInput').value = `bundle:${mode}`;
             }
         }
 
@@ -367,7 +535,9 @@
                 b.className = 'scope-btn px-4 py-2 rounded-xl text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer';
             });
             // ไฮไลต์ปุ่มที่ถูกเลือกด้วยสีประจำร้าน
-            btn.className = 'scope-btn px-4 py-2 rounded-xl text-xs font-bold bg-[#2F39A9] text-white shadow-xs cursor-pointer';
+            if (btn) {
+                btn.className = 'scope-btn px-4 py-2 rounded-xl text-xs font-bold bg-[#2F39A9] text-white shadow-xs cursor-pointer';
+            }
         }
 
         // เมื่อโหลดหน้าเว็บเสร็จสมบูรณ์ ให้เลือกประเภทส่วนลดตามค่าที่มีในฐานข้อมูล

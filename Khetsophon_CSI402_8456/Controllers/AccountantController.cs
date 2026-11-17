@@ -302,10 +302,23 @@ public class AccountantController : Controller
             // แปลงผลลัพธ์เป็นรายการลิสต์
             .ToList();
 
-        // คำนวณผลรวมของรายการที่เป็นรายรับทั้งหมดในสมุดบัญชี
-        var totalIncome = entries.Where(e => e.EntryType.ToLower() == "income").Sum(e => e.Amount);
-        // คำนวณผลรวมของรายการที่เป็นรายจ่ายทั้งหมดในสมุดบัญชี
-        var totalExpense = entries.Where(e => e.EntryType.ToLower() == "expense").Sum(e => e.Amount);
+        // กำหนดช่วงวันเริ่มต้นและสิ้นสุดของเดือนปัจจุบันเพื่อให้ยอดการ์ดสรุปตรงกับหน้าแดชบอร์ดภาพรวมการเงินร้าน 100%
+        var todayDate = DateOnly.FromDateTime(DateTime.Today);
+        // คำนวณวันแรกของเดือนปัจจุบัน
+        var currentMonthStart = new DateOnly(todayDate.Year, todayDate.Month, 1);
+        // คำนวณวันแรกของเดือนถัดไปสำหรับเป็นขอบเขตสิ้นสุด
+        var currentMonthEnd = currentMonthStart.AddMonths(1);
+        // กรองเฉพาะรายการสมุดบัญชีที่อยู่ในเดือนปัจจุบันสำหรับคำนวณยอดการ์ดสรุปประจำเดือนนี้
+        var currentMonthEntries = entries
+            // เลือกเฉพาะรายการที่ตั้งแต่วันแรกของเดือนปัจจุบันและก่อนวันแรกของเดือนถัดไป
+            .Where(e => e.EntryDate >= currentMonthStart && e.EntryDate < currentMonthEnd)
+            // แปลงผลลัพธ์เป็นลิสต์
+            .ToList();
+
+        // คำนวณผลรวมของรายการที่เป็นรายรับบันทึกเองเฉพาะเดือนนี้ให้ตรงกับหน้าแดชบอร์ด
+        var totalIncome = currentMonthEntries.Where(e => e.EntryType.ToLower() == "income").Sum(e => e.Amount);
+        // คำนวณผลรวมของรายการที่เป็นรายจ่ายรวมเฉพาะเดือนนี้ให้ตรงกับหน้าแดชบอร์ด
+        var totalExpense = currentMonthEntries.Where(e => e.EntryType.ToLower() == "expense").Sum(e => e.Amount);
 
         // กำหนดจำนวนรายการต่อหน้าเป็น 10 รายการ
         int pageSize = 10;

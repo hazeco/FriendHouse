@@ -43,6 +43,27 @@ public class CartViewModel
     // สถานะระบุว่าโปรโมชั่นให้คะแนนสะสมพิเศษสองเท่าหรือไม่
     public bool IsDoublePoints { get; set; }
 
+    // สถานะว่ากำลังใช้โปรโมชั่นซื้อ 1 แถม 1 ในตะกร้าหรือไม่
+    public bool IsBogoApplied { get; set; }
+
+    // โหมดของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1 (same = แถมตัวมันเอง, item = แถมสินค้าที่ระบุ, pick = ลูกค้าเลือกได้เอง)
+    public string BogoGiftMode { get; set; } = string.Empty;
+
+    // รหัสสินค้าของแถมที่ได้รับหรือเลือกไว้ (0 หมายถึงแถมตัวมันเองรุ่นเดียวกับที่ซื้อ)
+    public int? SelectedFreeGiftProductId { get; set; }
+
+    // ชื่อสินค้าของแถมที่ได้รับจากโปรโมชั่นซื้อ 1 แถม 1
+    public string? SelectedFreeGiftProductName { get; set; }
+
+    // รูปภาพของสินค้าของแถม
+    public string? SelectedFreeGiftImageUrl { get; set; }
+
+    // มูลค่าปกติของสินค้าของแถมที่ได้รับฟรี
+    public decimal SelectedFreeGiftPrice { get; set; }
+
+    // รายการตัวเลือกสินค้าของแถมสำหรับโหมดที่ให้ลูกค้าเลือกของแถมได้เองในตะกร้า
+    public List<BogoGiftOptionViewModel> AvailableBogoGifts { get; set; } = new();
+
     // รายการคูปองโปรโมชั่นทั้งหมดที่สมาชิกเก็บสะสมไว้
     public List<CollectedPromoOptionViewModel> CollectedPromos { get; set; } = new();
 
@@ -149,6 +170,31 @@ public class PromoEvaluationResult
     public bool IsDoublePoints { get; set; }
     // พร็อพเพอร์ตี้ BenefitSummary สำหรับจัดเก็บข้อความสรุปสิทธิประโยชน์
     public string BenefitSummary { get; set; } = string.Empty;
+    // โหมดของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1 (same, item, pick)
+    public string BogoGiftMode { get; set; } = string.Empty;
+    // รหัสสินค้าของแถมที่ได้รับฟรี (0 = แถมตัวมันเองรุ่นเดียวกัน)
+    public int? FreeGiftProductId { get; set; }
+    // ชื่อสินค้าของแถมที่ได้รับฟรี
+    public string? FreeGiftProductName { get; set; }
+    // พาธรูปภาพสินค้าของแถม
+    public string? FreeGiftImageUrl { get; set; }
+    // มูลค่าปกติของสินค้าของแถม
+    public decimal FreeGiftPrice { get; set; }
+}
+
+// โครงสร้างตัวเลือกสินค้าของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1 ในหน้าตะกร้าสินค้า
+public class BogoGiftOptionViewModel
+{
+    // รหัสสินค้าของแถม (0 = แถมตัวมันเองรุ่นเดียวกับสินค้าที่ซื้อ)
+    public int ProductId { get; set; }
+    // ชื่อแสดงผลของสินค้าของแถม
+    public string Name { get; set; } = string.Empty;
+    // พาธรูปภาพสินค้าของแถม
+    public string ImageUrl { get; set; } = string.Empty;
+    // ราคาขายปกติของสินค้าของแถม
+    public decimal RetailPrice { get; set; }
+    // สถานะว่าตัวเลือกนี้กำลังถูกเลือกเป็นของแถมอยู่หรือไม่
+    public bool IsSelected { get; set; }
 }
 
 // ข้อมูลวันนัดรับและเบอร์ติดต่อของการจองแลกของรางวัล จัดเก็บผ่าน DetailPayload ในบันทึกกิจกรรม
@@ -179,4 +225,12 @@ public class PreorderPromoPayload
     public decimal DiscountAmount { get; set; }
     // พร็อพเพอร์ตี้ IsDoublePoints สำหรับจัดเก็บสถานะแต้มสะสมพิเศษสองเท่า
     public bool IsDoublePoints { get; set; }
+    // รหัสสินค้าของแถมจากโปรโมชั่นซื้อ 1 แถม 1 (ถ้ามี)
+    public int? FreeGiftProductId { get; set; }
+    // ชื่อสินค้าของแถมจากโปรโมชั่นซื้อ 1 แถม 1 (สำหรับแสดงในใบจองและหน้าเคาน์เตอร์พนักงาน)
+    public string FreeGiftProductName { get; set; } = string.Empty;
+    // รูปภาพของสินค้าของแถม
+    public string FreeGiftImageUrl { get; set; } = string.Empty;
+    // มูลค่าปกติของสินค้าของแถมที่ได้รับฟรี
+    public decimal FreeGiftValue { get; set; }
 }

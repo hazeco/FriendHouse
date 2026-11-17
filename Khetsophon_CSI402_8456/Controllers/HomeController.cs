@@ -1938,15 +1938,31 @@ public class HomeController : Controller
         // เพิ่มรายการโปรโมชั่นทั้งหมดลงใน ViewModel
         viewModel.AddRange(promotions);
 
+        // ดึงพจนานุกรมชื่อสินค้าทั้งหมดสำหรับอธิบายเงื่อนไขโปรโมชั่นซื้อ 1 แถม 1 และซื้อคู่ Bundle
+        var allProductNames = _db.Products.ToDictionary(x => x.ProductId, x => x.Name);
+        // ดึงกฎเชิงลึกของโปรโมชั่น BOGO และ Bundle จากตาราง Systemlogs โมดูล promo.rule
+        var promoRuleMap = _db.Systemlogs
+            .Where(l => l.Module == "promo.rule" && !string.IsNullOrEmpty(l.Message) && !string.IsNullOrEmpty(l.DetailPayload))
+            .OrderByDescending(l => l.Timestamp)
+            .ToList()
+            .GroupBy(l => l.Message.ToUpperInvariant())
+            .ToDictionary(g => g.Key, g => g.First().DetailPayload!);
+
         // แปลงข้อมูลโปรโมชั่นเป็นโมเดลการ์ดแสดงผล
         viewModel.PromotionCards = promotions.Select(p =>
         {
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
+            string pTypeCode = (p.PromoType ?? "percent").Trim().ToLowerInvariant();
+            // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
             string tagThai = GetPromoTypeThaiLabel(p.PromoType);
+            // ดึงกฎเชิงลึกของโปรโมชั่นหากมีบันทึกไว้ในระบบ
+            string effectiveScope = promoRuleMap.TryGetValue(p.VoucherCode.ToUpperInvariant(), out string? customRule)
+                ? customRule.Trim().ToLowerInvariant()
+                : (p.ApplicableScope ?? "all").Trim().ToLowerInvariant();
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-            string scopeCode = (p.ApplicableScope ?? "all").Trim().ToLowerInvariant();
+            string scopeCode = effectiveScope;
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-            string scopeThai = GetScopeThaiLabel(scopeCode);
+            string scopeThai = FormatDetailedScopeThai(scopeCode, allProductNames);
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
             string discountText = FormatPromoBenefitSummary(p);
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
@@ -1960,6 +1976,36 @@ public class HomeController : Controller
                 // กรณีไม่จำกัดจำนวนสิทธิ์
                 : $"ใช้ได้ไม่จำกัดสิทธิ์ (ใช้แล้ว {p.CurrentUsageCount:N0} สิทธิ์)";
 
+            // แยกข้อมูลสินค้าคู่ Bundle หรือรายละเอียดของแถม BOGO สำหรับแสดงบนการ์ดโปรโมชั่น
+            int? bundleP1 = null;
+            // รหัสสินค้าชิ้นที่ 2 ของโปรซื้อคู่
+            int? bundleP2 = null;
+            // ข้อความอธิบายสิทธิพิเศษเพิ่มเติมตามประเภทโปรโมชั่นทั้ง 5 แบบ
+            string extraDetail = pTypeCode switch
+            {
+                "percent" when scopeCode == "clearance" => "เงื่อนไข: ลดราคาพิเศษ 20–50% เฉพาะสินค้าที่ค้างสต็อกนานในร้าน",
+                "bogo" => $"เงื่อนไขของแถม: {scopeThai} (มีระยะเวลาจำกัด)",
+                "bundle" => $"เงื่อนไขชุดคู่สุดคุ้ม: {scopeThai} ซื้อเป็นชุดในราคาพิเศษกว่าซื้อแยก",
+                "double_points" => "เงื่อนไขสมาชิก: สะสมแต้ม X2 สำหรับแลกสินค้าและของรางวัล (เฉพาะสมาชิกที่เข้าสู่ระบบเท่านั้น)",
+                "fixed" => "เงื่อนไขพรีออเดอร์: จองสินค้าล่วงหน้าผ่านเว็บ มารับและชำระเงินที่หน้าร้านเท่านั้น",
+                _ => $"ใช้ได้กับ{scopeThai}"
+            };
+
+            // กรณีเป็นโปรโมชั่นซื้อคู่ที่ระบุรหัสสินค้า 2 ชิ้น ให้ดึงรหัสทั้ง 2 ชิ้นสำหรับปุ่มเพิ่มชุดคู่ลงตะกร้า
+            if (scopeCode.StartsWith("bundle:"))
+            {
+                // แยกส่วนข้อความด้วยเครื่องหมายทวิภาค
+                var bParts = scopeCode.Split(':');
+                // ตรวจสอบว่าเป็นรหัสตัวเลขของสินค้า 2 ชิ้นหรือไม่
+                if (bParts.Length >= 3 && int.TryParse(bParts[1], out int parsedP1) && int.TryParse(bParts[2], out int parsedP2))
+                {
+                    // กำหนดรหัสสินค้าชิ้นที่ 1
+                    bundleP1 = parsedP1;
+                    // กำหนดรหัสสินค้าชิ้นที่ 2
+                    bundleP2 = parsedP2;
+                }
+            }
+
             // ส่งคืนค่าผลลัพธ์จากการประมวลผลของฟังก์ชัน
             return new PromotionCardItemViewModel
             {
@@ -1970,7 +2016,7 @@ public class HomeController : Controller
                 // ชื่อโปรโมชั่น
                 Title = p.Name,
                 // คำอธิบายเงื่อนไขโปรโมชั่น
-                Description = $"ใช้ได้กับ{scopeThai} · {limitDesc}",
+                Description = $"{scopeThai} · {limitDesc}",
                 // ระยะเวลาของโปรโมชั่น
                 Period = $"{startFormatted} - {endFormatted}",
                 // เงื่อนไขการรับสิทธิ์
@@ -1979,6 +2025,14 @@ public class HomeController : Controller
                 VoucherCode = p.VoucherCode,
                 // ขอบเขตสินค้าที่ร่วมรายการ
                 ApplicableScope = scopeCode,
+                // รหัสประเภทโปรโมชั่น
+                PromoTypeCode = pTypeCode,
+                // ข้อความอธิบายของแถมหรือชุดคู่
+                GiftOrBundleDetail = extraDetail,
+                // รหัสสินค้าชิ้นที่ 1 ของชุดคู่
+                BundleProduct1Id = bundleP1,
+                // รหัสสินค้าชิ้นที่ 2 ของชุดคู่
+                BundleProduct2Id = bundleP2,
                 // สถานะว่าลูกค้าเก็บคูปองนี้แล้วหรือไม่
                 IsCollected = collectedCodes.Contains(p.VoucherCode, StringComparer.OrdinalIgnoreCase)
             };
@@ -2240,10 +2294,14 @@ public class HomeController : Controller
         // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
         if (!string.IsNullOrWhiteSpace(appliedCode) && rawItems.Any())
         {
+            // ดึงรายการสินค้าที่เปิดขายทั้งหมดในร้านเพื่อรองรับการเลือกของแถม BOGO และการตรวจสอบคู่สินค้า Bundle
+            var allStoreProducts = _db.Products.Include(p => p.Inventory).Where(p => p.IsActive == true).OrderBy(p => p.Name).ToList();
+            // อ่านค่ารหัสสินค้าของแถมที่ลูกค้าเลือกไว้ในเซสชัน (0 = แถมตัวมันเองรุ่นเดียวกับที่ซื้อ)
+            int? selectedBogoGiftId = HttpContext.Session.GetInt32("SelectedBogoGiftProductId");
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
             var promo = FindPromotionByVoucherCode(appliedCode);
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-            var eval = EvaluateCartPromotion(promo, rawItems);
+            var eval = EvaluateCartPromotion(promo, rawItems, null, allStoreProducts, selectedBogoGiftId);
             // ตรวจสอบเงื่อนไขว่าคูปองผ่านเกณฑ์การใช้งานหรือไม่
             if (eval.IsValid)
             {
@@ -2257,6 +2315,69 @@ public class HomeController : Controller
                 viewModel.DiscountAmount = eval.DiscountAmount;
                 // กำหนดสถานะรับแต้มสองเท่า
                 viewModel.IsDoublePoints = eval.IsDoublePoints;
+                // กำหนดสถานะว่าเป็นโปรโมชั่นซื้อ 1 แถม 1 หรือไม่
+                viewModel.IsBogoApplied = eval.PromoType == "bogo";
+                // กำหนดโหมดของแถม (same, item, pick)
+                viewModel.BogoGiftMode = eval.BogoGiftMode;
+                // กำหนดรหัสสินค้าของแถมที่เลือกอยู่
+                viewModel.SelectedFreeGiftProductId = eval.FreeGiftProductId;
+                // กำหนดชื่อสินค้าของแถมที่ได้รับฟรี
+                viewModel.SelectedFreeGiftProductName = eval.FreeGiftProductName;
+                // กำหนดรูปภาพสินค้าของแถม
+                viewModel.SelectedFreeGiftImageUrl = eval.FreeGiftImageUrl;
+                // กำหนดมูลค่าปกติของสินค้าของแถม
+                viewModel.SelectedFreeGiftPrice = eval.FreeGiftPrice;
+
+                // หากเป็นโปรโมชั่นซื้อ 1 แถม 1 ให้สร้างรายการตัวเลือกของแถมสำหรับแสดงในตะกร้าสินค้า
+                if (viewModel.IsBogoApplied)
+                {
+                    // ดึงสินค้าตัวแรกในตะกร้าที่ร่วมรายการเพื่อใช้เป็นตัวเลือก "แถมตัวมันเอง"
+                    var baseEligibleProd = rawItems.FirstOrDefault(c => MatchesScope(c.Product, promo?.ApplicableScope))?.Product
+                                           ?? rawItems.First().Product;
+                    // กำหนดเพดานราคาของแถมสูงสุดตามที่ตั้งไว้ในโปรโมชั่น (หากตั้ง 0 ให้ใช้ราคาสินค้าที่ซื้อ)
+                    decimal maxGiftPrice = (promo?.DiscountValue ?? 0m) > 0m
+                        ? promo!.DiscountValue!.Value
+                        : (baseEligibleProd?.RetailPrice ?? 99999m);
+                    // สร้างลิสต์ตัวเลือกของแถมเริ่มต้นด้วยตัวเลือก "แถมตัวมันเอง" (ProductId = 0)
+                    var giftOptions = new List<BogoGiftOptionViewModel>();
+                    if (baseEligibleProd != null)
+                    {
+                        // เพิ่มตัวเลือกที่ 0: แถมตัวมันเองรุ่นเดียวกับสินค้าที่ซื้อ
+                        giftOptions.Add(new BogoGiftOptionViewModel
+                        {
+                            // รหัส 0 แทนการแถมตัวมันเองรุ่นเดียวกัน
+                            ProductId = 0,
+                            // ชื่อตัวเลือกแถมตัวมันเอง
+                            Name = $"แถมตัวมันเอง: {baseEligibleProd.Name} (+1 ชิ้นฟรี)",
+                            // รูปภาพสินค้าตัวมันเอง
+                            ImageUrl = baseEligibleProd.ImageUrl ?? "~/media/images/naruto_hero_fig.png",
+                            // ราคาปกติของสินค้าที่แถม
+                            RetailPrice = baseEligibleProd.RetailPrice,
+                            // สถานะว่ากำลังเลือกตัวเลือกนี้อยู่หรือไม่
+                            IsSelected = (eval.FreeGiftProductId ?? 0) == 0
+                        });
+                    }
+                    // เพิ่มรายการสินค้าในร้านที่มีสต็อกพร้อมส่งและราคาอยู่ในเกณฑ์ของแถม
+                    foreach (var sp in allStoreProducts.Where(p => ((p.Inventory?.QuantityOnHand ?? 0) - (p.Inventory?.ReservedQuantity ?? 0)) > 0 && p.RetailPrice <= maxGiftPrice))
+                    {
+                        // เพิ่มตัวเลือกสินค้าของแถมแต่ละรุ่น
+                        giftOptions.Add(new BogoGiftOptionViewModel
+                        {
+                            // รหัสสินค้าของแถม
+                            ProductId = sp.ProductId,
+                            // ชื่อสินค้าของแถม
+                            Name = $"แถมฟรี: {sp.Name}",
+                            // รูปภาพสินค้าของแถม
+                            ImageUrl = sp.ImageUrl ?? "~/media/images/naruto_hero_fig.png",
+                            // ราคาปกติของสินค้า
+                            RetailPrice = sp.RetailPrice,
+                            // สถานะว่ากำลังเลือกสินค้ารุ่นนี้เป็นของแถมหรือไม่
+                            IsSelected = eval.FreeGiftProductId == sp.ProductId
+                        });
+                    }
+                    // กำหนดรายการตัวเลือกของแถมลงใน CartViewModel
+                    viewModel.AvailableBogoGifts = giftOptions;
+                }
             }
             // จัดการกรณีคูปองไม่ผ่านเกณฑ์การใช้งาน
             else
@@ -2285,12 +2406,25 @@ public class HomeController : Controller
         // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
         if (string.IsNullOrEmpty(normalized)) return null;
 
-        // ส่งคืนค่าผลลัพธ์จากการประมวลผลของฟังก์ชัน
-        return _db.Promotions.ToList().FirstOrDefault(p =>
+        // ส่งคืนค่าผลลัพธ์จากการประมวลผลของฟังก์ชันแบบไม่ติดตามเอนทิตีเพื่อให้นำกฎเชิงลึกมาผูกในหน่วยความจำได้โดยไม่กระทบ Check Constraint
+        var foundPromo = _db.Promotions.AsNoTracking().ToList().FirstOrDefault(p =>
             // ตรวจสอบความตรงกันของรหัสคูปองปกติ
             p.VoucherCode.Equals(normalized, StringComparison.OrdinalIgnoreCase)
             // หรือตรวจสอบความตรงกันของรหัสคูปองแบบไม่ใส่ขีด
             || (!string.IsNullOrEmpty(noHyphen) && NormalizeCodeNoHyphen(p.VoucherCode) == noHyphen));
+        // หากพบโปรโมชั่น ให้ตรวจสอบว่ามีกฎเชิงลึกใน Systemlogs โมดูล promo.rule หรือไม่
+        if (foundPromo != null)
+        {
+            var ruleLog = _db.Systemlogs
+                .Where(l => l.Module == "promo.rule" && l.Message.ToUpper() == foundPromo.VoucherCode.ToUpper())
+                .OrderByDescending(l => l.Timestamp)
+                .FirstOrDefault();
+            if (ruleLog != null && !string.IsNullOrEmpty(ruleLog.DetailPayload))
+            {
+                foundPromo.ApplicableScope = ruleLog.DetailPayload;
+            }
+        }
+        return foundPromo;
     }
 
     // ACTION: กรอกหรือเลือกใช้รหัสโปรโมชั่นกับรายการสินค้าในตะกร้า (POST Method)
@@ -2341,10 +2475,14 @@ public class HomeController : Controller
             return RedirectToAction("Cart");
         }
 
+        // ดึงรายการสินค้าทั้งหมดในร้านเพื่อประเมินเงื่อนไข BOGO และ Bundle
+        var allStoreProducts = _db.Products.Include(p => p.Inventory).Where(p => p.IsActive == true).ToList();
+        // อ่านรหัสของแถมที่เลือกไว้ในเซสชัน
+        int? selectedBogoGiftId = HttpContext.Session.GetInt32("SelectedBogoGiftProductId");
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         var promo = FindPromotionByVoucherCode(cleanCode);
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-        var eval = EvaluateCartPromotion(promo, rawItems);
+        var eval = EvaluateCartPromotion(promo, rawItems, null, allStoreProducts, selectedBogoGiftId);
         // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
         if (!eval.IsValid || eval.Promotion == null)
         {
@@ -2359,6 +2497,108 @@ public class HomeController : Controller
         // บันทึกข้อความแจ้งสถานะการทำงานลงใน TempData สำหรับแสดงผลบนหน้าเว็บ
         TempData["SuccessMessage"] = $"ใช้คูปอง \"{eval.Promotion.VoucherCode}\" สำเร็จ ({eval.BenefitSummary})";
         // เปลี่ยนเส้นทางกลับไปยัง Action ที่กำหนดหลังประมวลผลเสร็จ
+        return RedirectToAction("Cart");
+    }
+
+    // ACTION: ลูกค้าเลือกสินค้าของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1 ในหน้าตะกร้าสินค้า (POST Method)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    // ฟังก์ชันบันทึกการเลือกสินค้าของแถมลงในเซสชัน
+    public IActionResult SelectBogoFreeGift(int freeProductId)
+    {
+        // ตรวจสอบว่าลูกค้าเข้าสู่ระบบแล้วหรือไม่
+        var userId = GetCurrentCustomerId();
+        // หากยังไม่ได้เข้าสู่ระบบให้เปลี่ยนเส้นทางไปหน้าล็อกอิน
+        if (!userId.HasValue)
+        {
+            // แจ้งเตือนให้เข้าสู่ระบบ
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบก่อนเลือกสินค้าของแถม";
+            // เปลี่ยนเส้นทางไปหน้าล็อกอิน
+            return RedirectToAction("Login", "Account");
+        }
+
+        // บันทึกรหัสสินค้าของแถมที่ลูกค้าเลือกไว้ในเซสชัน (0 = แถมตัวมันเองรุ่นเดียวกับที่ซื้อ)
+        HttpContext.Session.SetInt32("SelectedBogoGiftProductId", Math.Max(0, freeProductId));
+        // แจ้งข้อความสำเร็จบนหน้าตะกร้า
+        TempData["SuccessMessage"] = "อัปเดตรายการสินค้าของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1 เรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางกลับไปยังหน้าตะกร้าสินค้า
+        return RedirectToAction("Cart");
+    }
+
+    // ACTION: เพิ่มสินค้าคู่ชุดเซ็ตสุดคุ้ม (Bundle) ทั้ง 2 ชิ้นลงในตะกร้าพร้อมใช้โค้ดส่วนลดทันที (POST Method)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    // ฟังก์ชันเพิ่มชุดคู่สินค้าลงตะกร้าและผูกคูปอง Bundle อัตโนมัติ
+    public IActionResult AddBundleToCart(int product1Id, int product2Id, string? voucherCode)
+    {
+        // ตรวจสอบสิทธิ์ผู้ใช้งานลูกค้า
+        var userId = GetCurrentCustomerId();
+        // หากยังไม่ได้ล็อกอินให้เปลี่ยนเส้นทางไปหน้าล็อกอิน
+        if (!userId.HasValue)
+        {
+            // แจ้งเตือนให้เข้าสู่ระบบก่อนเพิ่มชุดคู่ลงตะกร้า
+            TempData["ErrorMessage"] = "กรุณาเข้าสู่ระบบด้วยบัญชีลูกค้าก่อนสั่งซื้อชุดคู่โปรโมชั่น";
+            // เปลี่ยนเส้นทางไปหน้าเข้าสู่ระบบ
+            return RedirectToAction("Login", "Account");
+        }
+
+        // รายการรหัสสินค้าทั้ง 2 ชิ้นในชุดคู่
+        var targetIds = new[] { product1Id, product2Id }.Where(id => id > 0).Distinct().ToList();
+        // วนลูปเพิ่มสินค้าแต่ละชิ้นลงในตะกร้าของลูกค้า
+        foreach (var pid in targetIds)
+        {
+            // ค้นหาข้อมูลสินค้าและสต็อกคงคลัง
+            var prod = _db.Products.Include(p => p.Inventory).FirstOrDefault(p => p.ProductId == pid && p.IsActive == true);
+            // คำนวณสต็อกพร้อมขาย
+            int avail = (prod?.Inventory?.QuantityOnHand ?? 0) - (prod?.Inventory?.ReservedQuantity ?? 0);
+            // ตรวจสอบว่ามีสินค้าพร้อมขายหรือไม่
+            if (prod != null && avail > 0)
+            {
+                // ตรวจสอบว่ามีสินค้ารุ่นนี้ในตะกร้าแล้วหรือยัง
+                var existingItem = _db.Cartitems.FirstOrDefault(c => c.UserId == userId.Value && c.ProductId == pid);
+                // หากยังไม่มีในตะกร้าให้เพิ่มใหม่ 1 ชิ้น
+                if (existingItem == null)
+                {
+                    // เพิ่มรายการสินค้าลงในตาราง Cartitems
+                    _db.Cartitems.Add(new Cartitem
+                    {
+                        // รหัสผู้ใช้งาน
+                        UserId = userId.Value,
+                        // รหัสสินค้า
+                        ProductId = pid,
+                        // จำนวนเริ่มต้น 1 ชิ้น
+                        Quantity = 1,
+                        // วันเวลาที่เพิ่มลงตะกร้า
+                        CreatedAt = DateTime.Now
+                    });
+                }
+            }
+        }
+        // บันทึกรายการตะกร้าลงฐานข้อมูล
+        _db.SaveChanges();
+
+        // หากมีการส่งรหัสคูปองชุดคู่มาด้วย ให้เก็บเข้าเซสชันและเปิดใช้งานทันที
+        if (!string.IsNullOrWhiteSpace(voucherCode))
+        {
+            // ปรับแต่งรหัสคูปองเป็นตัวพิมพ์ใหญ่
+            string cleanCode = NormalizeCode(voucherCode);
+            // อ่านรายการคูปองที่เก็บไว้เดิม
+            var collected = ReadCollectedCodes(HttpContext.Session.GetString(CollectedPromoSessionKey));
+            // หากยังไม่ได้เก็บคูปองนี้ให้เพิ่มเข้าลิสต์
+            if (!collected.Contains(cleanCode, StringComparer.OrdinalIgnoreCase))
+            {
+                // เพิ่มรหัสคูปองลงในรายการที่เก็บไว้
+                collected.Add(cleanCode);
+                // บันทึกลงเซสชัน
+                HttpContext.Session.SetString(CollectedPromoSessionKey, SerializeCollectedCodes(collected));
+            }
+            // เปิดใช้งานรหัสคูปองชุดคู่นี้กับตะกร้าทันที
+            HttpContext.Session.SetString(AppliedPromoSessionKey, cleanCode);
+        }
+
+        // แจ้งข้อความสำเร็จและพาไปหน้าตะกร้าสินค้าทันที
+        TempData["SuccessMessage"] = "เพิ่มสินค้าชุดคู่ (Bundle) ลงในตะกร้าพร้อมใช้โค้ดส่วนลดเรียบร้อยแล้ว";
+        // เปลี่ยนเส้นทางไปยังหน้าตะกร้าสินค้า
         return RedirectToAction("Cart");
     }
 
@@ -2797,8 +3037,12 @@ public class HomeController : Controller
             {
                 // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
                 var promo = FindPromotionByVoucherCode(effectivePromoCode);
+                // ดึงรายการสินค้าทั้งหมดเพื่อประเมินเงื่อนไขของแถม BOGO และชุดคู่ Bundle
+                var allStoreProds = _db.Products.Include(p => p.Inventory).Where(p => p.IsActive == true).ToList();
+                // อ่านค่ารหัสของแถมที่ลูกค้าเลือกไว้ในเซสชัน
+                int? selectedBogoGiftId = HttpContext.Session.GetInt32("SelectedBogoGiftProductId");
                 // ประเมินเงื่อนไขการใช้โปรโมชั่นกับสินค้าในตะกร้า
-                appliedEval = EvaluateCartPromotion(promo, cartItems);
+                appliedEval = EvaluateCartPromotion(promo, cartItems, null, allStoreProds, selectedBogoGiftId);
                 // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
                 if (!appliedEval.IsValid || appliedEval.Promotion == null)
                 {
@@ -2811,8 +3055,12 @@ public class HomeController : Controller
                 }
                 // กำหนดจำนวนเงินส่วนลดจากผลการประเมิน
                 discountAmount = appliedEval.DiscountAmount;
-                // เพิ่มยอดการใช้สิทธิ์ของโปรโมชั่นขึ้น 1 ครั้ง
-                appliedEval.Promotion.CurrentUsageCount += 1;
+                // อัปเดตยอดการใช้สิทธิ์ของโปรโมชั่นในตารางฐานข้อมูลจริงขึ้น 1 ครั้ง
+                var trackedPromo = _db.Promotions.FirstOrDefault(p => p.PromotionId == appliedEval.Promotion.PromotionId);
+                if (trackedPromo != null)
+                {
+                    trackedPromo.CurrentUsageCount += 1;
+                }
             }
 
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
@@ -2887,6 +3135,35 @@ public class HomeController : Controller
             // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
             if (appliedEval != null && appliedEval.Promotion != null)
             {
+                // หากเป็นโปรโมชั่นซื้อ 1 แถม 1 ที่แถมสินค้าเพิ่มฟรี 1 ชิ้น (UnitPrice = 0) ให้บันทึกสินค้าของแถมลงในใบจองและสำรองสต็อกด้วย
+                if (appliedEval.PromoType == "bogo" && !string.IsNullOrEmpty(appliedEval.FreeGiftProductName) && appliedEval.DiscountAmount == 0m)
+                {
+                    // ค้นหารหัสสินค้าจริงของของแถม (กรณี 0 คือแถมตัวมันเองรุ่นเดียวกับสินค้าที่ซื้อ)
+                    int resolvedGiftProdId = (appliedEval.FreeGiftProductId.HasValue && appliedEval.FreeGiftProductId.Value > 0)
+                        ? appliedEval.FreeGiftProductId.Value
+                        : cartItems.First().ProductId;
+                    // ตรวจสอบสต็อกของสินค้าของแถม
+                    var giftInv = _db.Inventories.FirstOrDefault(i => i.ProductId == resolvedGiftProdId);
+                    // หากมีสต็อกพร้อมแถม ให้เพิ่มรายการของแถมราคา 0 บาทลงใน Preorderitems เพื่อให้แสดงในใบจองและหน้าเคาน์เตอร์พนักงาน
+                    if (giftInv != null && (giftInv.QuantityOnHand - giftInv.ReservedQuantity) >= 1)
+                    {
+                        // เพิ่มรายการสินค้าของแถมราคา 0 บาท
+                        _db.Preorderitems.Add(new Preorderitem
+                        {
+                            // ผูกรหัสใบจอง
+                            PreorderId = preorder.PreorderId,
+                            // ผูกรหัสสินค้าของแถม
+                            ProductId = resolvedGiftProdId,
+                            // ราคาต่อหน่วยเป็น 0 บาท (แถมฟรีจากโปรโมชั่น ซื้อ 1 แถม 1)
+                            UnitPrice = 0m,
+                            // จำนวนของแถม 1 ชิ้น
+                            Quantity = 1
+                        });
+                        // สำรองสต็อกของแถม 1 ชิ้น
+                        giftInv.ReservedQuantity += 1;
+                    }
+                }
+
                 // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
                 var promoPayload = new PreorderPromoPayload
                 {
@@ -2903,7 +3180,15 @@ public class HomeController : Controller
                     // กำหนดจำนวนเงินส่วนลด
                     DiscountAmount = discountAmount,
                     // กำหนดสถานะรับแต้มสองเท่า
-                    IsDoublePoints = appliedEval.IsDoublePoints
+                    IsDoublePoints = appliedEval.IsDoublePoints,
+                    // กำหนดรหัสสินค้าของแถม (ถ้ามี)
+                    FreeGiftProductId = appliedEval.FreeGiftProductId,
+                    // กำหนดชื่อสินค้าของแถม (ถ้ามี)
+                    FreeGiftProductName = appliedEval.FreeGiftProductName ?? string.Empty,
+                    // กำหนดรูปภาพสินค้าของแถม
+                    FreeGiftImageUrl = appliedEval.FreeGiftImageUrl ?? string.Empty,
+                    // กำหนดมูลค่าปกติของสินค้าของแถม
+                    FreeGiftValue = appliedEval.FreeGiftPrice
                 };
                 // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
                 string logCode = GenerateLogCode("PRM");
@@ -4462,6 +4747,71 @@ public class HomeController : Controller
             _ => "โปรโมชั่นพิเศษ"
         };
 
+    // ฟังก์ชันช่วยแปลงรหัสเป้าหมายสินค้าเป็นชื่อภาษาไทยสำหรับคำอธิบายโปรโมชั่น
+    private static string FormatTargetProductOrGroupThai(string target, Dictionary<int, string>? prodNameMap = null)
+    {
+        // หากเป็นรหัสตัวเลขสินค้าและมีในพจนานุกรมชื่อสินค้า ให้คืนชื่อสินค้ารุ่นนั้น
+        if (int.TryParse(target, out int pid) && prodNameMap != null && prodNameMap.TryGetValue(pid, out string? pName))
+        {
+            // คืนชื่อสินค้าระบุรุ่น
+            return $"รุ่น \"{pName}\"";
+        }
+        // คืนชื่อกลุ่มหมวดหมู่สินค้ามาตรฐาน
+        return target switch
+        {
+            "figures" => "สินค้าหมวดฟิกเกอร์",
+            "clearance" => "สินค้าค้างสต็อกนาน / ล้างสต็อกสิ้นปี",
+            _ => "สินค้าทุกหมวดหมู่ในร้าน"
+        };
+    }
+
+    // ฟังก์ชันคืนค่าคำอธิบายขอบเขตและเงื่อนไขโปรโมชั่นแบบละเอียดพร้อมชื่อสินค้าจริง
+    private static string FormatDetailedScopeThai(string? scope, Dictionary<int, string>? prodNameMap = null)
+    {
+        // ปรับแต่งข้อความขอบเขตเป็นตัวพิมพ์เล็ก
+        string raw = (scope ?? string.Empty).Trim().ToLowerInvariant();
+        // กรณีโปรโมชั่นซื้อ 1 แถม 1 (bogo:mode:buyTarget[:freeProdId])
+        if (raw.StartsWith("bogo:"))
+        {
+            // แยกส่วนรหัสขอบเขต
+            var parts = raw.Split(':');
+            // ตรวจสอบความครบถ้วนของโครงสร้าง
+            if (parts.Length >= 3)
+            {
+                // โหมดของแถม (same, item, pick)
+                string mode = parts[1];
+                // ชื่อสินค้าหรือหมวดหมู่ที่ต้องซื้อ
+                string buyLbl = FormatTargetProductOrGroupThai(parts[2], prodNameMap);
+                // กรณีแถมตัวมันเองรุ่นเดียวกัน
+                if (mode == "same") return $"ซื้อ{buyLbl} แถมฟรีตัวมันเองรุ่นเดียวกัน 1 ชิ้น";
+                // กรณีแถมสินค้าเฉพาะรุ่นที่ร้านกำหนด
+                if (mode == "item" && parts.Length >= 4) return $"ซื้อ{buyLbl} แถมฟรี {FormatTargetProductOrGroupThai(parts[3], prodNameMap)} 1 ชิ้น";
+                // กรณีให้ลูกค้าเลือกของแถมเองหรือเลือกแถมตัวเดิมในตะกร้า
+                return $"ซื้อ{buyLbl} เลือกของแถมในตะกร้าหรือเลือกแถมตัวมันเองได้ฟรี 1 ชิ้น";
+            }
+        }
+        // กรณีโปรโมชั่นซื้อคู่ / Bundle (bundle:p1:p2 หรือ bundle:any2:target)
+        if (raw.StartsWith("bundle:"))
+        {
+            // แยกส่วนรหัสขอบเขต
+            var parts = raw.Split(':');
+            // กรณีซื้อครบ 2 ชิ้นขึ้นไปในหมวดที่กำหนด
+            if (parts.Length >= 3 && parts[1] == "any2")
+            {
+                // คืนคำอธิบายการซื้อครบ 2 ชิ้น
+                return $"ซื้อครบ 2 ชิ้นขึ้นไป ({FormatTargetProductOrGroupThai(parts[2], prodNameMap)})";
+            }
+            // กรณีจับคู่สินค้า 2 รุ่นที่กำหนด
+            if (parts.Length >= 3)
+            {
+                // คืนชื่อสินค้าทั้ง 2 รุ่นที่จับคู่กัน
+                return $"ซื้อคู่ {FormatTargetProductOrGroupThai(parts[1], prodNameMap)} + {FormatTargetProductOrGroupThai(parts[2], prodNameMap)}";
+            }
+        }
+        // คืนค่าป้ายขอบเขตพื้นฐาน
+        return GetScopeThaiLabel(raw);
+    }
+
     // ฟังก์ชันคืนค่าข้อความภาษาไทยสำหรับขอบเขตสินค้าที่ร่วมรายการโปรโมชั่น
     private static string GetScopeThaiLabel(string? scope) =>
         // แปลงขอบเขตสินค้าเป็นป้ายชื่อภาษาไทย
@@ -4471,13 +4821,15 @@ public class HomeController : Controller
             "all" or "" => "สินค้าทุกหมวดหมู่ในร้าน",
             // ใช้ได้เฉพาะสินค้าหมวดฟิกเกอร์
             "figures" => "สินค้าหมวดฟิกเกอร์",
-            // ใช้ได้เฉพาะสินค้าลดล้างสต๊อกหรือพร้อมส่ง
-            "clearance" => "สินค้าลดล้างสต๊อก / พร้อมส่ง",
+            // ใช้ได้เฉพาะสินค้าค้างสต็อกนานหรือลดล้างสต็อก
+            "clearance" => "สินค้าค้างสต็อกนาน / ล้างสต็อกสิ้นปี",
+            // ขอบเขตอื่นๆ ให้แสดงตามฟังก์ชันละเอียด
+            var s when s.StartsWith("bogo:") || s.StartsWith("bundle:") => FormatDetailedScopeThai(s, null),
             // ขอบเขตอื่นๆ ให้แสดงตามชื่อเดิม
             _ => scope!
         };
 
-    // ฟังก์ชัน MatchesScope สำหรับประมวลผลตรรกะและการทำงานของระบบ
+    // ฟังก์ชัน MatchesScope สำหรับประมวลผลตรรกะและการทำงานของระบบ (รองรับทั้ง all, figures, clearance, bogo:..., bundle:..., prod:...)
     private static bool MatchesScope(Product? product, string? scope)
     {
         // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
@@ -4492,7 +4844,58 @@ public class HomeController : Controller
             return true;
         }
 
-        // ตรวจสอบเงื่อนไขทางตรรกะเพื่อแยกการทำงานตามกรณี
+        // กรณีขอบเขตแบบ BOGO (bogo:mode:buyTarget[:freeProdId]) ให้ตรวจสอบสินค้าที่ซื้อเทียบกับ buyTarget
+        if (normalizedScope.StartsWith("bogo:"))
+        {
+            // แยกส่วนรหัสขอบเขต
+            var parts = normalizedScope.Split(':');
+            // ดึงรหัสเป้าหมายสินค้าที่ต้องซื้อ
+            string buyTarget = parts.Length >= 3 ? parts[2] : "all";
+            // หากระบุเป็นรหัสสินค้าเฉพาะรุ่น ให้เทียบกับ ProductId
+            if (int.TryParse(buyTarget, out int targetPid))
+            {
+                // คืนผลการเปรียบเทียบรหัสสินค้า
+                return product.ProductId == targetPid;
+            }
+            // มิฉะนั้นให้ตรวจสอบตามกลุ่มหมวดหมู่ของ buyTarget
+            return MatchesScope(product, buyTarget);
+        }
+
+        // กรณีขอบเขตแบบ Bundle (bundle:p1:p2 หรือ bundle:any2:target)
+        if (normalizedScope.StartsWith("bundle:"))
+        {
+            // แยกส่วนรหัสขอบเขต
+            var parts = normalizedScope.Split(':');
+            // กรณีซื้อครบ 2 ชิ้นในหมวดที่กำหนด
+            if (parts.Length >= 3 && parts[1] == "any2")
+            {
+                // ตรวจสอบตามหมวดหมู่ที่กำหนด
+                return MatchesScope(product, parts[2]);
+            }
+            // กรณีจับคู่สินค้า 2 รุ่นที่กำหนด
+            if (parts.Length >= 3 && int.TryParse(parts[1], out int p1) && int.TryParse(parts[2], out int p2))
+            {
+                // สินค้าที่อยู่ในชุดคู่คือชิ้นที่ 1 หรือชิ้นที่ 2
+                return product.ProductId == p1 || product.ProductId == p2;
+            }
+            // ค่าเริ่มต้นคืนค่าจริง
+            return true;
+        }
+
+        // กรณีระบุรหัสสินค้าเฉพาะรุ่น (prod:id)
+        if (normalizedScope.StartsWith("prod:"))
+        {
+            // แยกส่วนรหัสสินค้า
+            var parts = normalizedScope.Split(':');
+            // เปรียบเทียบรหัสสินค้า
+            if (parts.Length >= 2 && int.TryParse(parts[1], out int pid))
+            {
+                // คืนผลการเปรียบเทียบรหัสสินค้า
+                return product.ProductId == pid;
+            }
+        }
+
+        // ตรวจสอบเงื่อนไขทางตรรกะเพื่อแยกการทำงานตามกรณีหมวดฟิกเกอร์
         if (normalizedScope == "figures")
         {
             // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
@@ -4507,29 +4910,33 @@ public class HomeController : Controller
                 || slug == "limited-collectibles";
         }
 
-        // ตรวจสอบเงื่อนไขทางตรรกะเพื่อแยกการทำงานตามกรณี
+        // ตรวจสอบเงื่อนไขทางตรรกะเพื่อแยกการทำงานตามกรณีสินค้าค้างสต็อกนาน / ลดล้างสต็อกสิ้นปี
         if (normalizedScope == "clearance")
         {
-            // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
+            // คำนวณจำนวนสินค้าพร้อมจำหน่ายในคลัง
             int available = (product.Inventory?.QuantityOnHand ?? 0) - (product.Inventory?.ReservedQuantity ?? 0);
-            // ส่งคืนค่าผลลัพธ์จากการประมวลผลของฟังก์ชัน
-            return !product.IsPreorder && available > 0;
+            // สินค้าค้างสต็อกนานคือสินค้าพร้อมส่งที่มีสต็อกคงเหลือตั้งแต่ 10 ชิ้นขึ้นไปในคลัง
+            return !product.IsPreorder && available >= 10;
         }
 
         // ส่งคืนค่าผลลัพธ์จากการประมวลผลของฟังก์ชัน
         return true;
     }
 
-    // ฟังก์ชันคำนวณและประเมินผลสิทธิประโยชน์ของโปรโมชั่นสำหรับรายการสินค้าในตะกร้า
+    // ฟังก์ชันคำนวณและประเมินผลสิทธิประโยชน์ของโปรโมชั่นทั้ง 5 รูปแบบสำหรับรายการสินค้าในตะกร้า
     private static PromoEvaluationResult EvaluateCartPromotion(
         Promotion? promo,
         IReadOnlyCollection<Cartitem> cartItems,
-        DateOnly? todayOverride = null)
+        DateOnly? todayOverride = null,
+        IReadOnlyCollection<Product>? allStoreProducts = null,
+        int? selectedBogoGiftProductId = null)
     {
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         var today = todayOverride ?? TodayGregorian();
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         decimal subtotal = cartItems.Sum(c => (c.Product?.RetailPrice ?? 0m) * c.Quantity);
+        // สร้างพจนานุกรมชื่อสินค้าสำหรับแสดงข้อความแจ้งเตือนที่ชัดเจน
+        var prodNameMap = allStoreProducts?.ToDictionary(p => p.ProductId, p => p.Name);
 
         // ตรวจสอบความถูกต้องและค่าว่างของข้อมูลก่อนดำเนินการต่อ
         if (promo == null)
@@ -4639,7 +5046,7 @@ public class HomeController : Controller
                 // กำหนดยอดรวมสินค้าในตะกร้า
                 SubtotalAmount = subtotal,
                 // กำหนดข้อความแจ้งข้อผิดพลาด
-                ErrorMessage = $"โค้ด \"{promo.VoucherCode}\" ใช้ได้เฉพาะ{GetScopeThaiLabel(promo.ApplicableScope)} แต่ไม่มีสินค้าที่ร่วมรายการในตะกร้า"
+                ErrorMessage = $"โค้ด \"{promo.VoucherCode}\" ใช้ได้เฉพาะ{FormatDetailedScopeThai(promo.ApplicableScope, prodNameMap)} แต่ไม่มีสินค้าที่ร่วมรายการในตะกร้า"
             };
         }
 
@@ -4673,81 +5080,188 @@ public class HomeController : Controller
 
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         string promoType = (promo.PromoType ?? "percent").Trim().ToLowerInvariant();
+        // อ่านรหัสขอบเขตสินค้าของโปรโมชั่น
+        string rawScope = (promo.ApplicableScope ?? "all").Trim().ToLowerInvariant();
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         decimal discountValue = promo.DiscountValue ?? 0m;
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         decimal discount = 0m;
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         bool isDoublePoints = false;
+        // ตัวแปรเก็บข้อมูลของแถมสำหรับโปรโมชั่นซื้อ 1 แถม 1
+        string bogoGiftMode = string.Empty;
+        // รหัสสินค้าของแถม
+        int? freeGiftProdId = null;
+        // ชื่อสินค้าของแถม
+        string? freeGiftProdName = null;
+        // พาธรูปภาพสินค้าของแถม
+        string? freeGiftImgUrl = null;
+        // ราคาปกติของสินค้าของแถม
+        decimal freeGiftPrice = 0m;
         // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
         string summary;
 
-        // แยกการทำงานตามค่าตัวแปรที่ระบุ
+        // แยกการทำงานตามประเภทโปรโมชั่นทั้ง 5 รูปแบบ
         switch (promoType)
         {
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
+            // รูปแบบที่ 1: ส่วนลดเปอร์เซ็นต์ / ล้างสต็อกสิ้นปี 20-50%
             case "percent":
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
             case "percentage":
-                // คำนวณมูลค่าส่วนลดตามเปอร์เซ็นต์
+                // คำนวณมูลค่าส่วนลดตามเปอร์เซ็นต์ของสินค้าที่ร่วมรายการ
                 discount = Math.Round(eligibleSubtotal * (discountValue / 100m), 2, MidpointRounding.AwayFromZero);
                 // จำกัดมูลค่าส่วนลดไม่ให้เกินยอดรวมสินค้าที่ร่วมรายการ
                 discount = Math.Clamp(discount, 0m, eligibleSubtotal);
                 // จัดรูปแบบข้อความสรุปส่วนลดเปอร์เซ็นต์
-                summary = $"ลด {discountValue:0.#}% (ประหยัด ฿{discount:N0})";
+                summary = rawScope == "clearance"
+                    ? $"โปรล้างสต็อกสิ้นปี ลด {discountValue:0.#}% (ประหยัด ฿{discount:N0})"
+                    : $"ลด {discountValue:0.#}% (ประหยัด ฿{discount:N0})";
                 // จบการทำงานของเงื่อนไขนี้
                 break;
 
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
+            // รูปแบบที่ 2: ซื้อ 1 แถม 1 เฉพาะสินค้าที่กำหนด (รองรับแถมตัวมันเอง, แถมสินค้าที่ร้านระบุ, หรือให้ลูกค้าเลือกของแถมได้)
             case "bogo":
-                // ตรวจสอบเงื่อนไขทางตรรกะเพื่อแยกการทำงานตามกรณี
-                if (eligibleQty < 2)
+                // แยกโหมดของแถมจาก ApplicableScope (bogo:same:..., bogo:item:buy:freeId, bogo:pick:...)
+                bogoGiftMode = "pick";
+                // รหัสสินค้าของแถมที่ร้านล็อกไว้ (กรณีโหมด item)
+                int? fixedFreeProdId = null;
+                if (rawScope.StartsWith("bogo:"))
                 {
-                    // ส่งคืนผลลัพธ์การประเมินโปรโมชั่นที่ไม่ถูกต้องเนื่องจากสินค้าไม่ครบ 2 ชิ้น
+                    var bParts = rawScope.Split(':');
+                    if (bParts.Length >= 2) bogoGiftMode = bParts[1];
+                    if (bogoGiftMode == "item" && bParts.Length >= 4 && int.TryParse(bParts[3], out int parsedFreeId))
+                    {
+                        fixedFreeProdId = parsedFreeId;
+                    }
+                }
+
+                // ดึงสินค้าตัวหลักที่ลูกค้าซื้อในตะกร้าเพื่อใช้เป็นฐานของแถม
+                var baseBoughtProduct = eligibleItems.First().Product;
+                // คำนวณเพดานมูลค่าของแถมสูงสุด
+                decimal bogoCap = discountValue > 0m ? discountValue : (baseBoughtProduct?.RetailPrice ?? 0m);
+
+                // กำหนดสินค้าของแถมตามโหมดที่ตั้งค่าไว้
+                Product? resolvedFreeProduct = null;
+                if (bogoGiftMode == "same")
+                {
+                    // โหมดแถมตัวมันเอง: แถมรุ่นเดียวกับสินค้าที่ซื้อ 1 ชิ้น
+                    freeGiftProdId = 0;
+                    resolvedFreeProduct = baseBoughtProduct;
+                }
+                else if (bogoGiftMode == "item" && fixedFreeProdId.HasValue)
+                {
+                    // โหมดแถมสินค้าเฉพาะรุ่นที่ร้านกำหนดไว้
+                    freeGiftProdId = fixedFreeProdId.Value;
+                    resolvedFreeProduct = allStoreProducts?.FirstOrDefault(p => p.ProductId == fixedFreeProdId.Value) ?? baseBoughtProduct;
+                }
+                else
+                {
+                    // โหมดให้ลูกค้าเลือกของแถมเองในหน้าตะกร้า (หรือเลือก 0 = แถมตัวมันเอง)
+                    int chosenId = selectedBogoGiftProductId ?? 0;
+                    if (chosenId > 0 && allStoreProducts != null)
+                    {
+                        resolvedFreeProduct = allStoreProducts.FirstOrDefault(p => p.ProductId == chosenId && p.RetailPrice <= bogoCap);
+                    }
+                    if (resolvedFreeProduct != null)
+                    {
+                        freeGiftProdId = resolvedFreeProduct.ProductId;
+                    }
+                    else
+                    {
+                        freeGiftProdId = 0;
+                        resolvedFreeProduct = baseBoughtProduct;
+                    }
+                }
+
+                // บันทึกชื่อ รูปภาพ และมูลค่าของแถมที่ได้รับฟรี
+                freeGiftProdName = resolvedFreeProduct != null
+                    ? (freeGiftProdId == 0 ? $"{resolvedFreeProduct.Name} (แถมตัวมันเอง +1 ชิ้นฟรี)" : $"{resolvedFreeProduct.Name} (ของแถมที่เลือก +1 ชิ้นฟรี)")
+                    : "สินค้าของแถม 1 ชิ้น";
+                freeGiftImgUrl = resolvedFreeProduct?.ImageUrl ?? "~/media/images/naruto_hero_fig.png";
+                freeGiftPrice = resolvedFreeProduct?.RetailPrice ?? bogoCap;
+
+                // กรณีลูกค้าหยิบสินค้าใส่ตะกร้ามาแล้วตั้งแต่ 2 ชิ้นขึ้นไป และไม่ได้แยกของแถมต่างหาก ให้หักส่วนลดชิ้นที่แถมในตะกร้าได้ด้วย
+                // แต่หากลูกค้าซื้อ 1 ชิ้น ระบบจะเพิ่มรายการของแถมฟรี (฿0) ให้ในใบจองโดยไม่ต้องหักราคาชิ้นหลัก
+                if (eligibleQty >= 2 && resolvedFreeProduct != null && cartItems.Any(c => c.ProductId == resolvedFreeProduct.ProductId))
+                {
+                    discount = Math.Clamp(Math.Min(resolvedFreeProduct.RetailPrice, bogoCap), 0m, eligibleSubtotal);
+                    summary = $"ซื้อ 1 แถม 1: ฟรี {resolvedFreeProduct.Name} (ลด ฿{discount:N0})";
+                }
+                else
+                {
+                    discount = 0m;
+                    summary = $"ซื้อ 1 แถม 1: รับฟรี {freeGiftProdName} (มูลค่า ฿{freeGiftPrice:N0})";
+                }
+                // จบการทำงานของเงื่อนไขนี้
+                break;
+
+            // รูปแบบที่ 3: ซื้อคู่ / Bundle ซื้อเป็นชุดในราคาพิเศษกว่าซื้อแยก
+            case "bundle":
+                // ตรวจสอบกรณีระบุคู่สินค้า 2 รุ่นเฉพาะเจาะจง (bundle:id1:id2)
+                if (rawScope.StartsWith("bundle:"))
+                {
+                    var bParts = rawScope.Split(':');
+                    if (bParts.Length >= 3 && bParts[1] != "any2" && int.TryParse(bParts[1], out int reqP1) && int.TryParse(bParts[2], out int reqP2))
+                    {
+                        bool hasP1 = cartItems.Any(c => c.ProductId == reqP1 && c.Quantity >= 1);
+                        bool hasP2 = cartItems.Any(c => c.ProductId == reqP2 && c.Quantity >= 1);
+                        if (!hasP1 || !hasP2)
+                        {
+                            string p1Name = FormatTargetProductOrGroupThai(reqP1.ToString(), prodNameMap);
+                            string p2Name = FormatTargetProductOrGroupThai(reqP2.ToString(), prodNameMap);
+                            return new PromoEvaluationResult
+                            {
+                                IsValid = false,
+                                Promotion = promo,
+                                SubtotalAmount = subtotal,
+                                EligibleSubtotal = eligibleSubtotal,
+                                ErrorMessage = $"โปรซื้อคู่ \"{promo.VoucherCode}\" ต้องมีสินค้าครบทั้ง {p1Name} และ {p2Name} ในตะกร้าจึงจะได้ราคาชุดพิเศษ"
+                            };
+                        }
+                    }
+                    else if (eligibleQty < 2)
+                    {
+                        return new PromoEvaluationResult
+                        {
+                            IsValid = false,
+                            Promotion = promo,
+                            SubtotalAmount = subtotal,
+                            EligibleSubtotal = eligibleSubtotal,
+                            ErrorMessage = $"โปรซื้อคู่ / ชุดเซ็ตสุดคุ้ม \"{promo.VoucherCode}\" ต้องซื้อสินค้าที่ร่วมรายการอย่างน้อย 2 ชิ้นขึ้นไป"
+                        };
+                    }
+                }
+                else if (eligibleQty < 2)
+                {
                     return new PromoEvaluationResult
                     {
-                        // กำหนดสถานะความถูกต้องของโปรโมชั่น
                         IsValid = false,
-                        // กำหนดข้อมูลโปรโมชั่น
                         Promotion = promo,
-                        // กำหนดยอดรวมสินค้าในตะกร้า
                         SubtotalAmount = subtotal,
-                        // กำหนดยอดรวมสินค้าที่ร่วมรายการ
                         EligibleSubtotal = eligibleSubtotal,
-                        // กำหนดข้อความแจ้งข้อผิดพลาด
-                        ErrorMessage = $"โค้ดซื้อ 1 แถม 1 ({promo.VoucherCode}) ต้องมีสินค้าที่ร่วมรายการอย่างน้อย 2 ชิ้นในตะกร้า"
+                        ErrorMessage = $"โปรซื้อคู่ / ชุดเซ็ตสุดคุ้ม \"{promo.VoucherCode}\" ต้องซื้อสินค้าที่ร่วมรายการอย่างน้อย 2 ชิ้นขึ้นไป"
                     };
                 }
-                // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-                decimal cheapestUnit = eligibleItems.Min(c => c.Product?.RetailPrice ?? 0m);
-                // ประกาศและกำหนดค่าตัวแปรสำหรับใช้คำนวณและประมวลผลในขั้นตอนถัดไป
-                decimal bogoCap = discountValue > 0m ? discountValue : cheapestUnit;
-                // คำนวณและจำกัดมูลค่าส่วนลดฟรีสินค้าชิ้นที่ถูกที่สุด
-                discount = Math.Clamp(bogoCap, 0m, eligibleSubtotal);
-                // จัดรูปแบบข้อความสรุปโปรโมชั่นซื้อหนึ่งแถมหนึ่ง
-                summary = $"สิทธิพิเศษซื้อ 1 แถม 1 (ส่วนลด ฿{discount:N0})";
-                // จบการทำงานของเงื่อนไขนี้
+                // คำนวณส่วนลดชุดคู่ราคาพิเศษกว่าซื้อแยก
+                discount = Math.Clamp(discountValue, 0m, eligibleSubtotal);
+                summary = $"โปรซื้อคู่ / Bundle ราคาพิเศษ (ประหยัด ฿{discount:N0})";
                 break;
 
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
+            // รูปแบบที่ 4: สะสมแต้ม X2 แลกสินค้า/ส่วนลด — เฉพาะสมาชิกที่ login เท่านั้น
             case "double_points":
                 // กำหนดแฟล็กแต้มสะสมสองเท่าเป็นจริง
                 isDoublePoints = true;
-                // กำหนดข้อความสรุปสิทธิพิเศษแต้มสองเท่า
-                summary = "รับแต้มสะสม x2 เมื่อชำระเงินที่หน้าร้าน";
+                // กำหนดข้อความสรุปสิทธิพิเศษแต้มสองเท่าสำหรับสมาชิก
+                summary = "สมาชิกสะสมแต้ม X2 เมื่อรับและชำระเงินที่หน้าร้าน (ใช้แลกของรางวัล)";
                 // จบการทำงานของเงื่อนไขนี้
                 break;
 
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
+            // รูปแบบที่ 5: พรีออเดอร์ จองสินค้าล่วงหน้า มารับ+ชำระที่หน้าร้านเท่านั้น
             case "fixed":
-            // กรณีเงื่อนไขตรงกับค่าที่กำหนด
-            case "bundle":
-            // กรณีประเภทโปรโมชั่นอื่นๆ
             default:
                 // จำกัดมูลค่าส่วนลดตามจำนวนเงินที่กำหนด
                 discount = Math.Clamp(discountValue, 0m, eligibleSubtotal);
-                // จัดรูปแบบข้อความสรุปส่วนลดเงินสดท้ายบิล
-                summary = $"ส่วนลดท้ายบิล ฿{discount:N0}";
+                // จัดรูปแบบข้อความสรุปส่วนลดพรีออเดอร์รับและชำระหน้าร้าน
+                summary = $"ส่วนลดสั่งจองรับและชำระหน้าร้าน ฿{discount:N0}";
                 // จบการทำงานของเงื่อนไขนี้
                 break;
         }
@@ -4768,7 +5282,17 @@ public class HomeController : Controller
             // กำหนดแฟล็กแต้มสองเท่า
             IsDoublePoints = isDoublePoints,
             // กำหนดข้อความสรุปสิทธิประโยชน์
-            BenefitSummary = summary
+            BenefitSummary = summary,
+            // กำหนดโหมดของแถม BOGO
+            BogoGiftMode = bogoGiftMode,
+            // กำหนดรหัสสินค้าของแถม
+            FreeGiftProductId = freeGiftProdId,
+            // กำหนดชื่อสินค้าของแถม
+            FreeGiftProductName = freeGiftProdName,
+            // กำหนดรูปภาพสินค้าของแถม
+            FreeGiftImageUrl = freeGiftImgUrl,
+            // กำหนดมูลค่าปกติของสินค้าของแถม
+            FreeGiftPrice = freeGiftPrice
         };
     }
 
