@@ -1,1 +1,7 @@
 friendhouse_db_mysql.sql
+
+# Report builder workspace & document files
+report_builder/
+*.docx
+*.pdf
+~$*
