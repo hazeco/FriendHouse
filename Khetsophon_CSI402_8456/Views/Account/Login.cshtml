@@ -1,164 +1,226 @@
-@* กำหนดโมเดลข้อมูลสำหรับการเข้าสู่ระบบ *@
+@* กำหนดโมเดลสำหรับรับค่าอีเมลและรหัสผ่านจากฟอร์มเข้าสู่ระบบ *@
 @model Khetsophon_CSI402_8456.ViewModels.LoginViewModel;
-@* ประกาศการกำหนดค่าหน้าเข้าสู่ระบบและอ็อบเจกต์ข้อความ *@
+@* บล็อก C# ส่วนบนสุดของไฟล์สำหรับกำหนดคอนฟิกข้อความและข้อมูลบัญชีทดสอบ *@
 @{
-    // กำหนดชื่อหัวข้อของหน้าเว็บ
+    // กำหนดชื่อหน้าเว็บสำหรับแสดงบนแท็บเบราว์เซอร์
     ViewData["Title"] = "เข้าสู่ระบบ";
-    // กำหนด Layout หลักที่ใช้แสดงผลร่วมกัน
+    // กำหนด Layout หลักสำหรับหน้าจัดการบัญชีผู้ใช้งาน
     Layout = "_AccountLayout";
 
-    // กำหนดค่าข้อความและไอคอนส่วนบนสุดของไฟล์ตามมาตรฐานโครงการ
-    var pageConfig = new {
-        // หัวข้อหลักหน้าเข้าสู่ระบบ
+    // ประกาศอ็อบเจกต์เก็บข้อความเนื้อหาสำคัญของหน้าเข้าสู่ระบบ (Top-of-file Content Configuration)
+    var loginContent = new
+    {
+        // หัวข้อหลักของหน้าเข้าสู่ระบบ
         Title = "เข้าสู่ระบบ",
-        // คำอธิบายประโยชน์ของการเข้าสู่ระบบ
+        // คำอธิบายย่อยใต้หัวข้อหลัก
         Subtitle = "เข้าสู่ระบบเพื่อสั่งพรีออเดอร์และสะสมแต้ม",
-        // ป้ายกำกับช่องกรอกอีเมล
-        EmailLabel = "อีเมล",
-        // ข้อความตัวอย่างในช่องอีเมล
-        EmailPlaceholder = "you@example.com",
-        // ป้ายกำกับช่องกรอกรหัสผ่าน
-        PasswordLabel = "รหัสผ่าน",
-        // ข้อความลิงก์ลืมรหัสผ่าน
-        ForgotPasswordText = "ลืมรหัสผ่าน / เปลี่ยนรหัสผ่าน?",
-        // ข้อความบนปุ่มส่งแบบฟอร์ม
-        SubmitButtonText = "เข้าสู่ระบบ",
-        // หัวข้อส่วนทางลัดเข้าสู่ระบบด่วนสำหรับการทดสอบ
-        FastLoginTitle = "เข้าสู่ระบบด่วนสำหรับการทดสอบระบบ",
-        // ข้อความสอบถามการเป็นสมาชิก
-        RegisterPrompt = "ยังไม่มีบัญชีสมาชิก?",
-        // ข้อความลิงก์สมัครสมาชิกใหม่
-        RegisterLinkText = "สมัครสมาชิกใหม่"
+        // หัวข้อกำกับกลุ่มปุ่มเข้าสู่ระบบด่วน
+        FastLoginHeading = "เข้าสู่ระบบด่วน (กรอกอีเมล/รหัสผ่านและยืนยันผ่านระบบจริง)"
+    };
+
+    // ประกาศรายการบัญชีทดสอบจริงในฐานข้อมูลครบทั้ง 5 บทบาท (ตรวจสอบรหัสผ่านด้วย BCrypt ใน AccountController.Login)
+    var fastLoginAccounts = new[]
+    {
+        // บัญชีทดสอบบทบาทลูกค้าทั่วไป
+        new { Key = "customer", Label = "ลูกค้าทั่วไป (Customer View)", Email = "customer@friendhouse.com", Password = "password123", IsFullWidth = true },
+        // บัญชีทดสอบบทบาทพนักงานหน้าร้าน
+        new { Key = "staff", Label = "พนักงาน (Staff)", Email = "staff@friendhouse.com", Password = "password123", IsFullWidth = false },
+        // บัญชีทดสอบบทบาทเจ้าของร้าน
+        new { Key = "owner", Label = "เจ้าของร้าน (Owner)", Email = "owner@friendhouse.com", Password = "password123", IsFullWidth = false },
+        // บัญชีทดสอบบทบาทเจ้าหน้าที่ไอที
+        new { Key = "itsupport", Label = "ไอที (IT Support)", Email = "it@friendhouse.com", Password = "password123", IsFullWidth = false },
+        // บัญชีทดสอบบทบาทฝ่ายบัญชีและการเงิน
+        new { Key = "accountant", Label = "คนทำบัญชี (Account)", Email = "account@friendhouse.com", Password = "password123", IsFullWidth = false }
     };
 }
 
-@* กรอบคอนเทนเนอร์จัดตำแหน่งกึ่งกลางหน้าจอแบบเต็มความสูง *@
+@* กล่องครอบหลักจัดกึ่งกลางหน้าจอทั้งแนวตั้งและแนวนอน *@
 <div class="min-h-dvh flex-1 flex items-center justify-center px-4 py-8 sm:py-12 bg-white">
-    @* กรอบจำกัดความกว้างสูงสุดของการ์ดเข้าสู่ระบบ *@
+    @* กล่องจำกัดความกว้างสูงสุดของการ์ดเข้าสู่ระบบ *@
     <div class="w-full max-w-sm">
-        @* การ์ดสีขาวขอบมนพร้อมเงาสำหรับบรรจุแบบฟอร์มเข้าสู่ระบบ *@
+        @* การ์ดสีขาวขอบมนและเงาสำหรับบรรจุฟอร์มเข้าสู่ระบบ *@
         <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
-            @* ส่วนหัวของการ์ดแสดงไอคอนกุญแจและข้อความต้อนรับ *@
+            @* ส่วนหัวการ์ดแสดงไอคอนแม่กุญแจและชื่อหน้า *@
             <div class="flex flex-col items-center text-center mb-6">
-                @* กรอบพื้นหลังไอคอนระบบรักษาความปลอดภัย *@
+                @* กล่องวงกลมพื้นหลังสีรองสำหรับวางไอคอนแม่กุญแจ *@
                 <div class="w-14 h-14 rounded-2xl bg-secondary/30 flex items-center justify-center mb-3">
-                    @* ไอคอนแม่กุญแจ SVG สื่อถึงความปลอดภัย *@
+                    @* ไอคอนรูปแม่กุญแจ SVG *@
                     <svg class="w-7 h-7 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
                 </div>
-                @* หัวข้อหลักหน้าเข้าสู่ระบบ *@
-                <h1 class="text-xl font-bold text-slate">@pageConfig.Title</h1>
-                @* คำอธิบายประโยชน์ของการเข้าสู่ระบบ *@
-                <p class="text-sm text-slate-500 mt-1">@pageConfig.Subtitle</p>
+                @* หัวข้อหลักของหน้าเข้าสู่ระบบ *@
+                <h1 class="text-xl font-bold text-slate">@loginContent.Title</h1>
+                @* ข้อความคำอธิบายใต้หัวข้อหลัก *@
+                <p class="text-sm text-slate-500 mt-1">@loginContent.Subtitle</p>
             </div>
 
-            @* ตรวจสอบและแสดงข้อความแจ้งเตือนเมื่อการทำงานสำเร็จ *@
-            @if (TempData["SuccessMessage"] != null) {
-                @* กล่องข้อความสีเขียวแจ้งเตือนความสำเร็จ *@
-                <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-700 font-medium text-center">@TempData["SuccessMessage"]</div>
+            @* ตรวจสอบว่ามีข้อความแจ้งเตือนผลสำเร็จจาก TempData หรือไม่ *@
+            @if (TempData["SuccessMessage"] != null)
+            {
+                @* กล่องแจ้งเตือนสีเขียวแสดงข้อความผลสำเร็จ *@
+                <div class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-700 font-medium text-center">
+                    @* แสดงข้อความผลสำเร็จจาก TempData *@
+                    @TempData["SuccessMessage"]
+                </div>
             }
 
-            @* ตรวจสอบและแสดงข้อผิดพลาดสถานะการเข้าสู่ระบบ *@
-            @if (ViewBag.Status != null) {
-                @* กล่องข้อความสีแดงแจ้งเตือนข้อผิดพลาด *@
-                <div class="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-600 font-medium text-center">@ViewBag.Status</div>
+            @* ตรวจสอบว่ามีข้อความแจ้งเตือนข้อผิดพลาดจาก TempData หรือไม่ *@
+            @if (TempData["ErrorMessage"] != null)
+            {
+                @* กล่องแจ้งเตือนสีแดงแสดงข้อความข้อผิดพลาด *@
+                <div class="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-600 font-medium text-center">
+                    @* แสดงข้อความข้อผิดพลาดจาก TempData *@
+                    @TempData["ErrorMessage"]
+                </div>
             }
 
-            @* แบบฟอร์มเข้าสู่ระบบเชื่อมโยงไปยัง AccountController.Login (ไม่ใส่ method attribute) *@
-            <form class="space-y-4" asp-controller="Account" asp-action="Login">
-              @* กลุ่มช่องกรอกข้อมูลอีเมล *@
+            @* ตรวจสอบว่ามีข้อความแจ้งเตือนสถานะการล็อกอินจาก ViewBag หรือไม่ *@
+            @if (ViewBag.Status != null)
+            {
+                @* กล่องแจ้งเตือนสีแดงเมื่ออีเมลหรือรหัสผ่านไม่ถูกต้อง *@
+                <div class="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-600 font-medium text-center">
+                    @* แสดงข้อความสถานะจาก ViewBag *@
+                    @ViewBag.Status
+                </div>
+            }
+
+            @* ฟอร์มเข้าสู่ระบบจริง ส่งข้อมูลไปยัง AccountController แอ็กชัน Login พร้อม AntiForgeryToken อัตโนมัติ (ไม่ระบุ method) *@
+            <form id="loginForm" class="space-y-4" asp-controller="Account" asp-action="Login">
+              @* กล่องครอบช่องกรอกอีเมล *@
               <div>
                 @* ป้ายกำกับช่องกรอกอีเมล *@
-                <label class="block text-xs font-medium text-slate-700 mb-1.5">@pageConfig.EmailLabel</label>
-                @* กล่องบรรจุช่องกรอกและไอคอนซองจดหมาย *@
+                <label class="block text-xs font-medium text-slate-700 mb-1.5">อีเมล</label>
+                @* กล่องจัดตำแหน่งไอคอนด้านซ้ายของช่องกรอกอีเมล *@
                 <div class="relative">
-                  @* ไอคอนซองจดหมาย SVG แสดงทางซ้ายของช่องกรอก *@
+                  @* ไอคอนรูปซองจดหมาย SVG *@
                   <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"></path></svg>
-                  @* ช่องกรอกอีเมลผู้ใช้งานพร้อมการตรวจสอบความถูกต้อง *@
-                  <input asp-for="Email" type="email" placeholder="@pageConfig.EmailPlaceholder" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                  @* ช่องกรอกอีเมลผูกกับฟิลด์ Email ของ LoginViewModel *@
+                  <input id="loginEmail" asp-for="Email" type="email" placeholder="you@example.com" class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
                 </div>
-                @* ข้อความแจ้งเตือนข้อผิดพลาดของช่องอีเมล *@
+                @* ข้อความแจ้งเตือน Validation ของฟิลด์ Email *@
                 <span asp-validation-for="Email" class="text-xs text-rose-500 mt-1 block"></span>
               </div>
-
-              @* กลุ่มช่องกรอกรหัสผ่าน *@
+              @* กล่องครอบช่องกรอกรหัสผ่าน *@
               <div>
-                @* ป้ายกำกับช่องกรอกรหัสผ่าน *@
+                @* แถวจัดวางป้ายกำกับช่องกรอกรหัสผ่าน *@
                 <div class="flex items-center justify-between mb-1.5">
-                  @* ป้ายระบุข้อความรหัสผ่าน *@
-                  <label class="block text-xs font-medium text-slate-700">@pageConfig.PasswordLabel</label>
+                  @* ป้ายกำกับช่องกรอกรหัสผ่าน *@
+                  <label class="block text-xs font-medium text-slate-700">รหัสผ่าน</label>
                 </div>
-                @* กล่องบรรจุช่องกรอกรหัสผ่านและปุ่มเปิด/ปิดการมองเห็นรหัส *@
+                @* กล่องจัดตำแหน่งไอคอนด้านซ้ายและขวาของช่องกรอกรหัสผ่าน *@
                 <div class="relative">
-                  @* ไอคอนกุญแจล็อก SVG แสดงทางซ้ายของช่องกรอกรหัสผ่าน *@
+                  @* ไอคอนรูปแม่กุญแจ SVG ด้านซ้าย *@
                   <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                  @* ช่องกรอกรหัสผ่านผู้ใช้งาน *@
-                  <input asp-for="Password" id="loginPasswordInput" type="password" placeholder="••••••••" class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
-                  @* ปุ่มสลับการแสดง/ซ่อนรหัสผ่าน *@
-                  <button type="button" onclick="toggleLoginPassword()" aria-label="แสดงหรือซ่อนรหัสผ่าน" class="cursor-pointer w-7 h-7 flex items-center justify-center text-slate-400 hover:text-primary absolute right-1.5 top-1/2 -translate-y-1/2"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button>
+                  @* ช่องกรอกรหัสผ่านผูกกับฟิลด์ Password ของ LoginViewModel *@
+                  <input id="loginPassword" asp-for="Password" type="password" placeholder="••••••••" class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 text-sm text-slate placeholder:text-slate/30 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                  @* ไอคอนรูปดวงตา SVG ด้านขวา *@
+                  <svg class="cursor-pointer w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
-                @* ข้อความแจ้งเตือนข้อผิดพลาดของช่องรหัสผ่าน *@
+                @* ข้อความแจ้งเตือน Validation ของฟิลด์ Password *@
                 <span asp-validation-for="Password" class="text-xs text-rose-500 mt-1 block"></span>
               </div>
-
-              @* ลิงก์สำหรับเปลี่ยนเส้นทางไปหน้ากู้คืนรหัสผ่านกรณีลืมรหัสผ่านก่อนเข้าสู่ระบบ *@
-              <div class="flex items-center justify-end">
-                @* ลิงก์นำทางเชื่อมโยงไปยังหน้ากู้คืนรหัสผ่าน *@
-                <a asp-controller="Account" asp-action="ForgotPassword" class="text-xs text-primary hover:underline">@pageConfig.ForgotPasswordText</a>
+              @* แถวตัวเลือกจดจำการเข้าสู่ระบบและลิงก์ลืมรหัสผ่าน *@
+              <div class="flex items-center justify-between">
+                @* ป้ายกำกับพร้อมช่องทำเครื่องหมายจดจำผู้ใช้งาน *@
+                <label class="flex items-center gap-2 text-xs text-slate-500">
+                  @* ช่องทำเครื่องหมายจดจำฉันไว้ในเครื่องนี้ *@
+                  <input type="checkbox" class="cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/30">
+                  @* ข้อความกำกับช่องทำเครื่องหมาย *@
+                  <div class="font-medium text-slate-600">จดจำฉันไว้ในเครื่องนี้</div>
+                </label>
+                @* ลิงก์นำทางไปยังหน้า ResetPassword ใน AccountController *@
+                <a asp-controller="Account" asp-action="ResetPassword" class="text-xs text-primary hover:underline">ลืมรหัสผ่าน?</a>
               </div>
+              @* ปุ่มกดยืนยันส่งฟอร์มเข้าสู่ระบบจริง *@
+              <button id="loginSubmitBtn" type="submit"
+                 class="block w-full py-2.5 rounded-xl bg-primary text-white text-center text-sm font-semibold shadow-sm hover:opacity-90 transition cursor-pointer">
+                  เข้าสู่ระบบ
+              </button>
 
-              @* ปุ่มส่งแบบฟอร์มเข้าสู่ระบบ *@
-              <button type="submit" class="block w-full py-2.5 rounded-xl bg-primary text-white text-center text-sm font-semibold shadow-sm hover:opacity-90 transition cursor-pointer">@pageConfig.SubmitButtonText</button>
-
-              @* แถบทางเลือกเข้าสู่ระบบด่วนสำหรับการทดสอบระบบ *@
+              @* ส่วนกลุ่มปุ่มเข้าสู่ระบบด่วนแบบปลอดภัย (กรอกอีเมล/รหัสผ่านลงช่องจริงแล้วกดปุ่มเข้าสู่ระบบอัตโนมัติ) *@
               <div class="pt-2 border-t border-slate-100 space-y-2">
-                  @* ข้อความหัวข้อระบุการเข้าสู่ระบบด่วนสำหรับเดโม *@
-                  <span class="block text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">@pageConfig.FastLoginTitle</span>
-                  @* ตารางปุ่มเข้าสู่ระบบด่วนแบ่งตามบทบาทในร้าน *@
+                  @* หัวข้อกำกับกลุ่มปุ่มเข้าสู่ระบบด่วน *@
+                  <span class="block text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">@loginContent.FastLoginHeading</span>
+                  @* ตารางกริด 2 คอลัมน์จัดเรียงปุ่มแต่ละบทบาท *@
                   <div class="grid grid-cols-2 gap-2">
-                      @* ปุ่มเข้าสู่ระบบด่วนบทบาทลูกค้าสมาชิก *@
-                      <a asp-controller="Account" asp-action="FastLogin" asp-route-role="customer" class="col-span-2 flex items-center justify-center gap-2 rounded-xl bg-secondary/25 py-2 px-3 text-xs font-bold text-primary hover:bg-secondary/40 transition-colors cursor-pointer"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><span>ลูกค้าทั่วไป</span></a>
-                      @* ปุ่มเข้าสู่ระบบด่วนบทบาทพนักงานหน้าร้าน *@
-                      <a asp-controller="Account" asp-action="FastLogin" asp-route-role="staff" class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 px-2 text-xs font-bold text-text hover:bg-slate-50 transition-colors cursor-pointer"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg><span>พนักงานประจำสาขา</span></a>
-                      @* ปุ่มเข้าสู่ระบบด่วนบทบาทเจ้าของร้าน *@
-                      <a asp-controller="Account" asp-action="FastLogin" asp-route-role="owner" class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 px-2 text-xs font-bold text-text hover:bg-slate-50 transition-colors cursor-pointer"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>เจ้าของร้าน</span></a>
-                      @* ปุ่มเข้าสู่ระบบด่วนบทบาทผู้ดูแลระบบไอที *@
-                      <a asp-controller="Account" asp-action="FastLogin" asp-route-role="itsupport" class="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 px-2 text-xs font-bold text-text hover:bg-slate-50 transition-colors cursor-pointer"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><span>ผู้ดูแลระบบไอที</span></a>
-                      @* ปุ่มเข้าสู่ระบบด่วนบทบาทฝ่ายบัญชีและการเงิน *@
-                      <a asp-controller="Account" asp-action="FastLogin" asp-route-role="accountant" class="col-span-2 flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 px-2 text-xs font-bold text-text hover:bg-slate-50 transition-colors cursor-pointer"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg><span>ฝ่ายบัญชีและการเงิน</span></a>
+                      @* วนลูปสร้างปุ่มเข้าสู่ระบบด่วนครบทุกบทบาทจากอาร์เรย์ fastLoginAccounts *@
+                      @foreach (var acc in fastLoginAccounts)
+                      {
+                          // เลือกคลาสสไตล์ปุ่มแบบเต็มความกว้างสำหรับลูกค้า และแบบครึ่งความกว้างสำหรับบทบาทอื่น
+                          string btnClass = acc.IsFullWidth
+                              ? "col-span-2 flex items-center justify-center gap-2 rounded-xl bg-secondary/25 py-2 px-3 text-xs font-bold text-primary hover:bg-secondary/40 transition-colors cursor-pointer"
+                              : "flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 px-2 text-xs font-bold text-text hover:bg-slate-50 transition-colors cursor-pointer";
+                          @* ปุ่มเรียกฟังก์ชัน autoFillAndLogin เพื่อกรอกอีเมล/รหัสผ่านลงช่องแล้วกดส่งฟอร์มจริง *@
+                          <button type="button" onclick="autoFillAndLogin('@acc.Email', '@acc.Password')" class="@btnClass">
+                              @* ตรวจสอบบทบาทเพื่อแสดงไอคอน SVG ที่ตรงกับบทบาทนั้น *@
+                              @if (acc.Key == "customer")
+                              {
+                                  @* ไอคอนรูปลูกค้า SVG *@
+                                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                              }
+                              @* กรณีบทบาทพนักงานหน้าร้าน *@
+                              else if (acc.Key == "staff")
+                              {
+                                  @* ไอคอนรูปกระเป๋าทำงาน SVG *@
+                                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                              }
+                              @* กรณีบทบาทเจ้าของร้าน *@
+                              else if (acc.Key == "owner")
+                              {
+                                  @* ไอคอนรูปดาว SVG *@
+                                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                              }
+                              @* กรณีบทบาทเจ้าหน้าที่ไอที *@
+                              else if (acc.Key == "itsupport")
+                              {
+                                  @* ไอคอนรูปตารางระบบ SVG *@
+                                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                              }
+                              @* กรณีบทบาทฝ่ายบัญชีและการเงิน *@
+                              else
+                              {
+                                  @* ไอคอนรูปสัญลักษณ์การเงิน SVG *@
+                                  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                              }
+                              @* แสดงชื่อปุ่มบทบาทผู้ใช้งาน *@
+                              <span>@acc.Label</span>
+                          </button>
+                      }
                   </div>
               </div>
 
-              @* เส้นแบ่งคั่นระหว่างฟอร์มกับลิงก์สมัครสมาชิกใหม่ *@
+              @* เส้นคั่นแนวนอนพร้อมคำว่า "หรือ" *@
               <div class="flex items-center gap-3 my-4">
                   @* เส้นคั่นฝั่งซ้าย *@
                   <div class="h-px flex-1 bg-slate-200"></div>
-                  @* ข้อความคำว่าหรือ *@
+                  @* ข้อความคั่นตรงกลาง *@
                   <span class="text-[11px] text-slate-400">หรือ</span>
                   @* เส้นคั่นฝั่งขวา *@
                   <div class="h-px flex-1 bg-slate-200"></div>
               </div>
 
-              @* ลิงก์นำทางไปยังหน้าลงทะเบียนสมัครสมาชิกใหม่ *@
+              @* ข้อความและลิงก์สำหรับสมัครสมาชิกใหม่ *@
               <p class="text-center text-xs text-slate-500">
-                @* ข้อความสอบถามการเป็นสมาชิก *@
-                <span>@pageConfig.RegisterPrompt</span>
-                @* ลิงก์เชื่อมต่อไปยังหน้าลงทะเบียน *@
-                <a asp-controller="Account" asp-action="Register" class="text-primary font-bold hover:underline">@pageConfig.RegisterLinkText</a>
+                ยังไม่มีบัญชีสมาชิก?
+                @* ลิงก์นำทางไปยังหน้า Register ใน AccountController *@
+                <a asp-controller="Account" asp-action="Register" class="text-primary font-bold hover:underline">สมัครสมาชิกใหม่</a>
               </p>
             </form>
         </div>
     </div>
 </div>
 
-@* สคริปต์จาวาสคริปต์ควบคุมการเปิดและปิดการแสดงผลรหัสผ่าน *@
+@* บล็อกสคริปต์ JavaScript สำหรับกรอกอีเมล/รหัสผ่านลงช่องฟอร์มจริงแล้วกดปุ่มเข้าสู่ระบบอัตโนมัติ (ไม่ใช้ AJAX) *@
 <script>
-    // ฟังก์ชันสลับการแสดงผลรหัสผ่านระหว่างแบบข้อความกับแบบซ่อน
-    function toggleLoginPassword() {
-        // ค้นหาอิลิเมนต์ช่องกรอกรหัสผ่านตามรหัสไอดี
-        var input = document.getElementById('loginPasswordInput');
-        // ตรวจสอบว่าพบอิลิเมนต์หรือไม่
-        if (!input) return;
-        // สลับประเภทของช่องกรอกระหว่าง password และ text
-        input.type = input.type === 'password' ? 'text' : 'password';
+    // ฟังก์ชันรับค่าอีเมลและรหัสผ่านมากรอกลงในช่อง input จริง แล้วสั่งคลิกปุ่มเข้าสู่ระบบ
+    function autoFillAndLogin(email, password) {
+        // กรอกค่าอีเมลลงในช่อง input อีเมลจริง
+        document.getElementById('loginEmail').value = email;
+        // กรอกค่ารหัสผ่านลงในช่อง input รหัสผ่านจริง
+        document.getElementById('loginPassword').value = password;
+        // หน่วงเวลา 150 มิลลิวินาทีให้เห็นค่าที่กรอกในช่อง แล้วสั่งกดปุ่มเข้าสู่ระบบเพื่อส่ง POST ฟอร์มจริง
+        setTimeout(function () {
+            // สั่งคลิกปุ่ม submit ของฟอร์มเข้าสู่ระบบเพื่อให้เบราว์เซอร์ส่ง POST พร้อม AntiForgeryToken
+            document.getElementById('loginSubmitBtn').click();
+        }, 150);
     }
 </script>

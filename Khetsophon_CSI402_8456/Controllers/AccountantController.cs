@@ -281,8 +281,8 @@ public class AccountantController : Controller
         return File(csvBytes, "text/csv; charset=utf-8", $"FriendHouse_Receipts_{DateTime.Now:yyyyMMdd_HHmm}.csv");
     }
 
-    // READ: แสดงหน้าสมุดบันทึกรายรับ-รายจ่ายประจำร้านพร้อมระบบแบ่งหน้า
-    public IActionResult Ledger(int page = 1)
+    // READ: แสดงหน้าสมุดบันทึกรายรับ-รายจ่ายประจำร้านพร้อมตัวเลือกช่วงเดือนและระบบแบ่งหน้า (ใช้ยอดชุดเดียวกับหน้าภาพรวม)
+    public IActionResult Ledger(string? selectedMonth, int page = 1)
     {
         // ตรวจสอบสิทธิ์การเข้าใช้งานของฝ่ายบัญชีและการเงิน
         if (!IsAuthorizedAccountant())
@@ -293,32 +293,36 @@ public class AccountantController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        // ดึงรายการบันทึกรายรับ-รายจ่ายทั้งหมดพร้อมข้อมูลผู้บันทึก เรียงจากวันที่ล่าสุด
-        var entries = _db.Financialledgers
+        // สร้างข้อมูลรายงานการเงินชุดเดียวกับหน้าภาพรวม (Index) และเจ้าของร้าน เพื่อให้ตัวเลขทุกการ์ดตรงกัน 100%
+        var reportModel = FinancialReportViewModel.BuildReport(_db, selectedMonth, 1);
+
+        // เริ่มต้นดึงรายการสมุดบันทึกรายรับ-รายจ่ายทั้งหมดพร้อมข้อมูลผู้บันทึก
+        var entriesQuery = _db.Financialledgers
             // โหลดข้อมูลผู้บันทึกรายการบัญชี
             .Include(f => f.RecordedByUser)
+            // แปลงเป็น IQueryable เพื่อรองรับการกรองตามเดือนที่เลือก
+            .AsQueryable();
+
+        // ตรวจสอบว่าผู้ใช้เลือกดูข้อมูลเฉพาะเดือน (ไม่ใช่ภาพรวมทั้งหมด) หรือไม่
+        if (!reportModel.SelectedMonthKey.Equals("all", StringComparison.OrdinalIgnoreCase) &&
+            DateTime.TryParseExact(reportModel.SelectedMonthKey + "-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedMonthStart))
+        {
+            // แปลงวันแรกของเดือนที่เลือกเป็น DateOnly
+            var monthStart = DateOnly.FromDateTime(parsedMonthStart);
+            // คำนวณวันแรกของเดือนถัดไปสำหรับเป็นขอบเขตสิ้นสุด
+            var monthEnd = monthStart.AddMonths(1);
+            // กรองเฉพาะรายการสมุดบัญชีที่อยู่ในเดือนที่เลือก
+            entriesQuery = entriesQuery.Where(e => e.EntryDate >= monthStart && e.EntryDate < monthEnd);
+        }
+
+        // ดึงรายการสมุดบัญชีที่ผ่านการกรองแล้วเรียงจากวันที่ล่าสุด
+        var entries = entriesQuery
             // จัดเรียงตามวันที่บันทึกจากล่าสุดไปเก่าสุด
             .OrderByDescending(f => f.EntryDate)
+            // เรียงลำดับรองตามรหัสรายการล่าสุด
+            .ThenByDescending(f => f.EntryId)
             // แปลงผลลัพธ์เป็นรายการลิสต์
             .ToList();
-
-        // กำหนดช่วงวันเริ่มต้นและสิ้นสุดของเดือนปัจจุบันเพื่อให้ยอดการ์ดสรุปตรงกับหน้าแดชบอร์ดภาพรวมการเงินร้าน 100%
-        var todayDate = DateOnly.FromDateTime(DateTime.Today);
-        // คำนวณวันแรกของเดือนปัจจุบัน
-        var currentMonthStart = new DateOnly(todayDate.Year, todayDate.Month, 1);
-        // คำนวณวันแรกของเดือนถัดไปสำหรับเป็นขอบเขตสิ้นสุด
-        var currentMonthEnd = currentMonthStart.AddMonths(1);
-        // กรองเฉพาะรายการสมุดบัญชีที่อยู่ในเดือนปัจจุบันสำหรับคำนวณยอดการ์ดสรุปประจำเดือนนี้
-        var currentMonthEntries = entries
-            // เลือกเฉพาะรายการที่ตั้งแต่วันแรกของเดือนปัจจุบันและก่อนวันแรกของเดือนถัดไป
-            .Where(e => e.EntryDate >= currentMonthStart && e.EntryDate < currentMonthEnd)
-            // แปลงผลลัพธ์เป็นลิสต์
-            .ToList();
-
-        // คำนวณผลรวมของรายการที่เป็นรายรับบันทึกเองเฉพาะเดือนนี้ให้ตรงกับหน้าแดชบอร์ด
-        var totalIncome = currentMonthEntries.Where(e => e.EntryType.ToLower() == "income").Sum(e => e.Amount);
-        // คำนวณผลรวมของรายการที่เป็นรายจ่ายรวมเฉพาะเดือนนี้ให้ตรงกับหน้าแดชบอร์ด
-        var totalExpense = currentMonthEntries.Where(e => e.EntryType.ToLower() == "expense").Sum(e => e.Amount);
 
         // กำหนดจำนวนรายการต่อหน้าเป็น 10 รายการ
         int pageSize = 10;
@@ -329,12 +333,20 @@ public class AccountantController : Controller
         // ดึงเฉพาะรายการบัญชีของหน้าปัจจุบัน
         var pagedEntries = entries.Skip((currentPage - 1) * pageSize).Take(pageSize).ToList();
 
-        // ส่งยอดรวมรายรับไปยังหน้าแสดงผล
-        ViewBag.TotalIncome = totalIncome;
-        // ส่งยอดรวมรายจ่ายไปยังหน้าแสดงผล
-        ViewBag.TotalExpense = totalExpense;
-        // ส่งยอดคงเหลือสุทธิจากการนำรายรับลบรายจ่ายไปยังหน้าแสดงผล
-        ViewBag.NetBalance = totalIncome - totalExpense;
+        // ส่งข้อมูลรายงานชุดเดียวกับหน้าภาพรวมไปยัง View เพื่อแสดงตัวเลขและตัวเลือกเดือนตรงกัน 100%
+        ViewBag.ReportModel = reportModel;
+        // ส่งยอดรวมรายรับทั้งหมด (หน้าร้าน + สมุดบัญชี) ให้ตรงกับหน้า Index
+        ViewBag.TotalIncome = reportModel.TotalRevenue;
+        // ส่งยอดรายรับเฉพาะที่บันทึกเองในสมุดบัญชี
+        ViewBag.LedgerIncomeOnly = reportModel.LedgerIncome;
+        // ส่งยอดรายได้จากใบเสร็จหน้าร้าน
+        ViewBag.StorefrontRevenue = reportModel.StorefrontRevenue;
+        // ส่งยอดรวมรายจ่ายให้ตรงกับหน้า Index
+        ViewBag.TotalExpense = reportModel.RecordedExpenses;
+        // ส่งยอดคงเหลือสุทธิรวม (รายได้รวม - รายจ่าย) ให้ตรงกับหน้า Index
+        ViewBag.NetBalance = reportModel.GrossProfit;
+        // ส่งยอดคงเหลือสุทธิเฉพาะรายการที่บันทึกเองในสมุดบัญชี
+        ViewBag.ManualNetBalance = reportModel.LedgerIncome - reportModel.RecordedExpenses;
         // ส่งข้อมูลการแบ่งหน้าและจำนวนรายการทั้งหมดไปยังหน้าแสดงผล
         ViewBag.TotalEntryCount = entries.Count;
         // กำหนดหมายเลขหน้าปัจจุบัน
