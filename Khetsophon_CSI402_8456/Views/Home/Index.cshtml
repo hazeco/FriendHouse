@@ -40,7 +40,7 @@
     // การกำหนดค่าสื่อ รูปภาพ และโมเดล 3 มิติไว้ที่ส่วนบนสุดของไฟล์
     var pageMedia = new {
         NarutoModelUrl = !string.IsNullOrEmpty(hero?.Model3DPath) ? hero.Model3DPath : ((string?)ViewBag.HeroModel3D ?? "~/media/models/naruto_kyubi_sage.glb"),
-        NarutoFallbackImg = !string.IsNullOrEmpty(hero?.FallbackImageUrl) ? hero.FallbackImageUrl : "~/media/images/naruto_hero_fallback.png"
+        NarutoFallbackImg = !string.IsNullOrEmpty(hero?.FallbackImageUrl) ? hero.FallbackImageUrl : "~/media/images/naruto_hero_fig.png"
     };
 
     // การกำหนดข้อความเนื้อหาหลักของ Hero Section
